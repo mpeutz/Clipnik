@@ -23,6 +23,8 @@
 ;@Ahk2Exe-SetOrigFilename Clipjump.exe
 
 #Requires AutoHotkey v2.0
+#Warn All, StdOut
+#Warn Unreachable, Off   ; class definitions after the auto-execute return are hoisted; the warning is spurious
 SetWorkingDir A_ScriptDir
 #SingleInstance Force
 #ClipboardTimeout 0              ;keeping this value low as I already check for OpenClipboard in OnClipboardChange label
@@ -31,8 +33,8 @@ CoordMode "ToolTip", "Screen"
 FileEncoding "UTF-8"
 ListLines false
 KeyHistory 0
-#HotkeyInterval 1000
-#MaxHotkeysPerInterval 1000
+A_HotkeyInterval := 1000
+A_MaxHotkeysPerInterval := 1000
 SendMode "Event"          ; v1 default; paste-mode timing was tuned against it
 SetTitleMatchMode 1       ; v1 default (prefix match)
 
@@ -124,6 +126,10 @@ global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED :=
 global wasManualClipboard := false
 global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu(), Help_Tray := Menu()
 global HoverTip_Text := ""
+;Channel Organizer (v1 statics of channelOrganizer() and its menus)
+global chOrg_Width := "", chOrg_Height := "", chOrg_w_ofSearch := ""
+		, chOrg_t_horizButtons := 8, chOrg_t_startBtn := 2, chOrg_t_commonBtn := 3
+global chOrgLVMenu := Menu(), chOrgLBMenu := Menu(), chOrgSubM := Menu()
 
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
@@ -202,8 +208,8 @@ if (!DB.OpenDB(DBPATH))
 DEFAULT SETTINGS LOADING
 ************************
 */
-for k in StrSplit("Enter|Up|Down|Home", "|")
-	spmkey[k] := k
+for spmk in StrSplit("Enter|Up|Down|Home", "|")
+	spmkey[spmk] := spmk
 
 init_actionmode() ;Initialising Clipjump Channels
 initChannels()
@@ -240,8 +246,8 @@ MORE SETTINGS A/C USER SETTINGS
 ******************************
 */
 
-for k in StrSplit("a|c|s|z|space|x|e|up|down|f|h|Enter|t|F1|q", "|")
-	pastemodekey[k] := k
+for pmk in StrSplit("a|c|s|z|space|x|e|up|down|f|h|Enter|t|F1|q", "|")
+	pastemodekey[pmk] := pmk
 
 ;Setting Up shortcuts
 hkZ((paste_k ? "$" pstIdentifier paste_k : ""), paste)
@@ -480,10 +486,11 @@ cjClipboardChanged(DataType) {
 	{
 		STORE.CBCaptured := 0
 		clipboard_copy := "", returnV := "", temp_lastformat := ""
-		if !WinActive("ahk_class XLMAIN")
+		if !WinActive("ahk_class XLMAIN") {
 			try clipboard_copy := makeClipboardAvailable(), ISACTIVEEXCEL := 0
-		else
-			try clipboard_copy := LASTCLIP, ISACTIVEEXCEL := 1  	;so that Cj doesnt open excel clipboard (for a longer time) and cause problems
+		} else {
+			try clipboard_copy := LASTCLIP, ISACTIVEEXCEL := 1
+		}  	;so that Cj doesnt open excel clipboard (for a longer time) and cause problems
 		;clipboard_copy = lastclip as to remove duplicate copies in excel , ^x or ^c makes lastclip empty
 
 		if ISACTIVEEXCEL
@@ -1028,9 +1035,9 @@ ctrlCheck(*) {
 				Coutput := ""
 				if HasFuncByName(curPfunction)
 					Coutput := callPformat(curPfunction, zCb) 	; don't try here, the exception in fileread-filemissing-commonformats will nt allow it.
-				if STORE.ClipboardChanged
+				if STORE.ClipboardChanged {
 					try A_Clipboard := Coutput, IScurCBACTIVE := 0
-				else
+				} else
 					ONCLIPBOARD := 1
 				API.blockMonitoring(0, 5)
 				Critical "On"

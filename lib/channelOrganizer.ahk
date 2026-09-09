@@ -3,240 +3,268 @@
  * *****************
 */
 
-/**
- * Label to open channel organizer gui
- */
-channelOrganizer:
-	channelOrganizer()
-	return
-
+; State that v1 kept as statics inside channelOrganizer() now lives in globals initialized in Clipjump.ahk:
+;   chOrg_Width, chOrg_Height, chOrg_w_ofSearch                  ; // Needed to make widths and hts save
+;   chOrg_t_horizButtons := 8, chOrg_t_startBtn := 2, chOrg_t_commonBtn := 3
+;   chOrgLVMenu := Menu(), chOrgLBMenu := Menu(), chOrgSubM := Menu()
 
 /**
  * Function to open channel organizer gui
+ * (also the hotkey / tray menu / ACTIONS target that the v1 channelOrganizer label was)
  * @return {void}
  */
-channelOrganizer(){
+channelOrganizer(*){
 	global
-	static chOrg_Lb, chOrg_search, chOrg_Lv
-	static Width, Height, w_ofSearch 	; // Needed to make widths and hts save
-	static t_horizButtons := 8 , t_startBtn := 2, t_commonBtn := 3
+	local wt, ht, g, lb, lv, sb, ev
 
 	wt := ini_read("Organizer", "w") , ht := ini_read("Organizer", "h")
 	if !wt
 		wt := A_ScreenWidth>1300 ? 900 : 750
 	if !ht
 		ht := A_ScreenHeight>800 ? 500 : 400
-	w_ofSearch := getControlInfo("button", TXT.HST_search, "w", "s10")
+	chOrg_w_ofSearch := getControlInfo("button", TXT.HST_search, "w", "s10")
+	chOrg_Width := wt-158 , chOrg_Height := ht 		; the Size event overwrites these as soon as the window is shown
 
 	;enable tooltips
-	OnMessage(0x200, "WM_MOUSEMOVE")
+	OnMessage(0x200, WM_MOUSEMOVE)
 
-	Gui, chOrg:New
-	Gui, +Resize +MinSize850x500
-	Gui, Color, D2D2D2
-	Gui, Font, s10
-	Gui, Add, Text, % "x" wt - w_ofSearch - 200 " y10", % TXT.HST_search
-	Gui, Font, s9
-	Gui, Add, Edit, % "x" wt-200 " yp w200 vchOrg_search gchOrg_search", 		; width of EDIT is fixed = 200
-	Gui, Font, s10
-	Gui, Add, Button, % "x" 5+115+4+30+4 " yp vchorgNew gchorgNew ", % TXT.ORG_NewClip
-	Gui, Add, Text, x+30 yp+4, % TXT.ORG_chooseCh
-	Gui, Add, DropDownList, x+10 w150 yp-3 vchorg_useCh gchorg_useCh,
-	gosub chOrg_addChUseList
-	Gui, Add, ListBox, section x5 y+10 w115 h%ht% gchOrg_Lb vchOrg_Lb -LV0X10 AltSubmit, ;% "|" chList 	; width of LB is fixed = 115
-	gosub chOrg_addChList
+	GuiDestroy("chOrg")
+	g := Gui("+Resize +MinSize850x500", TXT.ORG__name)
+	CJGUI["chOrg"] := g
+	g.BackColor := "D2D2D2"
+	g.SetFont("s10")
+	g.Add("Text", "x" wt - chOrg_w_ofSearch - 200 " y10", TXT.HST_search)
+	g.SetFont("s9")
+	g.Add("Edit", "x" wt-200 " yp w200 vchOrg_search").OnEvent("Change", chOrg_search_Event) 		; width of EDIT is fixed = 200
+	g.SetFont("s10")
+	g.Add("Button", "x" 5+115+4+30+4 " yp vchorgNew", TXT.ORG_NewClip).OnEvent("Click", chOrgNew)
+	g.Add("Text", "x+30 yp+4", TXT.ORG_chooseCh)
+	g.Add("DropDownList", "x+10 w150 yp-3 vchorg_useCh").OnEvent("Change", chorg_UseCh_Event)
+	chOrg_addChUseList()
+	lb := g.Add("ListBox", "section x5 y+10 w115 h" ht " vchOrg_Lb -LV0X10 AltSubmit") 	; width of LB is fixed = 115
+	lb.OnEvent("Change", chOrg_Lb_Event) , lb.OnEvent("DoubleClick", chOrg_Lb_Event)
+	chOrg_addChList()
 
-	Gui, Font, s16, github-octicons
-	Gui, Add, Button, x+4 yp+20 w30 h35 +Disabled, % chrhex("f040")
-	Gui, Add, Button, xp y+20 w30 gchOrgUp vchOrgUp, % chrhex("f03d")			; buttons width = 30
-	Gui, Add, Button, xp y+2 w30 gchOrgDown vchOrgDown, % chrhex("f03f")
-	Gui, Add, Button, xp y+2 w30 gchOrgEdit vchOrgEdit, % chrhex("f058")
-	Gui, Add, Button, xp y+2 w30 gchorg_openPastemode vchorg_openPastemode, % chrhex("f032")
-	Gui, Add, Button, xp y+2 w30 gchOrg_props vchOrg_props, % chrhex("f015")
-	Gui, Add, Button, xp y+2 w30 gchOrgCut vchOrgCut, % chrhex("f035")
-	Gui, Add, Button, xp y+2 w30 gchOrgCopy vchOrgCopy, % chrhex("f04d")
-	Gui, Add, Button, xp y+2 w30 gchOrgDelete vchOrgDelete, % chrhex("f0d0")
+	g.SetFont("s16", "github-octicons")
+	g.Add("Button", "x+4 yp+20 w30 h35 +Disabled", chrhex("f040"))
+	g.Add("Button", "xp y+20 w30 vchOrgUp", chrhex("f03d")).OnEvent("Click", chOrgUp)			; buttons width = 30
+	g.Add("Button", "xp y+2 w30 vchOrgDown", chrhex("f03f")).OnEvent("Click", chOrgDown)
+	g.Add("Button", "xp y+2 w30 vchOrgEdit", chrhex("f058")).OnEvent("Click", chOrgEdit)
+	g.Add("Button", "xp y+2 w30 vchorg_openPastemode", chrhex("f032")).OnEvent("Click", chOrg_openPasteMode)
+	g.Add("Button", "xp y+2 w30 vchOrg_props", chrhex("f015")).OnEvent("Click", chOrg_props)
+	g.Add("Button", "xp y+2 w30 vchOrgCut", chrhex("f035")).OnEvent("Click", chOrgCut)
+	g.Add("Button", "xp y+2 w30 vchOrgCopy", chrhex("f04d")).OnEvent("Click", chOrgCopy)
+	g.Add("Button", "xp y+2 w30 vchOrgDelete", chrhex("f0d0")).OnEvent("Click", chOrgDelete)
 	; x = 5+115 + 4 + 30 = 154 + 4
-	Gui, Font
-	Gui, Add, ListView, % "x+4 ys -E0x200 w" wt-158 " h" ht " HWNDchOrg_Lv vchOrg_Lv gchOrg_Lv", % "Ch|#|" TXT.HST_clip
-	LV_ModifyCol(1, "30 Integer") , LV_ModifyCol(2, "30 Integer") , LV_ModifyCol(3, wt-158 -60 -10)
-	Gui, Add, StatusBar
-	SB_SetParts(5+115)
-	Gui, chOrg:Show,, % TXT.ORG__name
+	g.SetFont()
+	lv := g.Add("ListView", "x+4 ys -E0x200 w" wt-158 " h" ht " vchOrg_Lv", ["Ch", "#", TXT.HST_clip])
+	; v1 g-label (with AltSubmit) fired for clicks, selection/focus changes and column clicks
+	for ev in ["Click", "ItemSelect", "ItemFocus", "ColClick", "Focus"]
+		lv.OnEvent(ev, chOrg_Lv_Event)
+	lv.OnEvent("DoubleClick", chOrg_Lv_DoubleClick)
+	lv.ModifyCol(1, "30 Integer") , lv.ModifyCol(2, "30 Integer") , lv.ModifyCol(3, wt-158 -60 -10)
+	sb := g.Add("StatusBar", "vchOrg_SB")
+	sb.SetParts(5+115)
+	g.OnEvent("Size", chOrgGuiSize)
+	g.OnEvent("ContextMenu", chOrgGuiContextMenu)
+	g.OnEvent("Close", chOrgGuiClose)
+	g.OnEvent("Escape", chOrgGuiEscape)
+	g.Show()
 
-	GuiControl, chOrg:Choose, chOrg_Lb, % ini_OpenAllChByDef ? 1 : CN.NG+2
-	gosub chOrg_Lb
-	GuiControl, chOrg:+AltSubmit, chOrg_Lv
+	lb.Choose(ini_OpenAllChByDef ? 1 : CN.NG+2)
+	chOrg_Lb_Event()
 	; Gui Done
 
 	; // MENU LV
-	Menu, chOrgLVMenu, Add, % TXT.HST_m_prev, chOrg_preview
-	Menu, chOrgLVMenu, Add
-	Menu, chOrgLVMenu, Add, % TXT.ORG_m_insta, chOrg_paste
-	Menu, chOrgLVMenu, Add, % TXT.PLG_properties, chOrg_props
-	Menu, chOrgLVMenu, Add, % TXT.ORG_m_openPst, chOrg_openPasteMode
-		Menu, chOrgSubM, Add, % TXT.HST_m_edit, chOrgEdit
-		Menu, chOrgSubM, Add, % TXT.ORG_m_inc , chOrgUp
-		Menu, chOrgSubM, Add, % TXT.ORG_m_dec , chOrgDown
-		Menu, chOrgSubM, Add, % TXT.TIP_move "    (" TXT["_!x"] ")", chOrgCut
-		Menu, chOrgSubM, Add, % TXT.TIP_copy "    (" TXT["_!c"] ")" , chOrgCopy
-	Menu, chOrgLVMenu, Add, % TXT._more_options, :chOrgSubM
-	Menu, chOrgLVMenu, Add
-	Menu, chOrgLVMenu, Add, % TXT.HST_m_ref, chOrg_refresh
-	Menu, chOrgLVMenu, Add, % TXT.HST_m_del, chOrgDelete
-	Menu, chOrgLVMenu, Default, % TXT.HST_m_prev
+	chOrgLVMenu.Add(TXT.HST_m_prev, chOrg_preview)
+	chOrgLVMenu.Add()
+	chOrgLVMenu.Add(TXT.ORG_m_insta, chOrg_paste)
+	chOrgLVMenu.Add(TXT.PLG_properties, chOrg_props)
+	chOrgLVMenu.Add(TXT.ORG_m_openPst, chOrg_openPasteMode)
+		chOrgSubM.Add(TXT.HST_m_edit, chOrgEdit)
+		chOrgSubM.Add(TXT.ORG_m_inc , chOrgUp)
+		chOrgSubM.Add(TXT.ORG_m_dec , chOrgDown)
+		chOrgSubM.Add(TXT.TIP_move "    (" TXT["_!x"] ")", chOrgCut)
+		chOrgSubM.Add(TXT.TIP_copy "    (" TXT["_!c"] ")" , chOrgCopy)
+	chOrgLVMenu.Add(TXT._more_options, chOrgSubM)
+	chOrgLVMenu.Add()
+	chOrgLVMenu.Add(TXT.HST_m_ref, chOrg_refresh)
+	chOrgLVMenu.Add(TXT.HST_m_del, chOrgDelete)
+	chOrgLVMenu.Default := TXT.HST_m_prev
 
 	; // MENU LB
-	Menu, chOrgLBMenu, Add, % TXT._new, chOrgNewCh
-	Menu, chOrgLBMenu, Add, % TXT.ORG_m_inc, chOrgUp
-	Menu, chOrgLBMenu, Add, % TXT.ORG_m_dec, chOrgDown
-	Menu, chOrgLBMenu, Add, % TXT._rename " (F2)", chOrg_renameCh
-	Menu, chOrgLBMenu, Add, % TXT.HST_m_del, chOrgDelete
+	chOrgLBMenu.Add(TXT._new, chOrgNewCh)
+	chOrgLBMenu.Add(TXT.ORG_m_inc, chOrgUp)
+	chOrgLBMenu.Add(TXT.ORG_m_dec, chOrgDown)
+	chOrgLBMenu.Add(TXT._rename " (F2)", chOrg_renameCh)
+	chOrgLBMenu.Add(TXT.HST_m_del, chOrgDelete)
 
 	; Hotkeys
-	Hotkey, If, IsChorgActive()
-	hkZ("F5", "chOrg_refresh")
-	hkZ("^f", "chOrg_searchfocus")
-	hkZ("^n", "chOrgNew")
-	hkZ("^+n", "chOrgNewCh")
-	hkZ("^g", "chOrg_useChFocus")
-	hkZ("!a", "chOrg_activateLB")
-	hkZ("!s", "chOrg_activateLV")
-	Hotkey, If
-	Hotkey, If, IsChOrgLVActive()
-	hkZ("Enter", "chOrg_preview")
-	hkZ("Space", "chOrg_paste")
-	hkZ("!Enter", "chOrg_props")
-	hkZ("^o", "chOrg_openPasteMode")
-	hkZ("^h", "chOrgEdit")
-	hkZ("Del", "chOrgDelete")
-	hkZ("!Up", "chOrgUp")
-	hkZ("!Down", "chOrgDown")
-	hkZ("!x", "chOrgCut")
-	hkZ("!c", "chOrgCopy")
-	Hotkey, If
-	Hotkey, If, IsChOrgLBActive()
-	hkZ("Del", "chOrgDelete")
-	hkZ("!Up", "chOrgUp")
-	hkZ("!Down", "chOrgDown")
-	hkZ("F2", "chOrg_renameCh")
-	Hotkey, If
-	Hotkey, If, IsChOrgSearchActive()
-	hkZ("Tab", "chOrg_activateLV")
-	Hotkey, If
-	Hotkey, If, IsPrevActive()
-	hkZ("^f", "prevSearchfocus")
-	Hotkey, If
-	return
+	HotIf(IsChorgActive)
+	hkZ("F5", chOrg_refresh)
+	hkZ("^f", chOrg_searchfocus)
+	hkZ("^n", chOrgNew)
+	hkZ("^+n", chOrgNewCh)
+	hkZ("^g", chOrg_useChFocus)
+	hkZ("!a", chOrg_activateLB)
+	hkZ("!s", chOrg_activateLV)
+	HotIf()
+	HotIf(IsChOrgLVActive)
+	hkZ("Enter", chOrg_preview)
+	hkZ("Space", chOrg_paste)
+	hkZ("!Enter", chOrg_props)
+	hkZ("^o", chOrg_openPasteMode)
+	hkZ("^h", chOrgEdit)
+	hkZ("Del", chOrgDelete)
+	hkZ("!Up", chOrgUp)
+	hkZ("!Down", chOrgDown)
+	hkZ("!x", chOrgCut)
+	hkZ("!c", chOrgCopy)
+	HotIf()
+	HotIf(IsChOrgLBActive)
+	hkZ("Del", chOrgDelete)
+	hkZ("!Up", chOrgUp)
+	hkZ("!Down", chOrgDown)
+	hkZ("F2", chOrg_renameCh)
+	HotIf()
+	HotIf(IsChOrgSearchActive)
+	hkZ("Tab", chOrg_activateLV)
+	HotIf()
+	HotIf(IsPrevActive)
+	hkZ("^f", prevSearchfocus)
+	HotIf()
+}
 
 /**
  * add channel list to the listbox
  */
-chOrg_addChList:
+chOrg_addChList(*) {
+	global
+	local chList, lb
 	chList := RegexReplace( Trim( channel_find(), "`n" ), "`n", "|" )
-	Sort, chList, D| N
-	GuiControl, chOrg:, ListBox1, % "||" chList
-	return
+	chList := Sort(chList, "N D|")
+	lb := CJGUI["chOrg"]["chOrg_Lb"]
+	lb.Delete()
+	lb.Add(StrSplit("|" chList, "|")) 	; v1 "||" chList : the first (blank) item stands for all channels
+}
 
 /**
  * gui resize handler
  */
-chOrgGuiSize:
-	if (A_EventInfo != 1){
-		gui_w := A_GuiWidth , gui_h := A_GuiHeight
-		GuiControl, move, SysListView321, % "w" gui_w-158-5-2 " h" gui_h-80
-		GuiControl, move, ListBox1, % "h" gui_h-80
-		GuiControl, move, Edit1, % "x" gui_w-200-5
-		GuiControl, movedraw, Static1, % "x" gui_w- w_ofsearch-200-5
-		width := gui_w-158-5-2
-		height := gui_h-80
-		LV_ModifyCol(3, Width -60 -10)
+chOrgGuiSize(g, MinMax, W, H) {
+	global
+	local gui_w, gui_h
+	if (MinMax != -1){ 	; -1 = minimized
+		gui_w := W , gui_h := H
+		g["chOrg_Lv"].Move(, , gui_w-158-5-2, gui_h-80)
+		g["chOrg_Lb"].Move(, , , gui_h-80)
+		g["chOrg_search"].Move(gui_w-200-5)
+		g["Static1"].Move(gui_w- chOrg_w_ofsearch-200-5) , g["Static1"].Redraw()
+		chOrg_Width := gui_w-158-5-2
+		chOrg_Height := gui_h-80
+		g["chOrg_Lv"].ModifyCol(3, chOrg_Width -60 -10)
 	}
-	return
+}
 
 /**
  * context menu handler
  */
-chOrgGuiContextMenu:
-	if (A_GuiControl == "chOrg_Lv")
-		Menu, chOrgLVMenu, Show, %A_GuiX%, %A_GuiY%
-	else if (A_GuiControl == "chOrg_Lb")
+chOrgGuiContextMenu(g, ctrl, item, isRightClick, x, y) {
+	global
+	if IsObject(ctrl) && (ctrl.Name == "chOrg_Lv")
+		chOrgLVMenu.Show(x, y)
+	else if IsObject(ctrl) && (ctrl.Name == "chOrg_Lb")
 	{
-		gosub chOrg_isChActive
-		if isChActive
-			Menu, chOrgLBMenu, Show, %A_GuiX%, %A_GuiY%
+		if chOrg_isChActive()
+			chOrgLBMenu.Show(x, y)
 	}
-	return
+}
 
 /**
  * gui close/exit handler
  */
-chOrgGuiEscape:
-chOrgGuiClose:
-	Ini_write("Organizer", "w", width+158-5-2+2, 0) , Ini_write("Organizer", "h", height+2, 0) 	; +2 dont know why
-	Gui, chOrg:Destroy
-	Menu, chOrgLVMenu, DeleteAll
-	Menu, chOrgLBMenu, DeleteAll
-	Menu, chOrgSubM, DeleteAll
-	OnMessage(0x200, "") 		; This will conflict in case both settings and chorg are active at the same time
-	Tooltip,,,, 4
+chOrgGuiEscape(*) {
+	chOrgGuiClose()
+}
+
+chOrgGuiClose(*) {
+	global
+	Ini_write("Organizer", "w", chOrg_Width+158-5-2+2, 0) , Ini_write("Organizer", "h", chOrg_Height+2, 0) 	; +2 dont know why
+	GuiDestroy("chOrg")
+	chOrgLVMenu.Delete()
+	chOrgLBMenu.Delete()
+	chOrgSubM.Delete()
+	OnMessage(0x200, WM_MOUSEMOVE, 0) 		; This will conflict in case both settings and chorg are active at the same time
+	ToolTip(, , , 4)
 	EmptyMem()
-	return
+}
 
 /**
- * label to handle up/down of clips and channels
+ * handle up/down of clips and channels
+ * (v1 chOrgUp / chOrgDown labels; t_Up = 1 moves up)
  */
-chOrgUp:
-chOrgDown: 	; dont make these labels critical
-	Gui, chorg:Default
-	t_Up := A_ThisLabel="chOrgUp" ? 1 : 0
-	gosub chOrg_isChActive
-	if !isChActive {
-		gosub chOrg_getSelected
+chOrgUp(*) {
+	chOrgUpDown(1)
+}
+
+chOrgDown(*) {
+	chOrgUpDown(0)
+}
+
+chOrgUpDown(t_Up) { 	; dont make this critical
+	global
+	local lv, rSel, temp_row_s, fch, fcl, spRow, sch, scl, ftxt, stxt, chSel, nCh
+	lv := CJGUI["chOrg"]["chOrg_Lv"]
+	if !chOrg_isChActive() {
+		rSel := chOrg_getSelected()
 		if Instr(rSel, "`n")
 		{
 			chOrg_notification(TXT.ORG_error)
 			return
 		}
-		temp_row_s := LV_GetNext(0)
-		;while (temp_row_s := LV_GetNext(temp_row_s)) {
-			LV_GetText(fch, temp_row_s, 1) , LV_GetText(fcl, temp_row_s, 2)
+		if (rSel = "")
+			return
+		temp_row_s := lv.GetNext(0)
+		;while (temp_row_s := lv.GetNext(temp_row_s)) {
+			fch := lv.GetText(temp_row_s, 1) , fcl := lv.GetText(temp_row_s, 2)
 			spRow := t_Up ? temp_row_s-1 : temp_row_s+1
 			if (fcl==1) && (t_Up==1) 	; 1st clip not go up - thanks to fump2000
 				return
 			sch := scl := ""
-			LV_GetText(sch, spRow, 1) , LV_GetText(scl, spRow, 2)
+			if (spRow >= 1) 	; v1 LV_GetText returned blank for a row outside the list; v2 throws
+				try sch := lv.GetText(spRow, 1) , scl := lv.GetText(spRow, 2)
 			if (sch != "") {
 				chOrg_clipSwap(fch, fcl, sch, scl)
-				LV_GetText(ftxt, temp_row_s, 3) , LV_GetText(stxt, spRow, 3)
-				Gui, chOrg:Default
-				LV_Modify(temp_row_s, "", fch, fcl, stxt) 		; // change only 3rd col.. 
-				LV_Modify(SprOW,"", sch, scl, ftxt)
-				LV_Modify(temp_row_s, "-Select -Focus")
-				LV_Modify(spRow, "Select")
+				ftxt := lv.GetText(temp_row_s, 3) , stxt := lv.GetText(spRow, 3)
+				lv.Modify(temp_row_s, "", fch, fcl, stxt) 		; // change only 3rd col..
+				lv.Modify(spRow, "", sch, scl, ftxt)
+				lv.Modify(temp_row_s, "-Select -Focus")
+				lv.Modify(spRow, "Select")
 			}
 		;}
 	} else {
-		gosub chorg_getChSelected
+		chSel := chorg_getChSelected()
 		nCh := chSel + (t_Up ? -1 : 1)
 		if chOrg_clipFolderSwap(chSel, nCh){
-			gosub chOrg_addChList
-			gosub chOrg_addChUseList
+			chOrg_addChList()
+			chOrg_addChUseList()
 		}
 	}
-	return
+}
 
 /**
  * clip/channel delete handler
  * also allows emptying a channel
  */
-chOrgDelete:
-	Critical
-	gosub chOrg_isChActive
-	if !isChActive {
-		gosub chOrg_getSelected
-		tobj := {}
-		loop, parse, rSel, % "`n"
+chOrgDelete(*) {
+	global
+	local lv, lbv, rSel, tobj, k, v, z, lvgcb, cons, tch, tcl, chSel, r
+	Critical "On"
+	lv := CJGUI["chOrg"]["chOrg_Lv"]
+	if !chOrg_isChActive() {
+		rSel := chOrg_getSelected()
+		tobj := CJMap()
+		loop parse rSel, "`n"
 		{
 			k := Substr(A_LoopField, 1, Instr(A_LoopField, "-")-1) , v := Substr(A_LoopField, Instr(A_LoopField, "-")+1)
 			tobj[k] .= v "`n"
@@ -244,93 +272,104 @@ chOrgDelete:
 		; Sort and delete
 		for k,v in tobj
 		{
-			Sort, v, % "N R" ; reverse
+			v := Sort(v, "N R") ; reverse
 			v := Trim(v)
-			loop, parse, v, % "`n"
+			loop parse v, "`n"
 			{
 				if (Trim(A_LoopField) == "")
 					continue
 				API.deleteClip(k, A_LoopField)
 				z := A_LoopField
-				lvgcb := LV_GetCount()
+				lvgcb := lv.GetCount()
 				cons := 0
-				loop % lvgcb ; Silent delete
+				loop lvgcb ; Silent delete
 				{
-					LV_GetText(tch, A_index+cons, 1)
+					tch := ""
+					try tch := lv.GetText(A_index+cons, 1) 	; rows past the end read as blank like v1
 					if (tch != k)
 						continue
-					LV_GetText(tcl, A_index+cons, 2)
+					tcl := lv.GetText(A_index+cons, 2)
 					if (tcl < z)
 						continue
 					if (tcl == z){
-						LV_Delete(A_index)
+						lv.Delete(A_index)
 						cons := -1
 						continue
 					}
-					LV_Modify(A_index+cons, "Col2", tcl-1)
+					lv.Modify(A_index+cons, "Col2", tcl-1)
 				}
 			}
 		}
 		chOrg_notification(TXT.ORG_clpdelMsg)
 	}
 	else {
-		if (chOrg_Lb != "") && (chOrg_Lb>1) {
-			gosub chorg_getChSelected
-			MsgBox, 67, % TXT.ORG_delCnlMsgTitle, % TXT.ORG_delCnlMsg
-			IfMsgBox, Yes
+		lbv := CJGUI["chOrg"]["chOrg_Lb"].Value
+		if (lbv != "") && (lbv>1) {
+			chSel := chorg_getChSelected()
+			r := MsgBox(TXT.ORG_delCnlMsg, TXT.ORG_delCnlMsgTitle, 67)
+			if (r = "Yes")
 			{
 				manageChannel(chSel)
-				gosub chOrg_addChList
-				gosub chOrg_addChUseList
+				chOrg_addChList()
+				chOrg_addChUseList()
 			}
-			IfMsgBox, No
+			if (r = "No")
 			{
 				API.emptyChannel(chSel)
-				Gui, chorg:Default
-				LV_Delete()
+				lv.Delete()
 			}
-			IfMsgBox, Cancel
+			if (r = "Cancel")
 				chOrg_notification( TXT.TIP_cancelled)
 			else chOrg_notification(TXT.TIP_done)
 		}
 	}
-	return
+}
 
 /**
  * clip copy/move handler
+ * (v1 chOrgCut / chOrgCopy labels; flag = 1 copies, 0 moves)
  */
-chOrgCut:
-chOrgCopy:
+chOrgCut(*) {
+	chOrgCutCopy(0)
+}
+
+chOrgCopy(*) {
+	chOrgCutCopy(1)
+}
+
+chOrgCutCopy(flag) {
 ; single cut/ multi copy supported
-	gosub chOrg_getSelected
-	flag := A_ThisLabel="chOrgCut" ? 0 : 1
+	global
+	local rSel, ret
+	rSel := chOrg_getSelected()
 	chOrg_notification(flag ? TXT.ORG_copyingclp : TXT.ORG_movingclp, 99999999)
-	if (A_ThisLabel="chOrgCut") && Instr(rSel, "`n")
+	if !flag && Instr(rSel, "`n")
 	{
 		chOrg_notification(TXT.ORG_error)
 		return
 	}
 	ret := chooseChannelGui(TXT._destChannel)
-	if ret=
+	if (ret = "")
 	{
 		chOrg_notification(TXT.TIP_cancelled)
 		return
 	}
-	Gui, chOrg:Default
-	loop, parse, rSel, `n
+	loop parse rSel, "`n"
 	{
 		API.manageClip(ret, Substr(A_LoopField, 1, Instr(A_LoopField, "-")-1) , Substr(A_LoopField, Instr(A_LoopField, "-")+1) , flag )
 		chOrg_notification("In Process")
 	}
 	chOrg_notification(TXT.TIP_done)
-	gosub chOrg_refresh
-	return
+	chOrg_refresh()
+}
 
 /**
- * label to show create new clip dialog
+ * show create new clip dialog
  */
-chOrgNew:
-	gosub chorg_getChSelected
+chOrgNew(*) {
+	global
+	local chSel, out
+	chSel := chorg_getChSelected()
 	if chSel<0
 		chSel := CN.NG
 	STORE.ErrorLevel := 0
@@ -338,126 +377,143 @@ chOrgNew:
 	if STORE.ErrorLevel
 	{
 		API.addClip(chSel, out)
-		gosub chOrg_refresh
+		chOrg_refresh()
 	} Else
 		chOrg_notification(TXT.TIP_cancelled)
-	return
+}
 
 /**
- * label for creating new channel action
+ * create new channel action
  */
-chOrgNewCh:
-	InputBox, out, % TXT.ORG_newchname,,,,,,,,, % CN.Total
-	if !ErrorLevel {
+chOrgNewCh(*) {
+	global
+	local ib
+	ib := InputBox("", TXT.ORG_newchname, , CN.Total)
+	if (ib.Result = "OK") {
 		changeChannel(CN.Total)
-		renameChannel(CN.Total-1, out)
-		gosub chOrg_addChList
-		gosub chOrg_addChUseList ; No need as changeChannel calls it but Needed here as it name changes later on
-		; GuiControl, chOrg:Choose, Listbox1, % CN.Total+1 ; makes no sense to open an empty channel
+		renameChannel(CN.Total-1, ib.Value)
+		chOrg_addChList()
+		chOrg_addChUseList() ; No need as changeChannel calls it but Needed here as it name changes later on
+		; CJGUI["chOrg"]["chOrg_Lb"].Choose(CN.Total+1) ; makes no sense to open an empty channel
 	}
-	return
+}
 
 /**
  * get selected channel id and name
+ * @return {int} channel id (chSelname receives the channel name)
  */
-chorg_getChSelected:
-	Gui, chorg:Submit, nohide
-	chSel := chOrg_Lb-2
+chorg_getChSelected(&chSelname := "") {
+	chSel := CJGUI["chOrg"]["chOrg_Lb"].Value-2
 	chSelname := ini_read("Channels", chSel)
-	return
+	return chSel
+}
 
 /**
  * is channel list active or not
  * not in case clip list is active
+ * @return {bool}
  */
-chOrg_isChActive:
-	Gui, chorg:Default
-	GuiControlGet, isChActive, chOrg:, % "Button" t_startBtn 		; Cut button not enabled when LB is active
-	if (isChActive == chrhex("f040"))
-		isChActive := 1
-	else isChActive := 0
-	return
+chOrg_isChActive() {
+	global
+	; Cut button not enabled when LB is active
+	return (CJGUI["chOrg"]["Button" chOrg_t_startBtn].Text == chrhex("f040")) ? 1 : 0
+}
 
 /**
  * get selected clips from the list
+ * @return {string} "ch-clip" lines; out_ch / out_cl / last_Row receive the values of the last selected row
  */
-chOrg_getSelected:
-	Gui, chOrg:Default
-	temp_row_s := 0 , rSel := ""
-	while ( temp_row_s := LV_GetNext(temp_row_s) )
+chOrg_getSelected(&out_ch := "", &out_cl := "", &last_Row := "") {
+	lv := CJGUI["chOrg"]["chOrg_Lv"]
+	temp_row_s := 0 , rSel := "" , out_ch := out_cl := last_Row := ""
+	while ( temp_row_s := lv.GetNext(temp_row_s) )
 	{
-		LV_GetText(out_ch, temp_row_s, 1) , LV_GetText(out_cl, temp_row_s, 2)
+		out_ch := lv.GetText(temp_row_s, 1) , out_cl := lv.GetText(temp_row_s, 2)
 		rSel .= out_ch "-" out_cl "`n"
 		last_Row := temp_row_s
 	}
-	rSel := Trim(rSel, "`n")
-	return
+	return Trim(rSel, "`n")
+}
 
 /**
  * edit a selected clip or channel
  */
-chOrgEdit:
-	gosub chOrg_isChActive
-	if isChActive
-		gosub chOrg_renameCh
+chOrgEdit(*) {
+	global
+	local out_ch, out_cl, last_Row, ret
+	if chOrg_isChActive()
+		chOrg_renameCh()
 	else {
-		gosub chOrg_getSelected
+		if (chOrg_getSelected(&out_ch, &out_cl, &last_Row) = "")
+			return
 		STORE.ErrorLevel := 0
 		ret := editClip(out_ch, out_cl)
-		if STORE.ErrorLevel
-			LV_Modify(last_Row, "", out_ch, out_cl, ret)
+		if STORE.ErrorLevel {
+			try CJGUI["chOrg"]["chOrg_Lv"].Modify(last_Row, "", out_ch, out_cl, ret) 	; the organizer may have been closed meanwhile
+		}
 		else chOrg_notification(TXT.TIP_cancelled, 800)
 	}
-	return
+}
 
 /**
  * open paste mode for the selected clip
  */
-chOrg_openPasteMode: ; Toggles the interface
-	gosub chOrg_getSelected
+chOrg_openPasteMode(*) { ; Toggles the interface
+	global
+	local out_ch, out_cl, opnPstMd_cn, opnPstMd_cl
+	if (chOrg_getSelected(&out_ch, &out_cl) = "")
+		return
 	opnPstMd_cn := out_ch , opnPstMd_cl := API.getChStrength(out_ch)-out_cl+1
 	if ( opnPstMd_cn == CN.NG ) && ( opnPstMd_cl == realActive ) && SPM.ACTIVE
 	{
-		gosub endPasteMode
+		endPastemode()
 		opnPstMd_cn := opnPstMd_cl := ""
 	}
-	else ;WinGetPos, x, y,,, % TXT.ORG__name " ahk_class AutoHotkeyGUI"
+	else ;WinGetPos(&x, &y, , , TXT.ORG__name " ahk_class AutoHotkeyGUI")
 		API.showPasteTipAt(out_ch, out_cl) ;, x+100, y+160)
-	return
+}
 
 /**
  * close the organizer gui and paste the selected clip
  */
-chOrg_paste:
-	gosub chOrg_getSelected
-	gosub chOrgGuiClose
-	WinWaitClose, % TXT.ORG__name
-	loop, parse, rSel, `n
+chOrg_paste(*) {
+	global
+	local rSel
+	rSel := chOrg_getSelected()
+	chOrgGuiClose()
+	WinWaitClose(TXT.ORG__name)
+	loop parse rSel, "`n"
 	{
 		API.paste( Substr(A_LoopField, 1, Instr(A_LoopField, "-")-1) , Substr(A_LoopField, Instr(A_LoopField, "-")+1) )
-		sleep 30
-		SendInput, {Enter}
+		Sleep 30
+		SendInput("{Enter}")
 	}
-	return
+}
 
 /**
  * show properties of the selected clip
  */
-chOrg_props:
-	gosub chOrg_getSelected
+chOrg_props(*) {
+	global
+	local out_ch, out_cl
+	if (chOrg_getSelected(&out_ch, &out_cl) = "")
+		return
 	out_cl := API.getChStrength(out_ch)-out_cl+1
 	ClipPref_makeKeys(out_ch, out_cl)
-	SB_SetText(TXT._editing, 2)
-	CPS[out_ch][out_cl] := ObjectEditView( CPS[out_ch][out_cl], Array(TXT.ORG_editprops, "chOrg", TXT.ORG_oEditMsg, 150), 0 )
+	CJGUI["chOrg"]["chOrg_SB"].SetText(TXT._editing, 2)
+	CPS[out_ch][out_cl] := ObjectEditView( CPS[out_ch][out_cl], [TXT.ORG_editprops, "chOrg", TXT.ORG_oEditMsg, 150], 0 )
 	prefs2Ini()
 	chOrg_notification(blank, 10)
-	return
+}
 
 /**
  * preview the selected clip
  */
-chOrg_preview:
-	gosub chOrg_getSelected
+chOrg_preview(*) {
+	global
+	local out_ch, out_cl, clippath, clipdata
+	if (chOrg_getSelected(&out_ch, &out_cl) = "")
+		return
 	out_cl := API.getChStrength(out_ch) - out_cl + 1
 	out_ch := out_ch ? out_ch : ""
 	if FileExist(clippath := "cache\thumbs" out_ch "\" out_cl ".jpg")
@@ -465,62 +521,73 @@ chOrg_preview:
 	else {
 		clipdata := CDS[out_ch ? out_ch : 0][out_cl] 	; dont use LV here, limit of 8192 chrs
 		genHTMLforPreview(clipdata)
-		gui_Clip_preview(PREV_FILE, chOrg_search, "chOrg")
+		gui_Clip_preview(PREV_FILE, CJGUI["chOrg"]["chOrg_search"].Value, "chOrg")
 	}
-	return
+}
 
 /**
  * rename a channel and then refresh the channel list
  */
-chOrg_renameCh:
-	gosub chorg_getChSelected
-	InputBox, outName, % TXT.ORG__name, % TXT.ORG_renameAsk " -> " chSel,, 500, 200,,,,, % chSelname
-	if (ErrorLevel=1) or (outName="")
+chOrg_renameCh(*) {
+	global
+	local chSel, chSelname, ib
+	chSel := chorg_getChSelected(&chSelname)
+	ib := InputBox(TXT.ORG_renameAsk " -> " chSel, TXT.ORG__name, "w500 h200", chSelname)
+	if (ib.Result != "OK") or (ib.Value = "")
 		return
-	renameChannel(chSel, outName)
-	gosub chOrg_addChList
-	gosub chOrg_addChUseList
-	return
+	renameChannel(chSel, ib.Value)
+	chOrg_addChList()
+	chOrg_addChUseList()
+}
 
 /**
  * activate a channel
  */
-chorg_UseCh:
-	Gui, chorg:Submit, nohide
-	changeChannel(channel_find(chorg_UseCh)) 	; chChannel() will handle that list
-	return
+chorg_UseCh_Event(*) {
+	global
+	changeChannel(channel_find(CJGUI["chOrg"]["chorg_useCh"].Text)) 	; chChannel() will handle that list
+}
 
 /**
  * list view (clip list) event handler
  */
-chOrg_Lv:
-	Gui, chOrg:Default
-	GuiControl, , % "Button" t_startBtn, % chrhex("f03e")
-	loop % t_horizButtons
-		GuiControl, Enable, % "Button"  A_index+t_startBtn
-	if A_GuiEvent = DoubleClick
-		gosub chOrg_preview
-	return
+chOrg_Lv_Event(*) {
+	global
+	local g
+	g := CJGUI["chOrg"]
+	g["Button" chOrg_t_startBtn].Text := chrhex("f03e")
+	loop chOrg_t_horizButtons
+		g["Button" A_index+chOrg_t_startBtn].Enabled := true
+}
+
+chOrg_Lv_DoubleClick(*) {
+	chOrg_Lv_Event()
+	chOrg_preview()
+}
 
 /**
  * activate the list box i.e. channels list
  */
-chOrg_activateLB:
-	GuiControl, chOrg:focus, ListBox1
-	sleep 50 ; Needed
-	gosub chOrg_Lb
-	return
+chOrg_activateLB(*) {
+	global
+	CJGUI["chOrg"]["chOrg_Lb"].Focus()
+	Sleep 50 ; Needed
+	chOrg_Lb_Event()
+}
 
 /**
  * activate the list view i.e. clips list
  */
-chOrg_activateLV:
-	GuiControl, chOrg:focus, SysListView321
-	sleep 50
-	gosub chOrg_Lv
-	LV_Modify(0, "-Select")
-	LV_Modify(1, "Select Focus")
-	return
+chOrg_activateLV(*) {
+	global
+	local lv
+	lv := CJGUI["chOrg"]["chOrg_Lv"]
+	lv.Focus()
+	Sleep 50
+	chOrg_Lv_Event()
+	lv.Modify(0, "-Select")
+	try lv.Modify(1, "Select Focus") 	; the list may be empty
+}
 
 /**
  * refresh the clip list
@@ -528,56 +595,80 @@ chOrg_activateLV:
  * or press refresh (F5)
  * or change focus to list box (channels list) in order to change channel
  */
-chOrg_refresh:
-chOrg_search:
-chOrg_Lb:
-	Gui, chOrg:submit, nohide
-	Gui, chOrg:default
-	;msgbox here
-	GuiControl, chOrg:,% "Button" t_startBtn, % chrhex("f040")
-	if chOrg_Lb=1
-		loop % t_horizButtons 		; in case all channels are selected
-			GuiControl, chOrg:Disable, % "Button"  A_index+t_startBtn
-	else {
-		loop % t_horizButtons-t_commonBtn-1 	; 3=buttons common in bth LB LV
-			GuiControl, chOrg:Disable, % "Button"  A_index+t_startBtn+t_commonBtn
-		loop % t_commonBtn
-			GuiControl, chOrg:Enable,  % "Button"  A_Index+t_startBtn
-		GuiControl, chOrg:Enable, % "Button" t_horizButtons+t_startBtn
-	}
-	chOrgLV_update(chOrg_search, chOrg_Lb>1 ? chOrg_Lb-2 : "")
-	return
+chOrg_refresh(*) {
+	chOrg_Lb_Event()
+}
 
+chOrg_search_Event(*) {
+	chOrg_Lb_Event()
+}
+
+chOrg_Lb_Event(*) {
+	global
+	local g, lbv
+	g := CJGUI["chOrg"]
+	lbv := g["chOrg_Lb"].Value
+	;msgbox here
+	g["Button" chOrg_t_startBtn].Text := chrhex("f040")
+	if (lbv = 1) { 	; braces needed: in v2 an else after a loop belongs to the loop
+		loop chOrg_t_horizButtons 		; in case all channels are selected
+			g["Button" A_index+chOrg_t_startBtn].Enabled := false
+	}
+	else {
+		loop chOrg_t_horizButtons-chOrg_t_commonBtn-1 	; 3=buttons common in bth LB LV
+			g["Button" A_index+chOrg_t_startBtn+chOrg_t_commonBtn].Enabled := false
+		loop chOrg_t_commonBtn
+			g["Button" A_Index+chOrg_t_startBtn].Enabled := true
+		g["Button" chOrg_t_horizButtons+chOrg_t_startBtn].Enabled := true
+	}
+	chOrgLV_update(g["chOrg_search"].Value, lbv>1 ? lbv-2 : "")
 }
 
 /**
  * add the active channel selector list (the one on top)
  */
-chOrg_addChUseList:
+chOrg_addChUseList(*) {
+	global
+	local chList, chListnew, ddl, items, sel
 	chList := Trim(channel_find(), "`n")
 	chListnew := ""
-	loop, parse, chList, % "`n"
+	loop parse chList, "`n"
 		chListnew .= Substr(A_loopfield, Instr(A_loopfield, "-")+1) "|"
 	chList := RTrim(chListnew, "|")
 
-	StringReplace, chList, chList, % CN.Name, % CN.Name "|"
-	chList .= (Substr(chList, 0) == "|") ? "|" : ""
-	GuiControl, chOrg:, ComboBox1, % "|" chList
-	return
+	chList := StrReplace(chList, CN.Name, CN.Name "|", , , 1)
+	chList .= (Substr(chList, -1) == "|") ? "|" : ""
+	; v1 handed "|" chList to the control: a blank field marks the field before it as selected
+	items := [] , sel := 0
+	loop parse chList, "|"
+	{
+		if (A_LoopField = "")
+			sel := items.Length
+		else
+			items.Push(A_LoopField)
+	}
+	ddl := CJGUI["chOrg"]["chorg_useCh"]
+	ddl.Delete()
+	ddl.Add(items)
+	if sel
+		ddl.Choose(sel)
+}
 
 /**
- * label to focus on active channel selector
+ * focus on active channel selector
  */
-chOrg_useChFocus:
-	GuiControl, chOrg:focus, ComboBox1
-	return
+chOrg_useChFocus(*) {
+	global
+	CJGUI["chOrg"]["chorg_useCh"].Focus()
+}
 
 /**
  * focus on search box
  */
-chOrg_searchfocus:
-	GuiControl, chOrg:Focus, Edit1
-	return
+chOrg_searchfocus(*) {
+	global
+	CJGUI["chOrg"]["chOrg_search"].Focus()
+}
 
 /**
  * swap two channel
@@ -638,32 +729,35 @@ chOrg_clipSwap(fch, fcl, sch, scl){
  * @param  {int} time time to show in ms
  * @return {void}
  */
-chOrg_notification(text, time=800){
-	Gui, chOrg:Default
-	SB_SetText(text, 2)
-	SetTimer, chOrg_notification, % time
+chOrg_notification(text, time:=800){
+	global CJGUI
+	if !CJGUI.Has("chOrg")
+		return
+	CJGUI["chOrg"]["chOrg_SB"].SetText(text, 2)
+	SetTimer(chOrg_notificationOff, -time)
 }
 
 /**
- * timer'ed label to clear the notification
+ * timer'ed function to clear the notification (the v1 chOrg_notification label)
  */
-chOrg_notification:
-	SetTimer, chOrg_notification, Off
-	Gui, chOrg:Default
-	SB_SetText(empty, 2)
-	return
+chOrg_notificationOff(*) {
+	global CJGUI, empty
+	SetTimer(chOrg_notificationOff, 0)
+	if CJGUI.Has("chOrg")
+		CJGUI["chOrg"]["chOrg_SB"].SetText(empty, 2)
+}
 
 
-IsChorgActive(){
+IsChorgActive(*){
 	return WinActive( TXT.ORG__name " ahk_class AutoHotkeyGUI") && ctrlRef==""
 }
-IsChOrgLVActive(){
+IsChOrgLVActive(*){
 	return IsActive("SysListView321", "classnn") && WinActive(TXT.ORG__name " ahk_class AutoHotkeyGUI") && ctrlRef==""
 }
-IsChOrgLBActive(){
+IsChOrgLBActive(*){
 	return IsActive("ListBox1", "classnn") && WinActive(TXT.ORG__name " ahk_class AutoHotkeyGUI") && ctrlRef==""
 }
-IsChOrgSearchActive(){
+IsChOrgSearchActive(*){
 	return IsActive("Edit1", "classnn") && WinActive(TXT.ORG__name " ahk_class AutoHotkeyGUI") && ctrlRef==""
 }
 
@@ -673,34 +767,25 @@ IsChOrgSearchActive(){
  * @param  {int} channel channel number if any
  * @return {void}
  */
-chOrgLV_update(term="", channel=""){
-	Gui, chOrg:Default
-	LV_Delete() , term := Trim(term) , ct := 0
-	if channel=
+chOrgLV_update(term:="", channel:=""){
+	global CDS, CPS, TXT, CJGUI
+	g := CJGUI["chOrg"] , lv := g["chOrg_Lv"]
+	lv.Delete() , term := Trim(term) , ct := 0
+	if (channel = "")
 	{
 		for k,v in CDS
 		{
 			maxindex := API.getChStrength(k)
-			loop % maxindex
-				if SuperInstr( (v2 := getRealCD( v[maxIndex-A_index+1] )) " " CPS[k][maxIndex-A_index+1]["Tags"] , term, 1)
-					LV_Add("", k, A_index, v2) , ct++
+			loop (maxIndex = "" ? 0 : maxIndex)
+				if SuperInstr( (v2 := getRealCD( v[maxIndex-A_index+1] )) " " clipPref(k, maxIndex-A_index+1, "Tags") , term, 1)
+					lv.Add("", k, A_index, v2) , ct++
 		}
 	}
 	else {
 		maxIndex := API.getChStrength(channel)
-		loop % maxIndex
-			if SuperInstr( (v := getRealCD( CDS[channel][maxIndex-A_index+1] )) " " CPS[channel][maxIndex-A_index+1]["Tags"] , term, 1)
-				LV_Add("", channel, A_index, v) , ct++
+		loop (maxIndex = "" ? 0 : maxIndex)
+			if SuperInstr( (v := getRealCD( CDS[channel][maxIndex-A_index+1] )) " " clipPref(channel, maxIndex-A_index+1, "Tags") , term, 1)
+				lv.Add("", channel, A_index, v) , ct++
 	}
-	SB_SetText(TXT.ORG_countStatus " - " ct, 1)
+	g["chOrg_SB"].SetText(TXT.ORG_countStatus " - " ct, 1)
 }
-
-
-#If IsChorgActive()
-#If
-#If IsChOrgLVActive()
-#If
-#If IsChOrgLBActive()
-#If
-#If IsChOrgSearchActive()
-#If

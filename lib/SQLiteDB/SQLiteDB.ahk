@@ -232,10 +232,10 @@ class SQLiteDB {
             Row := []
             loop count {
                 col := A_Index - 1
-                type := DllCall("sqlite3.dll\sqlite3_column_type", "Ptr", this._Handle, "Int", col, "Cdecl Int")
-                if (type = SQLiteDB.RecordSet.SQLITE_NULL) {
+                ctype := DllCall("sqlite3.dll\sqlite3_column_type", "Ptr", this._Handle, "Int", col, "Cdecl Int")
+                if (ctype = SQLiteDB.RecordSet.SQLITE_NULL) {
                     Row.Push("")
-                } else if (type = SQLiteDB.RecordSet.SQLITE_BLOB) {
+                } else if (ctype = SQLiteDB.RecordSet.SQLITE_BLOB) {
                     ptr := DllCall("sqlite3.dll\sqlite3_column_blob", "Ptr", this._Handle, "Int", col, "Cdecl Ptr")
                     size := DllCall("sqlite3.dll\sqlite3_column_bytes", "Ptr", this._Handle, "Int", col, "Cdecl Int")
                     if (!ptr || !size) {
