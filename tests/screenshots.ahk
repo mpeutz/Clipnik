@@ -6,7 +6,7 @@ SetTitleMatchMode 2
 cj := Clipjump()
 pToken := Gdip_Startup()
 DirCreate(A_ScriptDir "\out")
-wins := [["main", "Clipjump [ Channel"], ["settings", "Clipjump Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]]]
+wins := [["main", "About Clipjump"], ["settings", "Clipjump Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]], ["classTool", "Clipjump " cj["TXT.IGN__name"]]]
 for w in wins {
     cj.runLabel(w[1])
     if !WinWait(w[2] " ahk_class AutoHotkeyGUI", , 5)

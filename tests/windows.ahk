@@ -16,7 +16,7 @@ errorDialog() {
     return WinExist("Clipjump.ahk ahk_class #32770")
 }
 cj := Clipjump()
-wins := [["main", "Clipjump [ Channel"], ["settings", "Clipjump Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]]]
+wins := [["main", "About Clipjump"], ["settings", "Clipjump Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]], ["classTool", cj["TXT.IGN__name"]]]
 for w in wins {
     cj.runLabel(w[1])
     found := WinWait(w[2] " ahk_class AutoHotkeyGUI", , 5)

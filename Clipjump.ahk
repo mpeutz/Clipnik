@@ -137,6 +137,8 @@ global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Thres
 		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
+		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_respectExclusion := 1, ini_searchUsesWindow := 0
+		, ini_showPastingTip := 0, ini_instapasteWritesClipboard := 0, ini_winForPasteMode := 0, ini_priority := "N", IGNORE_GROUP := "ignoreGroup"
 global ini_limitMaxClips := "", ini_KeepSession := ""
 global new_limitMaxClips := "", new_MaxClips := "", new_Threshold := "", new_Quality := "", new_startSearch := "", new_revFormat2def := "", new_copyBeep := ""
 	, new_IsMessage := "", new_KeepSession := "", new_PreserveClipPos := "", new_winClipjump := "", new_default_pformat := "", new_DaysToStore := "", new_IsImageStored := ""
@@ -227,12 +229,8 @@ load_Settings(1)
 validate_Settings()
 loadPlugins()
 
-; ---- modern UI: theme, HUD card, toasts (settings keys are read here until the Settings page exposes them) ----
-global ini_theme := IniRead(CONFIGURATION_FILE, "Main", "Theme", "system")
-global ini_toastPosition := IniRead(CONFIGURATION_FILE, "Main", "ToastPosition", "cursor")
-global ini_respectExclusion := IniRead(CONFIGURATION_FILE, "Main", "respectExclusionFormats", 1)
-global ini_searchUsesWindow := IniRead(CONFIGURATION_FILE, "Advanced", "SearchUsesWindow", 0)
-Theme.Init(ini_theme)
+; ---- modern UI: theme, HUD card, toasts ----
+Theme.Init(ini_theme, ini_accent)
 Toast.Position := ini_toastPosition
 Hud.Init()
 ClipExclusion.Init()
@@ -274,11 +272,7 @@ hkZ(holdClip_K, holdClip), hkZ(chOrg_K, channelOrganizer)
 hkZ(windows_copy_k, windows_copy), hkZ(windows_cut_k, windows_cut)
 
 ;create Ignore windows group from | separated values
-if (ignoreWindows != "")
-	loop parse ignoreWindows, "|"
-		if (A_LoopField != "")
-			GroupAdd("ignoreGroup", "ahk_class " A_LoopField)
-;group created
+rebuildIgnoreGroup()
 
 /*
 *********************
@@ -382,7 +376,7 @@ callPformat(fnName, text) {
 paste(*) {
 	global
 	Critical "On"
-	if WinActive("ahk_group ignoreGroup")
+	if WinActive("ahk_group " IGNORE_GROUP)
 	{
 		Send("^{vk56}")
 		return
@@ -487,7 +481,7 @@ cjClipboardChanged(DataType) {
 		}
 	}
 	; ignore windows
-	if WinActive("ahk_group IgnoreGroup")
+	if WinActive("ahk_group " IGNORE_GROUP)
 		return
 	; content marked private by the source app (password managers): never record it
 	if ini_respectExclusion && CALLER && ClipExclusion.IsExcluded() {
@@ -621,7 +615,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 moveBack(*) {
 	global
 	Critical "On"
-	if WinActive("ahk_group IgnoreGroup")
+	if WinActive("ahk_group " IGNORE_GROUP)
 		return
 	IN_BACK := true
 	TEMPSAVE := realActive + 1
@@ -1760,11 +1754,14 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\Theme.ahk
 #Include %A_ScriptDir%\src\ui\native\Toast.ahk
 #Include %A_ScriptDir%\src\ui\native\Hud.ahk
+#Include %A_ScriptDir%\src\ui\native\SettingsWin.ahk
+#Include %A_ScriptDir%\src\ui\native\AboutWin.ahk
+#Include %A_ScriptDir%\src\ui\native\IgnoredWindowsWin.ahk
 #Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
-#Include %A_ScriptDir%\lib\settings gui plug.ahk
+#Include %A_ScriptDir%\src\core\settings.ahk
 #Include %A_ScriptDir%\lib\history gui plug.ahk
 #Include %A_ScriptDir%\lib\pluginManager.ahk
 #Include %A_ScriptDir%\lib\channelOrganizer.ahk

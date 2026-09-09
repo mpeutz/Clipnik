@@ -108,10 +108,13 @@ choosechannelgui(guiname := "") {
 	GuiDestroy("choosech")
 	g := Gui("+ToolWindow -MaximizeBox", guiname)
 	CJGUI["choosech"] := g
-	g.Add("Text", "x7 y7", TXT.CNL_choose)
-	lb := g.Add("ListBox", "x+20 h150", StrSplit(channel_find(), "`n"))
-	g.Add("Button", "x7 y+10 Default", "OK").OnEvent("Click", onOK)
-	g.Add("Button", "x+10 yp", TXT.SET_cancel).OnEvent("Click", onCancel)
+	g.MarginX := 16, g.MarginY := 16
+	Theme.ApplyToGui(g)
+	g.Add("Text", "x16 y16 w300", TXT.CNL_choose)
+	lb := Theme.Add(g, "ListBox", "x16 y+8 w300 h180 -E0x200 +Border", StrSplit(channel_find(), "`n"))
+	lb.OnEvent("DoubleClick", onOK)
+	Theme.Add(g, "Button", "x" (16 + 300 - 76 - 8 - 76) " y+12 w76 h28 Default", "OK").OnEvent("Click", onOK)
+	Theme.Add(g, "Button", "x+8 yp w76 h28", TXT.SET_cancel).OnEvent("Click", onCancel)
 	g.OnEvent("Close", onCancel)
 	g.OnEvent("Escape", onCancel)
 	g.Show()

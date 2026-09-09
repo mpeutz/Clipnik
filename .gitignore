@@ -8,3 +8,6 @@ plugins/hotPaste.lib/
 tests/out/
 tests/_v.ahk
 tests/_v.out
+# Generated design canvas payloads and previews (rebuild with design/*/build.mjs)
+design/**/preview-*.html
+design/phase3/clipjump-settings-windows.html

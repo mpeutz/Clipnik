@@ -9,7 +9,7 @@ run_searchpm(*) {
 }
 
 settings(*) {
-	gui_Settings()
+	SettingsWin.Open()
 }
 
 history(*) {
@@ -17,7 +17,7 @@ history(*) {
 }
 
 classTool(*) {
-	API.runPlugin("external.ignoreWmanager.ahk")
+	IgnoredWindowsWin.Open()
 }
 
 tray_deleteFileFolder(*) {
@@ -141,16 +141,19 @@ multInputBox(Title, caption := "", row := 5, default := "", owner := "") {
 	global CJGUI, STORE, TXT
 	theEdit := ""
 	oDone := 0
-	kw := A_ScreenWidth < 1200 ? 600 : 700
+	kw := A_ScreenWidth < 1200 ? 520 : 600
 	GuiDestroy("mIBox")
-	g := Gui("", Title)
+	g := Gui("-MaximizeBox -MinimizeBox", Title)
 	CJGUI["mIBox"] := g
+	g.MarginX := 20, g.MarginY := 16
+	Theme.ApplyToGui(g)
+	g.Add("Text", "x20 y16 w" kw, caption)
 	g.SetFont("s10", "Consolas")
-	g.Add("Text", "x5 y5", caption)
-	g.SetFont("norm", "Consolas")
-	editCtl := g.Add("Edit", "xp y+30 w" kw " r" row " vtheEdit", default)
-	g.Add("Button", "x5 y+30 Default", "OK").OnEvent("Click", onOK)
-	g.Add("Button", "x+30 yp", TXT.SET_Cancel).OnEvent("Click", onClose)
+	editCtl := Theme.Add(g, "Edit", "x20 y+8 w" kw " r" row " vtheEdit -E0x200 +Border", default)
+	editCtl.Opt("Background" Theme.Hex("surfaceAlt"))
+	g.SetFont("s10", Theme.FontName)
+	Theme.Add(g, "Button", "x" (20 + kw - 76 - 8 - 76) " y+16 w76 h28 Default", "OK").OnEvent("Click", onOK)
+	Theme.Add(g, "Button", "x+8 yp w76 h28", TXT.SET_Cancel).OnEvent("Click", onClose)
 	g.OnEvent("Close", onClose)
 	g.OnEvent("Escape", onClose)
 	if owner {
@@ -199,26 +202,32 @@ ObjectEditView(obj, opn, readonly := 0) {
 	oDone := 0
 	opt(i) => opn.Has(i) ? opn[i] : ""
 	GuiDestroy("objEdit")
-	g := Gui("", opt(1))
+	g := Gui("-MaximizeBox -MinimizeBox", opt(1))
 	CJGUI["objEdit"] := g
-	g.SetFont("s10 underline", "Consolas")
-	g.Add("Text", "x5 y5", opt(3))
-	g.Add("Text", "xp y+15 section")
-	g.SetFont("norm", "Consolas")
+	g.MarginX := 20, g.MarginY := 16
+	Theme.ApplyToGui(g)
+	g.SetFont("s9 c" Theme.Hex("muted"))
+	g.Add("Text", "x20 y16", opt(3))
+	g.SetFont("s10 c" Theme.Hex("text"))
+	g.Add("Text", "x20 y+4 h0 section")
 
 	maxsize := 0
 	for k in obj
 		if StrLen(k) > maxsize
 			maxsize := StrLen(k)
-	maxsize := maxsize * 5 + 100
+	maxsize := maxsize * 7 + 40
+	fw := opt(4) ? opt(4) : 200
 
 	fields := []
 	for k, v in obj {
-		g.Add("Text", "xs y+7", k)
-		fields.Push(g.Add("Edit", "x" maxsize " yp" (readonly ? " +Readonly" : "") " w" (opt(4) ? opt(4) : 100), v))
+		g.Add("Text", "xs y+8 h24 +0x200", k)
+		e := Theme.Add(g, "Edit", "x" (20 + maxsize) " yp w" fw " h24" (readonly ? " +Readonly" : ""), v)
+		e.Opt("Background" Theme.Hex("surfaceAlt"))
+		fields.Push(e)
 	}
-	g.Add("Button", "x5 y+30 Default", readonly ? "OK" : TXT._save).OnEvent("Click", onSave)
-	g.Add("Button", "x+30 yp", TXT.SET_Cancel).OnEvent("Click", onClose)
+	right := 20 + maxsize + fw
+	Theme.Add(g, "Button", "x" (right - 76 - 8 - 76) " y+16 w76 h28 Default", readonly ? "OK" : TXT._save).OnEvent("Click", onSave)
+	Theme.Add(g, "Button", "x+8 yp w76 h28", TXT.SET_Cancel).OnEvent("Click", onClose)
 	g.OnEvent("Close", onClose)
 	g.OnEvent("Escape", onClose)
 	if opt(2) {
@@ -717,20 +726,23 @@ getControlInfo(type := "button", text := "", ret := "w", fontsize := "", fontmor
 ;GUI Message Box to allow selection
 guiMsgBox(title, text, owner := "", isEditable := 0, wait := 0, w := "", h := "") {
 	global CJGUI
-	wf := getControlInfo("edit", text, "w", "s9", "Lucida Console")
-	hf := getControlInfo("edit", text, "h", "s9", "Lucida Console")
-	w := !w ? (wf > A_ScreenWidth / 1.5 ? A_ScreenWidth / 1.5 : wf + 200) : w 	;+10 for scl bar
-	h := !h ? (hf > A_ScreenHeight ? A_ScreenHeight : hf + 65) : h 		;+10 for margin, +more for the button
-	w := Round(w), h := Round(h)
+	wf := getControlInfo("edit", text, "w", "s10", "Consolas")
+	hf := getControlInfo("edit", text, "h", "s10", "Consolas")
+	w := !w ? (wf > A_ScreenWidth / 1.5 ? A_ScreenWidth / 1.5 : wf + 60) : w
+	h := !h ? (hf > A_ScreenHeight / 1.5 ? A_ScreenHeight / 1.5 : hf + 90) : h
+	w := Round(Max(w, 320)), h := Round(Max(h, 140))
 
 	GuiDestroy("guiMsgBox")
 	g := Gui("-MaximizeBox +AlwaysOnTop", title)
 	CJGUI["guiMsgBox"] := g
 	if (owner != "" && CJGUI.Has(owner))
 		g.Opt("+Owner" CJGUI[owner].Hwnd)
-	g.SetFont("s9", "Lucida Console")
-	box := g.Add("Edit", "x5 y5 w" (w - 10) " h" (h - 35) (isEditable ? " -" : " +") "Readonly +Multi -Border", text)
-	btn := g.Add("Button", "x" (w / 2 - 20) " w40 y+5", "OK")
+	Theme.ApplyToGui(g)
+	g.SetFont("s10", "Consolas")
+	box := Theme.Add(g, "Edit", "x16 y16 w" (w - 32) " h" (h - 76) (isEditable ? " -" : " +") "Readonly +Multi -E0x200 +Border", text)
+	box.Opt("Background" Theme.Hex("surfaceAlt"))
+	g.SetFont("s10", Theme.FontName)
+	btn := Theme.Add(g, "Button", "x" (w - 16 - 76) " y" (h - 44) " w76 h28 Default", "OK")
 	btn.OnEvent("Click", onClose)
 	g.OnEvent("Close", onClose)
 	g.OnEvent("Escape", onClose)

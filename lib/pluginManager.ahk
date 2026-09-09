@@ -8,27 +8,35 @@ pluginManagerGui(*) {
 
 pluginManager_GUI(){
 	global CJGUI, TXT, PROGNAME, PLUGINS, ini_defEditor
-	local wt, ht, g, sb, plMenu
-	local searchTerm, pluginMLV
+	local wt, ht, g, sb, plMenu, pad, btnW, right, lvTop
+	local searchTerm, pluginMLV, btnRun, btnEdit, btnProps
 	local DidDelete, selected_row, valSelected, dirNum, plugin_displayname
-	wt := 650 ;(A_ScreenWidth/2.5) - 14
-	ht := 400
+	wt := 680, ht := 470, pad := 14, btnW := 84
 	DidDelete := 0
 	selected_row := 0, valSelected := 0, dirNum := "", plugin_displayname := ""
 
 	GuiDestroy("pluginM")
-	g := Gui("-MaximizeBox", PROGNAME " " TXT.PLG__name)
+	g := Gui("+Resize +MinSize560x360", PROGNAME " " TXT.PLG__name)
 	CJGUI["pluginM"] := g
-	g.MarginX := 7, g.MarginY := 7
-	g.SetFont(, "Consolas")
-	searchTerm := g.Add("Edit", "x7 y7 w" wt " vsearchTerm")
+	g.MarginX := pad, g.MarginY := pad
+	Theme.ApplyToGui(g)
+	right := wt - pad
+	searchTerm := Theme.Add(g, "Edit", "x" pad " y12 w" (right - pad - 3 * (btnW + 8)) " h26 vsearchTerm -E0x200 +Border")
+	searchTerm.Opt("Background" Theme.Hex("surfaceAlt"))
+	SendMessage(0x1501, 1, StrPtr(TXT.PLG_search), searchTerm.Hwnd)   ; EM_SETCUEBANNER
 	searchTerm.OnEvent("Change", pluginMSearch)
-	;Gui, Font,, Courier New
-	pluginMLV := g.Add("ListView", "xp y+10 h" (ht-40) " -LV0X10 vpluginMLV -Multi w" wt, [TXT._name, TXT._tags, TXT._author, "hidden"])
+	btnRun := Theme.Add(g, "Button", "x" (right - 3 * btnW - 16) " y12 w" btnW " h26 Default", TXT._run)
+	btnRun.OnEvent("Click", plugin_Run)
+	btnEdit := Theme.Add(g, "Button", "x+8 yp w" btnW " h26", TXT.PLG_edit)
+	btnEdit.OnEvent("Click", plugin_edit)
+	btnProps := Theme.Add(g, "Button", "x+8 yp w" btnW " h26", TXT._properties)
+	btnProps.OnEvent("Click", plugin_showprops)
+	lvTop := 48
+	pluginMLV := Theme.Add(g, "ListView", "x" pad " y" lvTop " w" (wt - 2 * pad) " h" (ht - lvTop - 52) " -LV0X10 vpluginMLV -Multi -E0x200 +Border", [TXT._name, TXT._tags, TXT._author, "hidden"])
+	pluginMLV.Opt("Background" Theme.Hex("surface"))
 	pluginMLV.OnEvent("DoubleClick", pluginMLV_Event)
-	pluginMLV.ModifyCol(1, Integer(4*wt/12)) , pluginMLV.ModifyCol(2, Integer(5*wt/12-4)) , pluginMLV.ModifyCol(3, Integer(3*wt/12)) , pluginMLV.ModifyCol(4, 0)
+	pluginM_sizeCols(wt - 2 * pad)
 	updatePluginList()
-	g.SetFont()
 	; The menu
 	plMenu := Menu()
 	plMenu.Add(TXT._run, plugin_Run)
@@ -38,11 +46,15 @@ pluginManager_GUI(){
 	plMenu.Add(TXT.HST_m_del, plugin_delete)
 	plMenu.Default := TXT._run
 
-	sb := g.Add("StatusBar")
+	g.SetFont("s9 c" Theme.Hex("muted"))
+	sb := g.Add("Text", "x" pad " y" (ht - 40) " w" (wt - 2 * pad - 90) " h28 +0x200 vpluginM_status", "")
+	g.SetFont("s10 c" Theme.Hex("text"))
+	Theme.Add(g, "Button", "x" (right - 76) " y" (ht - 40) " w76 h28 vpluginM_close", TXT._close).OnEvent("Click", pluginMGuiClose)
+	g.OnEvent("Size", pluginMGuiSize)
 	g.OnEvent("ContextMenu", pluginMGuiContextMenu)
 	g.OnEvent("Escape", pluginMGuiClose)
 	g.OnEvent("Close", pluginMGuiClose)
-	g.Show("w" (wt+14) " h" (ht+30))
+	g.Show("w" wt " h" ht)
 	; the Hotkeys
 	HotIfWinActive(PROGNAME " " TXT.PLG__name)
 	hkZ("^f", pluginSearchfocus)
@@ -56,24 +68,39 @@ pluginManager_GUI(){
 	HotIf()
 	return
 
+	pluginM_sizeCols(w) {
+		pluginMLV.ModifyCol(1, Integer(4*w/12)) , pluginMLV.ModifyCol(2, Integer(5*w/12-4)) , pluginMLV.ModifyCol(3, Integer(3*w/12) - 24) , pluginMLV.ModifyCol(4, 0)
+	}
+
+	pluginMGuiSize(gui, minMax, w, h) {
+		if (minMax = -1)
+			return
+		r := w - pad
+		searchTerm.Move(, , r - pad - 3 * (btnW + 8))
+		btnRun.Move(r - 3 * btnW - 16), btnEdit.Move(r - 2 * btnW - 8), btnProps.Move(r - btnW)
+		pluginMLV.Move(, , w - 2 * pad, h - lvTop - 52)
+		pluginM_sizeCols(w - 2 * pad)
+		sb.Move(, h - 40, w - 2 * pad - 90)
+		g["pluginM_close"].Move(r - 76, h - 40)
+	}
+
 	pluginMLV_Event(*) {		; only registered for DoubleClick
 		plugin_Run()
 	}
 
 	pluginSearchfocus(*) {
 		try searchTerm.Focus()
-		try g["Edit1"].Focus()
 	}
 
 	plugin_Run(*) {
 		if !plugin_getSelected()
 			return
 		filepath := PLUGINS["<>"][dirNum]["plugin_path"]
-		sb.SetText(TXT.PLG_sb_running " - " plugin_displayname)
+		sb.Value := TXT.PLG_sb_running " - " plugin_displayname
 		ret := API.runPlugin(filepath)
 		if (ret != "") && !(InStr(filepath, "external.") == 1)
 			guiMsgBox(plugin_displayname " Return", ret, "pluginM")
-		try sb.SetText(TXT.PLG_sb_exit " - " plugin_displayname) 	; the gui may have been closed while the plugin ran
+		try sb.Value := TXT.PLG_sb_exit " - " plugin_displayname 	; the gui may have been closed while the plugin ran
 		EmptyMem()
 	}
 
@@ -91,7 +118,6 @@ pluginManager_GUI(){
 			if !InStr("|#|*|silent|previewable|", "|" key "|")
 				tempObj[key] := value
 		ObjectEditView( tempObj, [tempObj["Name"], "pluginM", TXT._properties, (A_ScreenWidth/2)>700 ? 620 : 500] , 1  )
-		;guiMsgbox(plugin_displayname " " TXT._properties, disText, "pluginM")
 		EmptyMem()
 	}
 
@@ -104,7 +130,7 @@ pluginManager_GUI(){
 			try FileDelete(plugPath)
 			try DirDelete(SubStr(plugPath,1,-4) ".lib", 1) 	;remove .ahk and put .lib
 			pluginMLV.Delete(valSelected)
-			sb.SetText(TXT.PLG_sb_deleted " - " plugin_displayname)
+			sb.Value := TXT.PLG_sb_deleted " - " plugin_displayname
 			DidDelete := 1
 		}
 	}
