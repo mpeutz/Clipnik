@@ -1629,24 +1629,22 @@ Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75)
 		Quality := (Quality < 0) ? 0 : (Quality > 100) ? 100 : Quality
 
 		if RegExMatch(extension, "^\.(?i:JPG|JPEG|JPE|JFIF)$") {
-			DllCall("gdiplus\GdipGetEncoderParameterListSize", "UPtr", pBitmap, "UPtr", pCodec, "uint*", &nSize)
-			EncoderParameters := Buffer(nSize, 0)
-			DllCall("gdiplus\GdipGetEncoderParameterList", "UPtr", pBitmap, "UPtr", pCodec, "UInt", nSize, "UPtr", EncoderParameters.Ptr)
-			nCount := NumGet(EncoderParameters, "UInt")
-			loop nCount
-			{
-				elem := (24+(A_PtrSize ? A_PtrSize : 4))*(A_Index-1) + 4 + (pad := A_PtrSize = 8 ? 4 : 0)
-				if (NumGet(EncoderParameters, elem+16, "UInt") = 1) && (NumGet(EncoderParameters, elem+20, "UInt") = 6)
-				{
-					_p := elem + EncoderParameters.Ptr - pad - 4
-					NumPut("UInt", Quality, NumGet(NumPut("UInt", 4, NumPut("UInt", 1, _p+0)+20), "UInt"))
-					break
-				}
-			}
+			; Clipjump: rebuilt EncoderParameters (Count + one EncoderQuality parameter of type Long);
+			; the upstream NumPut chain produced an invalid pointer on x64.
+			off := (A_PtrSize = 8) ? 8 : 4
+			EncoderParameters := Buffer(off + 16 + 4 + 4 + A_PtrSize, 0)
+			NumPut("UInt", 1, EncoderParameters, 0)
+			DllCall("ole32\CLSIDFromString", "WStr", "{1D5BE4B5-FA4A-452D-9CDD-5DB35105E7EB}", "Ptr", EncoderParameters.Ptr + off)
+			NumPut("UInt", 1, EncoderParameters, off + 16)   ; NumberOfValues
+			NumPut("UInt", 4, EncoderParameters, off + 20)   ; EncoderParameterValueTypeLong
+			qualityValue := Buffer(4, 0)
+			NumPut("UInt", Quality, qualityValue)
+			NumPut("Ptr", qualityValue.Ptr, EncoderParameters, off + 24)
+			_p := EncoderParameters.Ptr
 		}
 	}
 
-	_E := DllCall("gdiplus\GdipSaveImageToFile", "UPtr", pBitmap, "UPtr", StrPtr(sOutput), "UPtr", pCodec, "UInt", _p ? _p : 0)
+	_E := DllCall("gdiplus\GdipSaveImageToFile", "UPtr", pBitmap, "UPtr", StrPtr(sOutput), "UPtr", pCodec, "Ptr", _p ? _p : 0)
 
 	return _E ? -5 : 0
 }
