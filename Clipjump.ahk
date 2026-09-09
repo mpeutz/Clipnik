@@ -131,6 +131,10 @@ global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Thres
 		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
+global ini_limitMaxClips := "", ini_KeepSession := ""
+global new_limitMaxClips := "", new_MaxClips := "", new_Threshold := "", new_Quality := "", new_startSearch := "", new_revFormat2def := "", new_copyBeep := ""
+	, new_IsMessage := "", new_KeepSession := "", new_PreserveClipPos := "", new_winClipjump := "", new_default_pformat := "", new_DaysToStore := "", new_IsImageStored := ""
+	, pst_K := "", actmd_K := "", hst_K := "", org_K := "", cfilep_K := "", cfolderp_K := "", cfiled_K := "", hldClip_K := "", plugM_K := "", pitswp_K := ""
 
 ;State shared between the paste-mode routines (v1 kept these as globals written by labels)
 global is_pstMode_active := 0, realActive := 0, realclipno := 0, halfClip := "", fixStatus := "", temp_clipboard := ""
@@ -138,7 +142,6 @@ global is_pstMode_active := 0, realActive := 0, realclipno := 0, halfClip := "",
 		, jumpClip_sign := 0, lastClipboardTime := 0, prefs_changed := 0, onetimeOn := 0, isnewdb := 0, temp21 := ""
 		, editclip_pid := 0, editclip_cancelled := 0, holdclip_continue := 0, matched_pformat := 0
 		, __x := "", __y := "", __fontops := "", __fontname := "", emptyvar := "", empty := "", blank := "", ablankvar := ""
-		, ini_Version := ""
 
 ; v1 label names resolved to functions for customizer "run = label", API.runLabel and action mode
 global ACTIONS := CJMap(

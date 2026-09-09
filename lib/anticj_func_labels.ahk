@@ -485,16 +485,16 @@ BrowserRun(site) {
 ;hkZ()
 ;	Hotkey command function. fn is a function object (or a name resolved via ACTIONS).
 
-hkZ(HotKey, fn, Status := 1) {
-	if (HotKey = "")
+hkZ(key, fn, Status := 1) {
+	if (key = "")
 		return
 	if !(fn is Func)
 		fn := actionFor(fn)
 	try
-		Hotkey(HotKey, fn, Status ? "On" : "Off")
+		Hotkey(key, fn, Status ? "On" : "Off")
 	catch {
 		t := ""
-		loop parse HotKey
+		loop parse key
 			if IsAlpha(A_LoopField)
 				t .= "vk" GetVKList(A_LoopField)[1]
 			else

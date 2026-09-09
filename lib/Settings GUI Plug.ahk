@@ -10,6 +10,8 @@ gui_Settings()
 	global
 	local settingsHaveChanged := false
 	local size_limitmaxclips, size_keepsession, size_cfolderp, left_size, x_ofhotkeys, size_advanced
+	local width_hk_control, right_size, height_group, height_downgroup, tempLst, tempSel, tempK, tempV
+	local g, chkLimitMaxClips, edtMaxClips, edtThreshold, edtPstK, ddlPformat, btnApply
 
 	; get max sizes possible of window
 	size_limitmaxclips := getControlInfo("checkbox", TXT.SET_limitmaxclips, "w")
@@ -20,206 +22,205 @@ gui_Settings()
 	; 16= max margin of any control (maxlcips)  ,  50 = width of updown , 40 = extra for compatibility in other languages
 
 	;enable tooltips
-	OnMessage(0x200, "WM_MOUSEMOVE")
+	OnMessage(0x200, WM_MOUSEMOVE)
 
 	height_group := 300
 	height_downgroup := 75
 
-	Gui, Settings:New
-	Gui, Margin, 8, 8
-	Gui, Add, GroupBox,	% "w" left_size " h" height_group, % TXT.SET_main		; for every new checkbox add 18 pixels to the height, and for every new UpDown control add 26 pixels
+	GuiDestroy("Settings")
+	g := Gui("", PROGNAME " Settings")
+	CJGUI["Settings"] := g
+	g.MarginX := 8, g.MarginY := 8
+	g.Add("GroupBox", "w" left_size " h" height_group, TXT.SET_main)		; for every new checkbox add 18 pixels to the height, and for every new UpDown control add 26 pixels
 	; The total width of the GUI is about 289 x 2
-	
-	Gui, Add, CheckBox, xp+9 yp+22 Section Checked%ini_limitMaxClips% vnew_limitMaxClips gchkbox_limitMaxClips, % TXT.SET_limitmaxclips	; when this is checked the following two controls will be disabled
-	Gui, Add, Text,		xs+16, % TXT.SET_maxclips
-	Gui, Add, Edit,	%	"x" left_size-55 " yp-3 w50 r1 Number vnew_MaxClips gedit_MaxClips" 		; 55 = 50(widthofupdown) + 5(margin)
-	Gui, Add, UpDown,	Range1-1000 gupdown_MaxClips, %ini_MaxClips%
-	
-	Gui, Add, Text,		xs+16, % TXT.SET_threshold
-	Gui, Add, Edit,	%	"x" left_size-55 " yp-3 w50 r1 Number vnew_Threshold gedit_Threshold"
-	Gui, Add, UpDown,	Range1-1000 gupdown_Threshold, %ini_Threshold%
 
-	Gui, Add, Text,		xs, % TXT.SET_quality
-	Gui, Add, Edit,	%	"x" left_size-55 " yp-3 w50 r1 Number vnew_Quality gedit_Quality"
-	Gui, Add, UpDown,	Range1-100 gupdown_Quality, %ini_Quality%
+	chkLimitMaxClips := g.Add("CheckBox", "xp+9 yp+22 Section Checked" ini_limitMaxClips " vnew_limitMaxClips", TXT.SET_limitmaxclips)	; when this is checked the following two controls will be disabled
+	chkLimitMaxClips.OnEvent("Click", chkbox_limitMaxClips)
+	g.Add("Text", "xs+16", TXT.SET_maxclips)
+	edtMaxClips := g.Add("Edit", "x" left_size-55 " yp-3 w50 r1 Number vnew_MaxClips") 		; 55 = 50(widthofupdown) + 5(margin)
+	edtMaxClips.OnEvent("Change", settingsChanged)
+	g.Add("UpDown", "Range1-1000", ini_MaxClips).OnEvent("Change", settingsChanged)
 
-	Gui, Add, Checkbox, xs Checked%ini_startSearch% 	vnew_startSearch		gsettingsChanged, 		% TXT.SET_startSearch
-	Gui, Add, Checkbox, xs Checked%ini_revFormat2def%  vnew_revFormat2def 	gsettingsChanged,		% TXT.SET_revFormat2def
-	Gui, Add, Checkbox, xs Checked%ini_CopyBeep% 		vnew_copyBeep 			gchkbox_copybeep, 		% TXT.SET_copybeep
-	Gui, Add, Checkbox, xs Checked%ini_IsMessage%		vnew_IsMessage			gchkbox_IsMessage,		% TXT.SET_ismessage
-	Gui, Add, Checkbox, xs Checked%ini_KeepSession%		vnew_KeepSession		gchkbox_KeepSession,	% TXT.SET_keepsession
-	Gui, Add, Checkbox, xs Checked%ini_PreserveClipPos%		vnew_PreserveClipPos 	gsettingsChanged, 	% TXT.SET_keepactivepos
-	Gui, Add, Checkbox, xs Checked%ini_winClipjump%			vnew_winClipjump 	gsettingsChanged, 		% TXT.SET_winClipjump
+	g.Add("Text", "xs+16", TXT.SET_threshold)
+	edtThreshold := g.Add("Edit", "x" left_size-55 " yp-3 w50 r1 Number vnew_Threshold")
+	edtThreshold.OnEvent("Change", settingsChanged)
+	g.Add("UpDown", "Range1-1000", ini_Threshold).OnEvent("Change", settingsChanged)
 
-	Gui, Add, Text, xs y+10, % TXT.SET_pformat 		; the y param is not needed but to make it symmetrical
-	; Build pformats list
-	tempLst := "-original-|" (ini_def_pformat="" ? "|" : "")
-	for tempK, tempV in PLUGINS.pformat
-		tempLst .= tempV["Name"] "|"     ( (ini_def_pformat == tempV["Name"]) ? "|" : "" ) 
-	Gui, Add, DropDownList, % "x" left_size-110 " w110 yp-3  r5	vnew_default_pformat 		gdropdown_pformat",		% tempLst
+	g.Add("Text", "xs", TXT.SET_quality)
+	g.Add("Edit", "x" left_size-55 " yp-3 w50 r1 Number vnew_Quality").OnEvent("Change", settingsChanged)
+	g.Add("UpDown", "Range1-100", ini_Quality).OnEvent("Change", settingsChanged)
+
+	g.Add("Checkbox", "xs Checked" ini_startSearch " vnew_startSearch", TXT.SET_startSearch).OnEvent("Click", settingsChanged)
+	g.Add("Checkbox", "xs Checked" ini_revFormat2def " vnew_revFormat2def", TXT.SET_revFormat2def).OnEvent("Click", settingsChanged)
+	g.Add("Checkbox", "xs Checked" ini_CopyBeep " vnew_copyBeep", TXT.SET_copybeep).OnEvent("Click", settingsChanged)
+	g.Add("Checkbox", "xs Checked" ini_IsMessage " vnew_IsMessage", TXT.SET_ismessage).OnEvent("Click", settingsChanged)
+	g.Add("Checkbox", "xs Checked" ini_KeepSession " vnew_KeepSession", TXT.SET_keepsession).OnEvent("Click", settingsChanged)
+	g.Add("Checkbox", "xs Checked" ini_PreserveClipPos " vnew_PreserveClipPos", TXT.SET_keepactivepos).OnEvent("Click", settingsChanged)
+	g.Add("Checkbox", "xs Checked" ini_winClipjump " vnew_winClipjump", TXT.SET_winClipjump).OnEvent("Click", settingsChanged)
+
+	g.Add("Text", "xs y+10", TXT.SET_pformat) 		; the y param is not needed but to make it symmetrical
+	; Build pformats list (v1 used a "||" marker in the pipe list; v2 selects by index)
+	tempLst := ["-original-"]
+	tempSel := (ini_def_pformat = "") ? 1 : 0
+	for tempK, tempV in PLUGINS.pformat {
+		tempLst.Push(tempV["Name"])
+		if (ini_def_pformat == tempV["Name"])
+			tempSel := tempLst.Length
+	}
+	ddlPformat := g.Add("DropDownList", "x" left_size-110 " w110 yp-3  r5	vnew_default_pformat", tempLst)
+	if tempSel
+		ddlPformat.Choose(tempSel)
+	ddlPformat.OnEvent("Change", settingsChanged)
 
 
 	;---- Clipboard H
-	Gui, Add, GroupBox, % "xm y" height_group+16 " w" left_size " h" height_downgroup,	% TXT.SET_cb  ;
+	g.Add("GroupBox", "xm y" height_group+16 " w" left_size " h" height_downgroup, TXT.SET_cb)  ;
 
-	Gui, Add, Text,		xp+9 yp+22,		% TXT.SET_daystostore
-	Gui, Add, Edit,	%	"x" left_size-55 " yp-3 w50 r1 Number vnew_DaysToStore gedit_DaysToStore"
-	Gui, Add, UpDown,	Range0-100000 gupdown_DaysToStore, %ini_DaysToStore%
+	g.Add("Text", "xp+9 yp+22", TXT.SET_daystostore)
+	g.Add("Edit", "x" left_size-55 " yp-3 w50 r1 Number vnew_DaysToStore").OnEvent("Change", settingsChanged)
+	g.Add("UpDown", "Range0-100000", ini_DaysToStore).OnEvent("Change", settingsChanged)
 
-	Gui, Add, Checkbox,	xs y+8 Checked%ini_IsImageStored% vnew_IsImageStored gchkbox_IsImageStored, % TXT.SET_images
+	g.Add("Checkbox", "xs y+8 Checked" ini_IsImageStored " vnew_IsImageStored", TXT.SET_images).OnEvent("Click", settingsChanged)
 
 	;---- Shortcuts
 	x_ofhotkeys := left_size+right_size+5 - width_hk_control
 	;5 is gap betn two adjacent group boxes , 150 is width of hotkey control
-	Gui, Add, GroupBox, % "ym w" right_size " h" height_group " vshortcutgroupbox",	% TXT.SET_shortcuts
-	Gui, Add, Text, 	xp+9 yp+22 section,	% TXT.SET_pst
-	Gui, Add, Edit, %	"Limit1 Uppercase -Wantreturn x" x_ofhotkeys " yp-3 w" width_hk_control " vpst_K ghotkey_paste", % paste_k
-	Gui, Add, Text, 	xs y+8,		% TXT.SET_actmd
-	Gui, Add, Hotkey, 	x%x_ofhotkeys% yp-3 w%width_hk_control% vactmd_K   ghotkey_actmd, % Actionmode_K
-	Gui, Add, Text,		xs y+8,		% TXT.HST__name
-	Gui, Add, Hotkey, 	x%x_ofhotkeys% yp-3 w%width_hk_control% vhst_K	gsettingsChanged, % history_k
-	Gui, Add, Text, 	xs y+8, 	% TXT.SET_org
-	Gui, Add, Hotkey, 	x%x_ofhotkeys% yp-3 w%width_hk_control% vorg_K 		gsettingsChanged, % chOrg_K
-	Gui, Add, Text, 	xs y+8,		% TXT._cfilep
-	Gui, Add, Hotkey, 	x%x_ofhotkeys% yp-3 w%width_hk_control% vcfilep_K   ghotkey_cfilep, % Copyfilepath_K
-	Gui, Add, Text,		xs y+8,		% TXT._cfolderp
-	Gui, Add, Hotkey,	x%x_ofhotkeys% yp-3 w%width_hk_control% vcfolderp_K ghotkey_cfolderp, % Copyfolderpath_K
-	Gui, Add, Text,		xs y+8,		% TXT._cfiled
-	Gui, Add, Hotkey,	x%x_ofhotkeys% yp-3 w%width_hk_control% vcfiled_K   ghotkey_cfiled, % Copyfiledata_K
-	Gui, Add, Text,		xs y+8,		% TXT.SET_holdclip
-	Gui, Add, Hotkey,	x%x_ofhotkeys% yp-3 w%width_hk_control% vhldClip_K		ghotkey_holdClip, % holdClip_K
-	Gui, Add, Text, 	xs y+8, 	% TXT.PLG__name
-	Gui, Add, Hotkey, 	x%x_ofhotkeys% yp-3 w%width_hk_control% vplugM_K 	ghotkey_plugM, % pluginManager_K
+	g.Add("GroupBox", "ym w" right_size " h" height_group " vshortcutgroupbox", TXT.SET_shortcuts)
+	g.Add("Text", "xp+9 yp+22 section", TXT.SET_pst)
+	edtPstK := g.Add("Edit", "Limit1 Uppercase -Wantreturn x" x_ofhotkeys " yp-3 w" width_hk_control " vpst_K", paste_k)
+	edtPstK.OnEvent("Change", hotkey_paste)
+	g.Add("Text", "xs y+8", TXT.SET_actmd)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vactmd_K", Actionmode_K).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT.HST__name)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vhst_K", history_k).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT.SET_org)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vorg_K", chOrg_K).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT._cfilep)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vcfilep_K", Copyfilepath_K).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT._cfolderp)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vcfolderp_K", Copyfolderpath_K).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT._cfiled)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vcfiled_K", Copyfiledata_K).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT.SET_holdclip)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vhldClip_K", holdClip_K).OnEvent("Change", settingsChanged)
+	g.Add("Text", "xs y+8", TXT.PLG__name)
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vplugM_K", pluginManager_K).OnEvent("Change", settingsChanged)
 
 	;---- Channels
-	Gui, Add, GroupBox, % "xs-9 y" height_group+16 " w" right_size " h" height_downgroup, % PROGNAME " " TXT.SET_channels
-	Gui, Add, Text, 	xs yp+22,	% TXT._pitswp " Hotkey"
-	Gui, Add, Hotkey,	x%x_ofhotkeys% yp-3 w%width_hk_control% vpitswp_K  ghotkey_pitswp, % pitswap_K
+	g.Add("GroupBox", "xs-9 y" height_group+16 " w" right_size " h" height_downgroup, PROGNAME " " TXT.SET_channels)
+	g.Add("Text", "xs yp+22", TXT._pitswp " Hotkey")
+	g.Add("Hotkey", "x" x_ofhotkeys " yp-3 w" width_hk_control " vpitswp_K", pitswap_K).OnEvent("Change", settingsChanged)
 
 	;---- Buttons
 	size_advanced := getControlInfo("text", TXT.SET_advanced, "w", "Underline")
-	Gui, Settings:Default
-	Gui, Font, Underline
-	Gui, Add, Text, 	% "y" height_group+height_downgroup+30 " x" left_size+right_size+5-size_advanced " cBlue gsettings_open_advanced", % TXT.SET_advanced 	;+5 for gap betn group boxes
-	Gui, Add, Text, 	x9 yp cBlue gClassTool, % TXT.SET_manageignore
-	Gui, font, norm
-	Gui, Add, Button,	% "x" ((left_size+right_size)/2)-60 " yp+23 Default gsettingsButtonOK", 	&OK 	;57 in vertical
-	Gui, Add, Button,	x+8 gsettingsButtonCancel,			% TXT.SET_cancel
-	Gui, Add, Button,	x+8	Disabled vsettingsButtonApply gsettingsButtonApply,	% TXT.SET_apply
-	GuiControl, Disable, settingsButtonApply
+	g.SetFont("underline")
+	g.Add("Text", "y" height_group+height_downgroup+30 " x" left_size+right_size+5-size_advanced " cBlue", TXT.SET_advanced).OnEvent("Click", settings_open_advanced) 	;+5 for gap betn group boxes
+	g.Add("Text", "x9 yp cBlue", TXT.SET_manageignore).OnEvent("Click", classTool)
+	g.SetFont("norm")
+	g.Add("Button", "x" ((left_size+right_size)/2)-60 " yp+23 Default", "&OK").OnEvent("Click", settingsButtonOk) 	;57 in vertical
+	g.Add("Button", "x+8", TXT.SET_cancel).OnEvent("Click", settingsButtonCancel)
+	btnApply := g.Add("Button", "x+8 Disabled vsettingsButtonApply", TXT.SET_apply)
+	btnApply.OnEvent("Click", settingsButtonApply)
+	btnApply.Enabled := false
+	g.OnEvent("Close", settingsButtonCancel)
+	g.OnEvent("Escape", settingsButtonCancel)
 
-	Gui, Settings:Show, , %PROGNAME% Settings
+	g.Show()
 
-	if ini_limitMaxClips = 0
+	if (ini_limitMaxClips = 0)
 	{
-		GuiControl, Disable, new_Maxclips
-		GuiControl, Disable, new_Threshold
+		edtMaxClips.Enabled := false
+		edtThreshold.Enabled := false
 	}
 
 	;disable hotkey keys
-	Hotkey, IfWinActive, % PROGNAME " " TXT.SET__name
-	#If IsHotkeyControlActive()
-	Hotkey, If, IsHotkeyControlActive()
-	hkZ(Copyfilepath_K, "shortcutblocker_settings", 1)
-	hkZ(Copyfolderpath_K, "shortcutblocker_settings", 1)
-	hkZ(Copyfiledata_K, "shortcutblocker_settings", 1)
-	hkZ(channel_K, "shortcutblocker_settings", 1)
-	hkZ(holdclip_K, "shortcutblocker_settings", 1)
-	hkZ(pitswap_K, "shortcutblocker_settings", 1)
-	hkZ(actionmode_k, "shortcutblocker_settings", 1)
-	hkz(pluginManager_K, "shortcutblocker_settings", 1)
-	hkz(chOrg_K, "shortcutblocker_settings", 1)
-	Hotkey, If
-	#If
-	Hotkey, If
+	; v1 also set "Hotkey, IfWinActive" first, but the "Hotkey, If" below replaced that criterion, so only the If-expression applies
+	HotIf(IsHotkeyControlActive)
+	hkZ(Copyfilepath_K, shortcutblocker_settings, 1)
+	hkZ(Copyfolderpath_K, shortcutblocker_settings, 1)
+	hkZ(Copyfiledata_K, shortcutblocker_settings, 1)
+	hkZ(channel_K, shortcutblocker_settings, 1)
+	hkZ(holdclip_K, shortcutblocker_settings, 1)
+	hkZ(pitswap_K, shortcutblocker_settings, 1)
+	hkZ(actionmode_k, shortcutblocker_settings, 1)
+	hkz(pluginManager_K, shortcutblocker_settings, 1)
+	hkz(chOrg_K, shortcutblocker_settings, 1)
+	HotIf()
 	return
 
-chkbox_limitMaxClips:
-	Gui, Settings:Submit, NoHide
-	if new_limitMaxClips = 0
-	{
-		GuiControl, , new_Maxclips, 0
-		GuiControl, Disable, new_Maxclips
-		GuiControl, Disable, new_Threshold
+	; The v1 labels below used the local settingsHaveChanged, so they are closures of gui_Settings.
+	; They must not use assume-global mode (that would stop them from capturing the locals above).
+
+	chkbox_limitMaxClips(*) {
+		if (chkLimitMaxClips.Value = 0)
+		{
+			edtMaxClips.Value := 0
+			edtMaxClips.Enabled := false
+			edtThreshold.Enabled := false
+		}
+		else if (chkLimitMaxClips.Value = 1)
+		{
+			edtMaxClips.Value := !ini_Maxclips ? 20 : ini_MaxClips
+			edtMaxClips.Enabled := true
+			edtThreshold.Enabled := true
+		}
+		; there isn't a return on purpose
+		settingsChanged()
 	}
-	else if new_limitMaxClips = 1
-	{
-		GuiControl, , Edit1,% !ini_Maxclips ? 20 : ini_MaxClips
-		GuiControl, Enable, new_Maxclips
-		GuiControl, Enable, new_Threshold
+
+	; one handler for every v1 label that fell into settingsChanged (edit_*, updown_*, chkbox_*, dropdown_pformat, hotkey_*)
+	settingsChanged(*) {
+		btnApply.Enabled := true
+		settingsHaveChanged := true
 	}
-	; there isn't a return on purpose
-settingsChanged:
-edit_MaxClips:
-updown_MaxClips:
-edit_Threshold:
-updown_Threshold:
-edit_Quality:
-updown_Quality:
-chkbox_copybeep:
-chkbox_KeepSession:
-chkbox_IsMessage:
-dropdown_pformat:
-edit_DaysToStore:
-updown_DaysToStore:
-chkbox_IsImageStored:
-hotkey_cfilep:
-hotkey_cfolderp:
-hotkey_cfiled:
-hotkey_ot:
-hotkey_pitswp:
-hotkey_actmd:
-hotkey_plugM:
-hotkey_holdClip:
-	GuiControl, Enable, settingsButtonApply
-	settingsHaveChanged := true
-	return
 
-hotkey_paste:
-	GuiControlGet, pst_k
-	pst_K := Trim(pst_k, "ESCXZAFH `t")
-	if pst_k =
-		GuiControl,, pst_k
-	GuiControl, Enable, settingsButtonApply
-	settingsHaveChanged := true
-	return
+	hotkey_paste(*) {
+		global pst_K
+		pst_K := Trim(edtPstK.Value, "ESCXZAFH `t")
+		if (pst_k = "")
+			edtPstK.Value := ""
+		btnApply.Enabled := true
+		settingsHaveChanged := true
+	}
 
-settingsButtonOk:
-	Gui, Settings:Submit, NoHide
-	if settingsHaveChanged		; we don't it to save if settings haven't changed (to increase performance, though minimal)
-	{
-		save_Settings()
-		load_Settings() , validate_Settings()
-		trayMenu(1) 	;update Tray menu
+	settingsButtonOk(*) {
+		SubmitToGlobals(g)
+		if settingsHaveChanged		; we don't it to save if settings haven't changed (to increase performance, though minimal)
+		{
+			save_Settings()
+			load_Settings() , validate_Settings()
+			trayMenu(1) 	;update Tray menu
+			settingsHaveChanged := false
+		}
+		GuiDestroy("Settings")
+	}
+
+	; settingsButtonCancel / settingsGuiEscape / settingsGuiClose
+	settingsButtonCancel(*) {
+		GuiDestroy("Settings")
+		ToolTip(, , , 4)
 		settingsHaveChanged := false
+		OnMessage(0x200, WM_MOUSEMOVE, 0)
+		EmptyMem()
 	}
-	Gui, Settings:Destroy
-	return
 
-settingsButtonCancel:
-settingsGuiEscape:
-settingsGuiClose:
-	Gui, Settings:Destroy
-	Tooltip, ,,, 4
-	settingsHaveChanged := false
-	OnMessage(0x200, "")
-	EmptyMem()
-	return
-	
-settingsButtonApply:
-	Gui, Settings:Submit, NoHide
-	if settingsHaveChanged
-	{
-		save_Settings()
-		load_Settings() , validate_Settings()
-		settingsHaveChanged := false
+	settingsButtonApply(*) {
+		SubmitToGlobals(g)
+		if settingsHaveChanged
+		{
+			save_Settings()
+			load_Settings() , validate_Settings()
+			settingsHaveChanged := false
+		}
+		btnApply.Enabled := false
 	}
-	GuiControl, Disable, settingsButtonApply
-	return
 
-settings_open_advanced:
+}
+
+settings_open_advanced(*) {
+	global
 	try {
-		run % "notepad.exe " CONFIGURATION_FILE
+		Run("notepad.exe " CONFIGURATION_FILE)
 		;WinWaitActive, ahk_class Notepad
 		;Send ^{vk47} 					;^g
 		;sleep 100
@@ -227,32 +228,31 @@ settings_open_advanced:
 		;Send % NUMBER_ADVANCED "{vk0d}"
 	}
 	catch {
-		MsgBox, 16, ERROR, % PROGNAME " " TXT.SET_advanced_error
+		MsgBox(PROGNAME " " TXT.SET_advanced_error, "ERROR", 16)
 	}
-	return
-
 }
 
-load_Settings(all=false){
+load_Settings(all := false){
 ; Preconditions: None
 ; Postconditions: Reads settings from the configuration file and saves them in corresponding variables beginning with "ini_".
 	global
-	IniRead, ini_limitMaxClips,	%CONFIGURATION_FILE%, Main, limit_MaxClips
-	IniRead, ini_MaxClips,		%CONFIGURATION_FILE%, Main, Minimum_No_Of_Clips_to_be_Active
-	IniRead, ini_Threshold,		%CONFIGURATION_FILE%, Main, Threshold
-	IniRead, ini_IsMessage,		%CONFIGURATION_FILE%, Main, Show_Copy_Message
-	IniRead, ini_Quality,		%CONFIGURATION_FILE%, Main, Quality_of_Thumbnail_Previews
-	IniRead, ini_CopyBeep, 		%CONFIGURATION_FILE%, Main, CopyBeep
-	IniRead, ini_KeepSession,	%CONFIGURATION_FILE%, Main, Keep_Session
-	IniRead, ini_Version,		%CONFIGURATION_FILE%, System, Version
-	IniRead, ini_DaysToStore,	%CONFIGURATION_FILE%, Clipboard_History, Days_to_store
-	IniRead, ini_IsImageStored,	%CONFIGURATION_FILE%, Clipboard_History, Store_images
+	local t, priority, tempVar, MSG_PASTING_t
+	ini_limitMaxClips := IniRead(CONFIGURATION_FILE, "Main", "limit_MaxClips", "ERROR")
+	ini_MaxClips := IniRead(CONFIGURATION_FILE, "Main", "Minimum_No_Of_Clips_to_be_Active", "ERROR")
+	ini_Threshold := IniRead(CONFIGURATION_FILE, "Main", "Threshold", "ERROR")
+	ini_IsMessage := IniRead(CONFIGURATION_FILE, "Main", "Show_Copy_Message", "ERROR")
+	ini_Quality := IniRead(CONFIGURATION_FILE, "Main", "Quality_of_Thumbnail_Previews", "ERROR")
+	ini_CopyBeep := IniRead(CONFIGURATION_FILE, "Main", "CopyBeep", "ERROR")
+	ini_KeepSession := IniRead(CONFIGURATION_FILE, "Main", "Keep_Session", "ERROR")
+	ini_Version := IniRead(CONFIGURATION_FILE, "System", "Version", "ERROR")
+	ini_DaysToStore := IniRead(CONFIGURATION_FILE, "Clipboard_History", "Days_to_store", "ERROR")
+	ini_IsImageStored := IniRead(CONFIGURATION_FILE, "Clipboard_History", "Store_images", "ERROR")
 
-	IniRead, Copyfilepath_K,% CONFIGURATION_FILE, Shortcuts, Copyfilepath_K, %A_space%
-	IniRead, Copyfolderpath_K,% CONFIGURATION_FILE, Shortcuts, Copyfolderpath_K
-	IniRead, Copyfiledata_K,% CONFIGURATION_FILE, Shortcuts, Copyfiledata_K
-	Iniread, paste_K, % CONFIGURATION_FILE, Shortcuts, paste_K
-	Iniread, Actionmode_K, % CONFIGURATION_FILE, Shortcuts, actionmode_k
+	Copyfilepath_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "Copyfilepath_K", "")
+	Copyfolderpath_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "Copyfolderpath_K", "")
+	Copyfiledata_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "Copyfiledata_K", "")
+	paste_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "paste_K", "ERROR") 	; v1 read this without a default; validate_Settings() turns ERROR into "V"
+	Actionmode_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "actionmode_k", "")
 
 	pitswap_K := ini_read("Channels", "pitswap_K")
 
@@ -274,14 +274,14 @@ load_Settings(all=false){
 	if (all) {
 		history_partial := Ini_read("Clipboard_history_window", "partial") ? 1 : 0 	; Important as the use of the var in History tool is such that false = 0 .
 
-		Iniread, MSG_PASTING_t,% CONFIGURATION_FILE, Advanced, Show_pasting_tip, %A_space%
+		MSG_PASTING_t := IniRead(CONFIGURATION_FILE, "Advanced", "Show_pasting_tip", "")
 		MSG_PASTING := MSG_PASTING_t ? MSG_PASTING : ""
 
-		iniread, windows_copy_k,% CONFIGURATION_FILE, Advanced, windows_copy_shortcut, %A_space%
-		iniread, windows_cut_k, % CONFIGURATION_FILE, Advanced, windows_cut_shortcut, %A_space%
+		windows_copy_k := IniRead(CONFIGURATION_FILE, "Advanced", "windows_copy_shortcut", "")
+		windows_cut_k := IniRead(CONFIGURATION_FILE, "Advanced", "windows_cut_shortcut", "")
 		windows_copy_k := HParse(windows_copy_k) , windows_cut_k := Hparse(windows_cut_k)
 
-		iniread, ini_is_duplicate_copied, % CONFIGURATION_FILE, Advanced, is_duplicate_copied, %A_space%
+		ini_is_duplicate_copied := IniRead(CONFIGURATION_FILE, "Advanced", "is_duplicate_copied", "")
 
 		beepFrequency := ini_read("Advanced", "beepFrequency")
 		if !beepFrequency
@@ -292,7 +292,7 @@ load_Settings(all=false){
 		ini_defEditor := (t:=ini_read("System", "default_editor")) ? t : "Notepad.exe"
 		;change priority once
 		priority := ini_read("System", "Priority")
-		try Process, Priority,, % Priority
+		try ProcessSetPriority(priority)
 		;v10.7.3
 		ini_defImgEditor := (t:=ini_read("System", "default_image_editor")) ? t : "mspaint.exe"
 		ini_pstMode_X := ini_read("Advanced", "pstMode_X")
@@ -315,23 +315,23 @@ save_Settings()
 ; Postconditions: Settings in variables starting in "new_" are saved in the configuration file in the corresponding key.
 {
 	global
-	IniWrite, %new_limitMaxClips%,		%CONFIGURATION_FILE%, Main, limit_MaxClips
-	IniWrite, % (new_limitMaxClips ? new_Maxclips : 0) , %CONFIGURATION_FILE%, Main, Minimum_No_Of_Clips_to_be_Active
-	IniWrite, %new_Threshold%,		%CONFIGURATION_FILE%, Main, Threshold
-	IniWrite, %new_IsMessage%,		%CONFIGURATION_FILE%, Main, Show_Copy_Message
-	IniWrite, %new_Quality%,		%CONFIGURATION_FILE%, Main, Quality_of_Thumbnail_Previews
-	IniWrite, %new_copyBeep%,  		%CONFIGURATION_FILE%, Main, CopyBeep
-	IniWrite, %new_KeepSession%,	%CONFIGURATION_FILE%, Main, Keep_Session
-	IniWrite, %new_DaysToStore%,	%CONFIGURATION_FILE%, Clipboard_History, Days_To_Store
-	IniWrite, %new_IsImageStored%,	%CONFIGURATION_FILE%, Clipboard_History, Store_Images
-	
-	IniWrite, %Cfilep_K%  ,% CONFIGURATION_FILE, Shortcuts, Copyfilepath_K
-	IniWrite, %Cfolderp_K%,% CONFIGURATION_FILE, Shortcuts, Copyfolderpath_K
-	IniWrite, %Cfiled_K%  ,% CONFIGURATION_FILE, Shortcuts, Copyfiledata_K
-	Iniwrite, %pst_k%	  ,% CONFIGURATION_FILE, Shortcuts, paste_K
-	IniWrite, %actmd_k%   ,% CONFIGURATION_FILE, Shortcuts, actionmode_k
+	IniWrite(new_limitMaxClips, CONFIGURATION_FILE, "Main", "limit_MaxClips")
+	IniWrite((new_limitMaxClips ? new_Maxclips : 0), CONFIGURATION_FILE, "Main", "Minimum_No_Of_Clips_to_be_Active")
+	IniWrite(new_Threshold, CONFIGURATION_FILE, "Main", "Threshold")
+	IniWrite(new_IsMessage, CONFIGURATION_FILE, "Main", "Show_Copy_Message")
+	IniWrite(new_Quality, CONFIGURATION_FILE, "Main", "Quality_of_Thumbnail_Previews")
+	IniWrite(new_copyBeep, CONFIGURATION_FILE, "Main", "CopyBeep")
+	IniWrite(new_KeepSession, CONFIGURATION_FILE, "Main", "Keep_Session")
+	IniWrite(new_DaysToStore, CONFIGURATION_FILE, "Clipboard_History", "Days_To_Store")
+	IniWrite(new_IsImageStored, CONFIGURATION_FILE, "Clipboard_History", "Store_Images")
 
-	IniWrite, %pitswp_k%  ,% CONFIGURATION_FILE, Channels, pitswap_K
+	IniWrite(Cfilep_K, CONFIGURATION_FILE, "Shortcuts", "Copyfilepath_K")
+	IniWrite(Cfolderp_K, CONFIGURATION_FILE, "Shortcuts", "Copyfolderpath_K")
+	IniWrite(Cfiled_K, CONFIGURATION_FILE, "Shortcuts", "Copyfiledata_K")
+	IniWrite(pst_k, CONFIGURATION_FILE, "Shortcuts", "paste_K")
+	IniWrite(actmd_k, CONFIGURATION_FILE, "Shortcuts", "actionmode_k")
+
+	IniWrite(pitswp_k, CONFIGURATION_FILE, "Channels", "pitswap_K")
 	; v10.7.3
 	ini_write("Main", "default_pformat", new_default_pformat="-original-" ? "" : new_default_pformat, 0) 	; trim reqd to remove space
 	ini_write("Shortcuts", "pluginManager_K", plugM_k, 0)
@@ -348,36 +348,38 @@ save_Settings()
 	}
 
 	;Disable old shortcuts
-	  hkZ(Copyfilepath_K, 	"CopyFile", 0)
-	, hkZ(Copyfolderpath_K, "CopyFolder", 0) 
-	, hkZ(Copyfiledata_K,   "CopyFileData", 0)
-	, hkZ(holdClip_K,		"holdClip",		0)
-	, hkZ(paste_k ? "$" pstIdentifier paste_k : emptyvar, "paste", 	0)
-	, hkZ(pitswap_K, 	   "PitSwap", 0)
-	, hkZ(actionmode_K, 	"actionmode", 0)
-	, hkZ(pluginManager_K, 	"pluginManagerGUI", 0)
-	, hkZ(chOrg_K, "channelOrganizer", 0)
-	, hkZ(history_K, "history", 0)
+	  hkZ(Copyfilepath_K, 	copyFile, 0)
+	, hkZ(Copyfolderpath_K, copyFolder, 0)
+	, hkZ(Copyfiledata_K,   CopyFileData, 0)
+	, hkZ(holdClip_K,		holdClip,		0)
+	, hkZ(paste_k ? "$" pstIdentifier paste_k : "", paste, 	0)
+	, hkZ(pitswap_K, 	   pitSwap, 0)
+	, hkZ(actionmode_K, 	actionmode_run, 0)
+	, hkZ(pluginManager_K, 	pluginManagerGui, 0)
+	, hkZ(chOrg_K, channelOrganizer, 0)
+	, hkZ(history_K, history, 0)
 
 	;Re-create shortcuts
-	  hkZ(Cfilep_K, "CopyFile", 1)
-	, hkZ(Cfolderp_K, "CopyFolder", 1)
-	, hkZ(Cfiled_K,   "CopyFileData", 1)
-	, hkZ(hldClip_K,	"holdClip",		1)
-	, hkZ(pst_k && CLIPJUMP_STATUS ? "$" pstIdentifier pst_k : emptyvar, "paste", CLIPJUMP_STATUS )
-	, hkZ(pitswp_K, "PitSwap", 1)
-	, hkZ(actmd_k, "actionmode", 1)
-	, hkZ(plugM_k, "pluginManagerGUI", 1)
-	, hkZ(org_K, "channelOrganizer", 1)
-	, hkZ(hst_k, "history", 1)
+	  hkZ(Cfilep_K, copyFile, 1)
+	, hkZ(Cfolderp_K, copyFolder, 1)
+	, hkZ(Cfiled_K,   CopyFileData, 1)
+	, hkZ(hldClip_K,	holdClip,		1)
+	, hkZ(pst_k && CLIPJUMP_STATUS ? "$" pstIdentifier pst_k : "", paste, CLIPJUMP_STATUS )
+	, hkZ(pitswp_K, pitSwap, 1)
+	, hkZ(actmd_k, actionmode_run, 1)
+	, hkZ(plugM_k, pluginManagerGui, 1)
+	, hkZ(org_K, channelOrganizer, 1)
+	, hkZ(hst_k, history, 1)
 
 	;Load settings will load correct values for vars
 }
 
-set_pformat(pst_format=""){
+set_pformat(pst_format := ""){
 ; Sets the default pformat at Clipjump startup , runs after all the plugins have been loaded.
+	global
+	local k, v, success := 0
 	pst_format := pst_format="" ? ini_def_pformat : pst_format
-	if pst_format == "-original-"
+	if (pst_format == "-original-")
 		pst_format := ""
 	for k,v in PLUGINS.pformat
 		if ( v["name"] == pst_format )
@@ -391,22 +393,22 @@ set_pformat(pst_format=""){
 	return 1
 }
 
-save_Default(full=1){
+save_Default(full := 1){
 ; Saves the default settings for Clipjump. Runs at start-up on program update or new installation
-	
-	if (full){
-	IniWrite, 1, % CONFIGURATION_FILE, Main, limit_MaxClips
-	IniWrite, 20,% CONFIGURATION_FILE, Main, Minimum_No_Of_Clips_to_be_Active
-	IniWrite, 10,% CONFIGURATION_FILE, Main, Threshold
-	IniWrite, 1, % CONFIGURATION_FILE, Main, Show_Copy_Message
-	IniWrite, 90,% CONFIGURATION_FILE, Main, Quality_of_Thumbnail_Previews
-	IniWrite, 1, % CONFIGURATION_FILE, Main, Keep_Session
 
-	IniWrite, 30,% CONFIGURATION_FILE, Clipboard_History, Days_to_store
-	IniWrite, 0, % CONFIGURATION_FILE, Clipboard_History, Store_Images
+	if (full){
+	IniWrite(1, CONFIGURATION_FILE, "Main", "limit_MaxClips")
+	IniWrite(20, CONFIGURATION_FILE, "Main", "Minimum_No_Of_Clips_to_be_Active")
+	IniWrite(10, CONFIGURATION_FILE, "Main", "Threshold")
+	IniWrite(1, CONFIGURATION_FILE, "Main", "Show_Copy_Message")
+	IniWrite(90, CONFIGURATION_FILE, "Main", "Quality_of_Thumbnail_Previews")
+	IniWrite(1, CONFIGURATION_FILE, "Main", "Keep_Session")
+
+	IniWrite(30, CONFIGURATION_FILE, "Clipboard_History", "Days_to_store")
+	IniWrite(0, CONFIGURATION_FILE, "Clipboard_History", "Store_Images")
 	}
 
-	IniWrite, %VERSION%,% CONFIGURATION_FILE, System, Version
+	IniWrite(VERSION, CONFIGURATION_FILE, "System", "Version")
 	ini_write("System", "Priority", "N")
 	ini_write("System", "default_editor", "Notepad.exe")
 	s := "Shortcuts"
@@ -459,46 +461,45 @@ save_Default(full=1){
 	Ini_delete("Channels", "IsChannelMin")
 }
 
-Ini_write(section, key, value="", ifblank=true){
+Ini_write(section, key, value := "", ifblank := true){
 	;ifblank==true means write only if key doesn't exist
 
-	Iniread, v,% CONFIGURATION_FILE,% section,% key
+	v := IniRead(CONFIGURATION_FILE, section, key, "ERROR") 	; v1 IniRead without a default returned ERROR for a missing key
 
 	if ifblank && (v == "ERROR")
-		IniWrite,% value,% CONFIGURATION_FILE,% section,% key
+		IniWrite(value, CONFIGURATION_FILE, section, key)
 	if !ifblank
-		IniWrite,% value,% CONFIGURATION_FILE,% section,% key
+		IniWrite(value, CONFIGURATION_FILE, section, key)
 }
 
 Ini_read(section, key){
-	Iniread, v, % CONFIGURATION_FILE,% section,% key, %A_space%
-	if v = %A_temp%
-		v := ""
+	; v1 passed A_Space as the default, which the ini API trims to "" for a missing key
+	v := IniRead(CONFIGURATION_FILE, section, key, "")
 	return v
 }
 
 Ini_delete(section, key){
-	IniDelete, % CONFIGURATION_FILE, % section, % key
+	try IniDelete(CONFIGURATION_FILE, section, key)
 }
 
 validate_Settings()
-; The function validates the settings for Clipjump . 
+; The function validates the settings for Clipjump .
 ; The reason validate_Settings() is not inside load_Settings() is conflicts with Ini_MaxClips and its unlimited value (0).
 {
 	global
 
 	if !ini_MaxClips			; if blank
 		ini_MaxClips := 9999999
-	if ini_MaxClips is not integer
+	if !IsInteger(ini_MaxClips)
 		ini_MaxClips := 20
-	If ini_Threshold is not integer
+	if !IsInteger(ini_Threshold)
 		ini_Threshold := 10
 
 	CopyMessage := !ini_IsMessage ? "" : MSG_TRANSFER_COMPLETE " {" ( (CN.Name=="") ? "Default" : CN.Name ) "}"
 
-	If ini_Quality is not Integer
+	if !IsInteger(ini_Quality)
 		ini_Quality := 20
-	if ini_KeepSession is not integer
+	if !IsInteger(ini_KeepSession)
 		ini_KeepSession := 1
 
 	if !ini_KeepSession && !startUpComplete
@@ -509,7 +510,7 @@ validate_Settings()
 
 	; reqd for the chkbox to use Checked0 or Checked1
 	ini_IsImageStored := ini_IsImageStored = 0 ? 0 : 1
-	ini_DaysToStore := ini_DaysToStore < 0 ? 0 : ini_DaysToStore
+	ini_DaysToStore := (IsNumber(ini_DaysToStore) && ini_DaysToStore < 0) ? 0 : ini_DaysToStore 	; v2 cannot compare "" with a number
 	ini_PreserveClipPos := ini_PreserveClipPos ? 1 : 0
 	ini_startSearch := ini_startSearch ? 1 : 0
 	ini_revFormat2def := ini_revFormat2def ? 1 : 0
@@ -520,11 +521,11 @@ validate_Settings()
 	{
 		NOINCOGNITO := false
 		if CALLER_STATUS
-			Menu, tray, icon, icons\no_history.ico
-		Menu, Options_Tray, check, % TXT.TRY_incognito
+			try TraySetIcon("icons\no_history.ico")
+		Options_Tray.Check(TXT.TRY_incognito)
 	}
 
-	if paste_K = ERROR
+	if (paste_K = "ERROR")
 		paste_K := "V"
 	paste_K := Substr(paste_K, 1, 1)
 
