@@ -7,18 +7,20 @@
 
 ;@Plugin-param1 Pass 1 or True to show confirmation message after updating
 
-plugin_updateClipjumpClipboard(zMsg = 1){
+plugin_updateClipjumpClipboard(zMsg := 1) {
+	failed := 0
 	try
-		zcb := ClipboardAll
+		zcb := ClipboardAll()
 	catch
-		error := 1
-	try 
-		Clipboard := zcb
+		failed := 1
+	try
+		A_Clipboard := zcb
 	catch
-		error := 1
-	sleep 500
+		failed := 1
+	Sleep 500
 	if zMsg
-		if !error
-			API.showTip( "Both Clipboards were synced. Success !", 1200)
-		else API.showTip("Operation Failed ! There was an error", 1200)
+		if !failed
+			API.showTip("Both Clipboards were synced. Success !", 1200)
+		else
+			API.showTip("Operation Failed ! There was an error", 1200)
 }

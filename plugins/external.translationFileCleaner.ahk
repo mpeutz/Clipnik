@@ -5,48 +5,46 @@
 ;@Plugin-Tags translation maintenance
 
 ;@Plugin-param1 The language file name to look in (without the .txt)
+#Requires AutoHotkey v2.0
 #Include %A_ScriptDir%\..\publicAPI.ahk
 
 
 projectDir := A_WorkingDir
 
-FileRead, fstr, Clipjump.ahk
+fstr := FileRead("Clipjump.ahk")
 
-loop, lib\*.ahk
-{
-	tmp := ""
-	FileRead, tmp, % A_LoopFileFullPath
-	fstr .= "`n" tmp
-}
+loop files "lib\*.ahk"
+	fstr .= "`n" FileRead(A_LoopFileFullPath)
 
-; MANAGING ARGUEMENT
-F = %1%
-if ( F == "" ) ; if no arguement passed
+; MANAGING ARGUMENT
+F := A_Args.Length ? A_Args[1] : ""
+if (F == "") ; if no argument passed
 	ExitApp
 
 F := "languages\" F ".txt"
-if !FileExist(F){
-	Msgbox, Translation file not found.
+if !FileExist(F) {
+	MsgBox("Translation file not found.")
 	ExitApp
 }
 
-kobj := {}
+kobj := Map()
+err := "", dup := ""
 
-loop, read, % F
+loop read F
 {
 	m := Trim(A_LoopReadLine)
-	if ((Instr(m,";")==1) || (Instr(m,"=")==1) || !m)
+	if ((InStr(m, ";") == 1) || (InStr(m, "=") == 1) || !m)
 		continue
-	k := Trim(Substr(m, 1, Instr(m,"=")-1))
-	if !Instr(fstr, k)
+	k := Trim(SubStr(m, 1, InStr(m, "=") - 1))
+	if !InStr(fstr, k)
 		err .= k "`n"
-	if !kobj.hasKey(k)
+	if !kobj.Has(k)
 		kobj[k] := 0
 	else
 		dup .= k "`n"
 }
 
-cj := new Clipjump()
-str = "INVALIDS`n`n%err%`n`nDUPLICATES`n`n%dup%"
-fstr := "guiMsgBox(""Translation File Cleaner Results"","  str ")"
+cj := Clipjump()
+str := '"INVALIDS`n`n' err '`n`nDUPLICATES`n`n' dup '"'
+fstr := 'guiMsgBox("Translation File Cleaner Results",' str ")"
 cj.runFunction(fstr)

@@ -1,84 +1,90 @@
 /*
 
-This function file helps any AHK script to use Clipjump API functions from its side. 
+This function file helps any AHK v2 script to use Clipjump API functions from its side.
 Just include this file in your script.
 
 Note that API.text2binary() is not supported currently.
 The ClipjumpCommunicator.ahk file is already included in this file.
 
-v 15.5.17
+v 15.5.17 (AutoHotkey v2 port)
 
 */
 
 /*
 EXAMPLES
-(It is necessary to initialize the object with "new")
 
-cj := new Clipjump()
+cj := Clipjump()
 
 cj.IncognitoMode(1)
 cj.pasteText("some text")
-msgbox % cj.getClipLoc(1, 5)
+MsgBox cj.getClipLoc(1, 5)
 cj.Paste("","")
 cj["CALLER"] := 0
 cj["STORE.somevar"] := "abc value"
-msgbox % cj.getVar("version")
-msgbox % cj.version
+MsgBox cj.getVar("version")
+MsgBox cj.version
 
 */
 
-;cj := new Clipjump()
+;cj := Clipjump()
 ;cj.runFunction("set_pformat(NO-FORMATTING)")
 ;cj.getClipAt(0, 7)
-;msgbox % cj.author_page
+;MsgBox cj.author_page
 
 class Clipjump
 {
-
-	__New(){
+	__New() {
 	}
 
-	__Call(funcname, parameters*){
-		cbF := A_temp "\cjcb.txt"
+	; any unknown method call is forwarded to Clipjump's API class over WM_COPYDATA
+	__Call(funcname, parameters) {
+		cbF := A_Temp "\cjcb.txt"
 		rFuncs := "|getClipAt|getClipLoc|getVar|runFunction|"
 
 		resChar := "`r"
 		ps := ""
-		for key,val in parameters
+		for val in parameters
 		{
-			StringReplace, val, val, % "`r`n", % "`n", All
-			StringReplace, val, val, % "`r", % "`n", All
+			val := StrReplace(val, "`r`n", "`n")
+			val := StrReplace(val, "`r", "`n")
 			ps .= resChar val
 		}
-		FileDelete, % cbF
-		returned := CjControl("API:" funcName ps)
-		if (returned>0) && Instr(rFuncs, "|" funcName "|")
+		try FileDelete(cbF)
+		returned := CjControl("API:" funcname ps)
+		if (returned > 0) && InStr(rFuncs, "|" funcname "|")
 		{
 			Clipjump_wait4file()
-			Fileread, out, % cbF
-			FileDelete, % cbF
+			out := FileRead(cbF)
+			try FileDelete(cbF)
 			return out
 		}
-		else return ""
+		else
+			return ""
 	}
 
 	/*
-	Use - 
-		cj := new Clipjump()
-		msgbox % cj.version
+	Use -
+		cj := Clipjump()
+		MsgBox cj.version
 	*/
-	__Get(var){
+	__Get(var, params) {
 		return this.getVar(var)
 	}
 
 	/*
 	Use -
-		cj := new Clipjump()
+		cj := Clipjump()
 		cj["pastemodekey.z"] := "y"
 		cj.MYVAR := "value"
 	*/
-	__Set(var, value){
+	__Set(var, params, value) {
 		this.setVar(var, value)
+	}
+
+	; cj["STORE.somevar"] := "abc" / x := cj["version"]
+	__Item[var] {
+		get => this.getVar(var)
+		set => this.setVar(var, value)
 	}
 
 	;-----------------------------------------------------------------------------------------
@@ -86,70 +92,63 @@ class Clipjump
 	;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 }
 
-Clipjump_wait4file(){
-	while !FileExist(A_temp "\cjcb.txt")
-		sleep 15
+Clipjump_wait4file() {
+	while !FileExist(A_Temp "\cjcb.txt")
+		Sleep 15
 }
 
 
 ;---------------------- Clipjump Communicator.ahk ---------------------------------------------
 
-CjControl(ByRef Code)
+CjControl(Code)
 {
-    global
-    local IsExe, TargetScriptTitle, CopyDataStruct, Prev_DetectHiddenWindows, Prev_TitleMatchMode, Z, S
+	if !(IsExe := CjControl_check())
+		return -1       ;Clipjump doesn't exist
 
-    if ! (IsExe := CjControl_check())
-        return -1       ;Clipjump doesn't exist
+	TargetScriptTitle := "Clipjump" (IsExe == 1 ? ".ahk ahk_class AutoHotkey" : ".exe ahk_class AutoHotkey")
 
-	TargetScriptTitle := "Clipjump" (IsExe==1 ? ".ahk ahk_class AutoHotkey" : ".exe ahk_class AutoHotkey")
-    
-    VarSetCapacity(CopyDataStruct, 3*A_PtrSize, 0)
-    SizeInBytes := (StrLen(Code) + 1) * (A_IsUnicode ? 2 : 1)
-    NumPut(SizeInBytes, CopyDataStruct, A_PtrSize)
-    NumPut(&Code, CopyDataStruct, 2*A_PtrSize)
-    Prev_DetectHiddenWindows := A_DetectHiddenWindows
-    Prev_TitleMatchMode := A_TitleMatchMode
-    DetectHiddenWindows On
-    SetTitleMatchMode 2
-    Z := 0
+	CopyDataStruct := Buffer(3 * A_PtrSize, 0)
+	SizeInBytes := (StrLen(Code) + 1) * 2
+	NumPut("UPtr", SizeInBytes, CopyDataStruct, A_PtrSize)
+	NumPut("Ptr", StrPtr(Code), CopyDataStruct, 2 * A_PtrSize)
+	Prev_DetectHiddenWindows := A_DetectHiddenWindows
+	Prev_TitleMatchMode := A_TitleMatchMode
+	DetectHiddenWindows true
+	SetTitleMatchMode 2
+	Z := 0
 
-    while !Z
-    {
-        SendMessage, 0x4a, 0, &CopyDataStruct,, %TargetScriptTitle%
-        Z := ErrorLevel
-       	if (Z == "FAIL")
-       		Z := ""
-        if A_index>100
-            return -1 ;Timeout..
-    }
+	while !Z
+	{
+		try Z := SendMessage(0x4a, 0, CopyDataStruct, , TargetScriptTitle)
+		catch
+			Z := 0
+		if A_Index > 100
+			return -1 ;Timeout..
+	}
 
-    DetectHiddenWindows %Prev_DetectHiddenWindows%
-    SetTitleMatchMode %Prev_TitleMatchMode%
+	DetectHiddenWindows Prev_DetectHiddenWindows
+	SetTitleMatchMode Prev_TitleMatchMode
 
-    while !FileExist(A_temp "\clipjumpcom.txt")
-    {
-    	if (A_index>40)		;2 secs total
-    		if !CjControl_check()
-    			return -1
-       	sleep 50
-       	;Tooltip, % "waiting for clipjumpcom"
-   	}
-    FileDelete % A_temp "\clipjumpcom.txt"
-    ;ToolTip
+	while !FileExist(A_Temp "\clipjumpcom.txt")
+	{
+		if (A_Index > 40)		;2 secs total
+			if !CjControl_check()
+				return -1
+		Sleep 50
+	}
+	try FileDelete(A_Temp "\clipjumpcom.txt")
 
-    return 1        ;True
+	return 1        ;True
 }
 
-CjControl_check(){
+CjControl_check() {
+	HW := A_DetectHiddenWindows, TM := A_TitleMatchMode
+	DetectHiddenWindows true
+	SetTitleMatchMode 2
+	A := WinExist("\Clipjump.ahk - ahk_class AutoHotkey")
+	E := WinExist("\Clipjump.exe - ahk_class AutoHotkey")
+	DetectHiddenWindows HW
+	SetTitleMatchMode TM
 
-    HW := A_DetectHiddenWindows , TM := A_TitleMatchMode
-    DetectHiddenWindows, On
-    SetTitleMatchMode, 2
-    A := WinExist("\Clipjump.ahk - ahk_class AutoHotkey")
-    E := WinExist("\Clipjump.exe - ahk_class AutoHotkey")
-    DetectHiddenWindows,% HW
-    SetTitleMatchMode,% TM
-
-    return A ? 1 : (E ? 2 : 0)
+	return A ? 1 : (E ? 2 : 0)
 }
