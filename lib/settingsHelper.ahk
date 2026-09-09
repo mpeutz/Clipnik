@@ -8,11 +8,12 @@
  * @param  {bool} flag   if 1 then enable, else disable
  * @param  {bool} write  if 1 then also write to settings file
  */
-manageWinPasteMode(flag, write=0){
+manageWinPasteMode(flag, write := 0) {
+	global
 	; disable old shortcut
-	hkZ( ( paste_k ? "$" pstIdentifier paste_k : emptyvar ) , "Paste", 0)
+	hkZ((paste_k ? "$" pstIdentifier paste_k : ""), paste, 0)
 	; set the vars
-	if (flag == 1){
+	if (flag == 1) {
 		pstIdentifier := "#"
 		pstKeyName := "LWin"
 	} else {
@@ -20,9 +21,8 @@ manageWinPasteMode(flag, write=0){
 		pstKeyName := "Ctrl"
 	}
 	; set the shortcut
-	hkZ( ( paste_k && CLIPJUMP_STATUS ? "$" pstIdentifier paste_k : emptyvar ) , "Paste")
+	hkZ((paste_k && CLIPJUMP_STATUS ? "$" pstIdentifier paste_k : ""), paste)
 	; write
-	if (write == 1){
+	if (write == 1)
 		ini_write("Advanced", "WinForPasteMode", flag, 0)
-	}
 }

@@ -7,25 +7,26 @@
 ;TIP , ABT , HST , PRV ,  SET , CNL , TRY , ACT , IGN , LNG, CHC , API , PLG _ (used for independent names)
 
 
-Translations_load(file="languages\english.txt", default_file="languages\english.txt"){
-	obj := {} , f := default_file
+Translations_load(file := "languages\english.txt", default_file := "languages\english.txt") {
+	obj := CJMap(), f := default_file
+	var := ""
 
-	if !FileExist(default_file){
-		MsgBox, 16, Warning, % TXT.LNG_error
-	}
+	if !FileExist(default_file)
+		MsgBox(TXT.LNG_error, "Warning", 16)
 
 	loop 2
 	{
-		loop, read, % f
+		if !FileExist(f)
+			continue
+		loop read f
 		{
-			if !( line := Trim(A_LoopReadLine) ) or ( Instr(line, ";") = 1 )
+			if !(line := Trim(A_LoopReadLine)) || (InStr(line, ";") = 1)
 				continue
-			p := Instr(line, "=")
-			if p = 1
-				value := Ltrim( Substr(line, 2) )   ,  obj[var] .= "`n" value
+			p := InStr(line, "=")
+			if (p = 1)
+				value := LTrim(SubStr(line, 2)), obj[var] .= "`n" value
 			else
-				var := Trim( Substr(line, 1, p-1) )   ,   value := LTrim( Substr(line, p+1) )
-				, obj[var] := value
+				var := Trim(SubStr(line, 1, p - 1)), value := LTrim(SubStr(line, p + 1)), obj[var] := value
 		}
 		p := 0
 		f := file
@@ -33,19 +34,18 @@ Translations_load(file="languages\english.txt", default_file="languages\english.
 	return obj
 }
 
-Translations_apply(){
+Translations_apply() {
 	;applies the loaded translations in vars to all GUIs and needed places
-	;channelGUI(1)
 	trayMenu(1)
 	init_actionmode()
 	Translations_fixglobalvars()
 }
 
-Translations_fixglobalvars(){
+Translations_fixglobalvars() {
 	global
 	MSG_TRANSFER_COMPLETE := valueof(TXT.TIP_copied_2)
 	CopyMessage := !ini_IsMessage ? "" : MSG_TRANSFER_COMPLETE " {" CN.Name "}"
-	
+
 	MSG_CLIPJUMP_EMPTY := TXT.TIP_empty1 "`n`n" valueof(TXT.TIP_empty2_2) "`n`n" TXT.TIP_empty3 ;not `n`n
 	MSG_ERROR := TXT.TIP_error
 	MSG_MORE_PREVIEW := TXT.TIP_more
@@ -59,10 +59,15 @@ Translations_fixglobalvars(){
 	MSG_FOLDER_PATH_COPIED := TXT.TIP_folderpath " " PROGNAME
 }
 
-Translations_loadlist(){
-	;load the lang files in dropdown form
-	loop, languages\*.txt
-		r .= Substr(A_LoopFileName, 1, -4) "|"
-		, r .= ( Substr(A_LoopFileName, 1, -4) == ini_Lang ) ? "|" : ""
-	GuiControl, 2:, ini_Lang, % "|" r
-} 
+; Fills a DropDownList control with the available language files and selects the active one.
+Translations_loadlist(ddl) {
+	global ini_LANG
+	names := []
+	loop files "languages\*.txt"
+		names.Push(SubStr(A_LoopFileName, 1, -4))
+	ddl.Delete()
+	ddl.Add(names)
+	for i, name in names
+		if (name = ini_LANG)
+			ddl.Choose(i)
+}
