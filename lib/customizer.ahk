@@ -12,40 +12,43 @@ What is supported?
  * loads customs from the ClipjumpCustom.ini file
  * @return {void}
  */
-loadCustomizations(){
+loadCustomizations() {
+	global CUSTOMS, startUpComplete
 	if !FileExist("ClipjumpCustom.ini") {
-		FileAppend, % ";Customizer File for Clipjump`n;Add your custom settings here`n`n[AutoRun]`n;auto-run items go here", ClipjumpCustom.ini
+		FileAppend(";Customizer File for Clipjump`n;Add your custom settings here`n`n[AutoRun]`n;auto-run items go here", "ClipjumpCustom.ini")
 		return
 	}
 	f := "ClipjumpCustom.ini"
 
-	IniRead, o, % f 	; load sections
-	loop, parse, o,`n, %A_space%
+	o := IniRead(f) 	; load sections
+	loop parse o, "`n", A_Space
 	{
-		Iniread, s, % f, % A_LoopField 	; read that section
-		tobj := {}
+		if (A_LoopField = "")
+			continue
+		s := IniRead(f, A_LoopField) 	; read that section
+		tobj := CJMap()
 
-		loop, parse, s,`n, %A_Space%
+		loop parse s, "`n", A_Space
 		{	; read each key
-			a := ""
-			loop % 3-Strlen(A_index)
-				a .= "0"
-			a .= A_index
-			k := Trim( Substr(A_LoopField, 1, p:=Instr(A_LoopField, "=")-1) ) , v := Trim( Substr(A_LoopField, p+2) )
-			if k=bind
+			if (A_LoopField = "")
+				continue
+			a := Format("{:03}", A_Index)
+			k := Trim(SubStr(A_LoopField, 1, p := InStr(A_LoopField, "=") - 1)), v := Trim(SubStr(A_LoopField, p + 2))
+			if (k = "bind")
 				tobj.bind := v
-			else if k=noautorun
+			else if (k = "noautorun")
 				tobj.noautorun := v
-			else tobj[a k] := v
+			else
+				tobj[a k] := v
 		}
 		if !(tobj.noautorun) && (tobj.bind = "") && !startUpComplete
 			customization_Run(tobj)
 		else if (tobj.bind != "") && (tobj.noautorun == 0) && !startUpComplete
 			customization_Run(tobj)
-		if Hparse(tobj.bind) 	; if key is valid
-			hkZ( tobj.bind := "$" Hparse(tobj.bind), "CustomHotkey", 1 ) ; create hotkey
-			, CUSTOMS[tobj.bind] := {}
-			, CUSTOMS[tobj.bind] := tobj.Clone()
+		if Hparse(tobj.bind) { 	; if key is valid
+			hkZ(tobj.bind := "$" Hparse(tobj.bind), CustomHotkey, 1) ; create hotkey
+			CUSTOMS[tobj.bind] := tobj.Clone()
+		}
 		CUSTOMS["_" A_LoopField] := tobj.Clone() 	; store section object for use later
 	}
 }
@@ -55,13 +58,41 @@ loadCustomizations(){
  * reset all customizations applied in Clipjump, including the hotkey bindings
  * @return {void}
  */
-resetCustomizations(){
-	for k,v in CUSTOMS
+resetCustomizations() {
+	global CUSTOMS
+	for k, v in CUSTOMS
 	{
 		if InStr(k, "_") != 1
-			hkZ(v.bind, "CustomHotkey", 0) 	; unregister hk
+			hkZ(v.bind, CustomHotkey, 0) 	; unregister hk
 	}
-	CUSTOMS := {}
+	CUSTOMS := CJMap()
+}
+
+
+; Resolves "name", "obj.key" or "obj.key.key2" to its current value.
+resolveVarPath(path) {
+	if !InStr(path, ".")
+		return VarGet(Trim(path))
+	parts := StrSplit(path, ".")
+	val := VarGet(Trim(parts[1]))
+	loop parts.Length - 1
+		val := IsObject(val) ? val[Trim(parts[A_Index + 1])] : ""
+	return val
+}
+
+; Assigns to "name", "obj.key" or "obj.key.key2".
+assignVarPath(path, value) {
+	if !InStr(path, ".") {
+		VarSet(Trim(path), value)
+		return
+	}
+	parts := StrSplit(path, ".")
+	target := VarGet(Trim(parts[1]))
+	if !IsObject(target)
+		return
+	loop parts.Length - 2
+		target := target[Trim(parts[A_Index + 1])]
+	target[Trim(parts[parts.Length])] := value
 }
 
 
@@ -70,58 +101,40 @@ resetCustomizations(){
  * @param  {array} obj customization object containing key-value pairs of commands in it
  * @return {void}
  */
-customization_Run(obj){
-	for k,v in obj
+customization_Run(obj) {
+	if !IsObject(obj)
+		return
+	for k, v in obj
 	{
-		k := Ltrim(k, "0123456789") 	; correct key
-		isf := ((k=="run") && Instr(v,"("))
+		k := LTrim(k, "0123456789") 	; correct key
+		isf := ((k == "run") && InStr(v, "("))
 		loop { 			; change %..% vars to keys
-			if !($op1 := Instr(v, "%", 0, 1, 1)) || !($op2 := Instr(v, "%", 0, 1, 2))
+			if !($op1 := InStr(v, "%", , 1, 1)) || !($op2 := InStr(v, "%", , 1, 2))
 				break
-			$match := Substr(v, $op1, $op2-$op1+1)
-			$var := Substr($match,2,-1)
+			$match := SubStr(v, $op1, $op2 - $op1 + 1)
+			$var := SubStr($match, 2, -1)
 
 			if RegExMatch($var, "iU)^[^ `t]+\(.*\)$")
 				$var := RunFunc($var)
-			else if Instr($var, ".")
-			{
-				loop, parse, $var,`.
-					$j%A_index% := Trim(A_LoopField) , $n := A_index-1
-				if $n=1
-					$var := %$j1%[$j2]
-				if $n=2
-					$var := %$j1%[$j2][$j3]
-			}
-			else $var := %$var%
-			StringReplace, v, v, % $match, % ( isf ? """" $var """" : $var )
+			else
+				$var := resolveVarPath($var)
+			v := StrReplace(v, $match, (isf ? '"' $var '"' : $var), , , 1)
 		}
 
-		if k = run
-		{
-			if !Instr(v, "(")
-				gosub % IsLabel(v) ? v : "keyblocker"
-			else 
+		if (k = "run") {
+			if !InStr(v, "(")
+				actionFor(v)()
+			else
 				ans := RunFunc(v)
 		}
-		else if k = tip
+		else if (k = "tip")
 			autoTooltip(v, 1000, 8)
-		else if k = send
-			SendInput, % RegExMatch( g:=HParse(v), "[#!\^\+]" ) = 1 ? g : v				; parse keys like Ctrl+Alt+k
-		else if k = sleep
-			sleep % v
-		else if (k != "bind") or (k != "noautorun")
-		{
-			if Instr(k,".")
-			{
-				loop, parse, k,`.
-					$j%A_index% := Trim(A_LoopField) , $n := A_index-1
-				if $n=1
-					%$j1%[$j2] := v
-				if $n=2
-					%$j1%[$j2][$j3] := v
-			}
-			else %k% := v
-		}
+		else if (k = "send")
+			SendInput(RegExMatch(g := HParse(v), "[#!\^\+]") = 1 ? g : v)				; parse keys like Ctrl+Alt+k
+		else if (k = "sleep")
+			Sleep(v)
+		else if (k != "bind") && (k != "noautorun")
+			assignVarPath(k, v)
 	}
 }
 
@@ -131,65 +144,57 @@ customization_Run(obj){
  * @param {string} v function string
  * @Return output of function
  */
-RunFunc(v){
+RunFunc(v) {
 ; runs dynamic functions
 	static rk := "ª"
 	static dq := "§"
 
-	fn := Substr(v, 1, Instr(v,"(")-1)
-	pms := Substr(v, Instr(v,"(")+1, -1) , ps := {}
-	; loop, parse, pms,`,, %A_Space%
-	; 	ps.Insert( RegExReplace(A_LoopField, rk, ",") )
-	StringReplace, pms, pms, % """""", % dq, All
+	fn := SubStr(v, 1, InStr(v, "(") - 1)
+	pms := SubStr(v, InStr(v, "(") + 1, -1), ps := []
+	pms := StrReplace(pms, '""', dq)
 	pmsbk := Trim(pms)
-	
-	while (Trim(pmsbk) != ""){
-		if ( Instr(pmsbk, """") == 1 ){
-			endb := Instr(pmsbk, """", 0, 2)
-			z1 := RegExReplace( Substr(pmsbk, 2, endb-2) , rk, ",")
-			ps.Insert( RegExReplace(z1, dq, """") )
-			pmsbk := Substr(pmsbk, endb+1) ; skip quotes
+
+	while (Trim(pmsbk) != "") {
+		if (InStr(pmsbk, '"') == 1) {
+			endb := InStr(pmsbk, '"', , 1, 2)
+			z1 := RegExReplace(SubStr(pmsbk, 2, endb - 2), rk, ",")
+			ps.Push(RegExReplace(z1, dq, '"'))
+			pmsbk := SubStr(pmsbk, endb + 1) ; skip quotes
 			pmsbk := Trim(pmsbk) ; ---
-			pmsbk := Substr(pmsbk, 2) ; and then comma
+			pmsbk := SubStr(pmsbk, 2) ; and then comma
 		} else { ; comma separated params
-			endb := !Instr(pmsbk, ",")?10000:Instr(pmsbk, ",")
-			z1 := RegExReplace( Substr(pmsbk, 1, endb-1) , rk, ",")
-			ps.Insert(z1)
-			pmsbk := Substr(pmsbk, endb+1)
+			endb := !InStr(pmsbk, ",") ? 10000 : InStr(pmsbk, ",")
+			z1 := RegExReplace(SubStr(pmsbk, 1, endb - 1), rk, ",")
+			ps.Push(z1)
+			pmsbk := SubStr(pmsbk, endb + 1)
 		}
 	}
 
-	n := ps.MaxIndex()
 	; API functions
-	if Instr(fn, "."){
-		str := "API:" , str .= Substr(fn, Instr(fn,".")+1)
-		loop % n
+	if InStr(fn, ".") {
+		str := "API:" SubStr(fn, InStr(fn, ".") + 1)
+		for temp in ps
 		{
-			temp := ps[A_Index]
-			StringReplace, temp, temp, % "`r`n", % "`n", All
-			StringReplace, temp, temp, % "`r", % "`n", All
+			temp := StrReplace(temp, "`r`n", "`n")
+			temp := StrReplace(temp, "`r", "`n")
 			str .= "`r" temp
 		}
-		return r := Act_API(str, "API:")
+		return Act_API(str, "API:")
 	}
 	; else normal function
-	if !n
-		r := %fn%()
-	else if n=1
-		r := %fn%(ps.1)
-	else if n=2
-		r := %fn%(ps.1, ps.2)
-	else if n=3
-		r := %fn%(ps.1, ps.2, ps.3)
-	else if n=4
-		r := %fn%(ps.1, ps.2, ps.3, ps.4)
-	return r
+	f := FuncByName(Trim(fn))
+	if !f {
+		errMsgBox("Unknown function: " fn)
+		return ""
+	}
+	return f(ps*)
 }
 
 
 /**
- * The label to run any hotkey created in Clipjump Custom
+ * The hotkey callback for any hotkey created in Clipjump Custom
  */
-CustomHotkey:
-	customization_Run( CUSTOMS[A_ThisHotkey] )
-	return
+CustomHotkey(ThisHotkey, *) {
+	global CUSTOMS
+	customization_Run(CUSTOMS[ThisHotkey])
+}

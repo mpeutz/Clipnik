@@ -5,74 +5,63 @@
  * @param {string} D string with the function call
  * @param {string} k api prefix, here 'api:'
  */
-Act_API(D, k){
-	static cbF := A_temp "\cjcb.txt"
+Act_API(D, k) {
+	static cbF := A_Temp "\cjcb.txt"
 	static rFuncs := "|getClipAt|getClipLoc|getVar|runFunction|getClipDataByTag"
 	static resChar := "`r"
 
-	fname := Substr(  D, l := Strlen(k)+1, ( Instr(D, resChar)?Instr(D, resChar):Strlen(D)+1 ) -l  )
-	p := Trim(Substr( D, Instr(D, resChar) ? Instr(D, resChar)+1 : 2000000 ))
-	ps := {}
-	loop, parse, p, % resChar
-		ps.Insert(A_LoopField)
-	n := ps.MaxIndex()
+	fname := SubStr(D, l := StrLen(k) + 1, (InStr(D, resChar) ? InStr(D, resChar) : StrLen(D) + 1) - l)
+	p := Trim(SubStr(D, InStr(D, resChar) ? InStr(D, resChar) + 1 : 2000000))
+	ps := []
+	if (p != "")
+		loop parse p, resChar
+			ps.Push(A_LoopField)
 
-	if !n
-		r := API[fname]()
-	if n=1
-		r := API[fname](ps.1)
-	else if n=2
-		r := API[fname](ps.1, ps.2)
-	else if n=3
-		r := API[fname](ps.1, ps.2, ps.3)
-	else if n=4
-		r := API[fname](ps.1, ps.2, ps.3, ps.4)
-	else if n=5
-		r := API[fname](ps.1, ps.2, ps.3, ps.4, ps.5)
+	r := API.%fname%(ps*)
 
-	if Instr(rFuncs, "|" fname "|")
-		FileAppend, % r, % cbF
+	if InStr(rFuncs, "|" fname "|")
+		FileAppend(r, cbF)
 	return r
 }
 
 
 /**
  * API Class
- * includes all methods accessible through the api
+ * includes all methods accessible through the api (all static, called as API.method())
  */
 class API
 {
 	; pastes clips from certain postion in certain channel
 	; if both are blank, paste 1st clip from currently active channel
-	paste(channel="", clipno=""){
+	static paste(channel := "", clipno := "") {
+		global IsCurCBActive, CLIPS_dir, TEMPSAVE
 		this.blockMonitoring(1)
-		if  (channel="") && (clipno="")
-		{
+		if (channel = "") && (clipno = "") {
 			if !IsCurCBActive
-				try FileRead, Clipboard, *c %A_WorkingDir%\%CLIPS_dir%\%TEMPSAVE%.avc
+				try A_Clipboard := ClipboardAll(FileRead(A_WorkingDir "\" CLIPS_dir "\" TEMPSAVE ".avc", "RAW"))
 		}
 		else {
 			r := this.getClipLoc(channel, clipno)
 			try_ClipboardFromFile(r, 10)
-			;try Fileread, Clipboard, *c %r%
 		}
 
-		Send ^{vk56}
+		Send("^{vk56}")
 		this.blockMonitoring(0)
 	}
 
 	; get Clip content
-	; toreturn = 1 < return Clipboard text data > 
+	; toreturn = 1 < return Clipboard text data >
 	; toreturn = 2 < return ClipboardAll binary data >
-	getClipAt(channel=0, clipno=1, toreturn=1, Byref err=""){
-		if toreturn=1
-			ret := CDS[channel][ this.getChStrength(channel)-clipno+1 ]
+	static getClipAt(channel := 0, clipno := 1, toreturn := 1, &err := "") {
+		global CDS
+		if (toreturn = 1)
+			ret := CDS[channel][this.getChStrength(channel) - clipno + 1]
 		else {
 			this.blockMonitoring(1)
 			r := this.getClipLoc(channel, clipno)
-			try Fileread, Clipboard, *c %r%
-			err := GetClipboardformat()="" ? 0 : 1
-			ret := ClipboardAll
+			try A_Clipboard := ClipboardAll(FileRead(r, "RAW"))
+			err := GetClipboardFormat() = "" ? 0 : 1
+			ret := ClipboardAll()
 			this.blockMonitoring(0)
 		}
 		return ret
@@ -81,45 +70,47 @@ class API
 	; 0 = cut , 1 = copy
 	; if channel is empty, active channel is used
 	; if clip is empty, active clip in paste mode (Clip x of y, "x") is used.
-	manageClip(new_channel=0, channel="", clip="", flag=0){
-		if channel=
+	static manageClip(new_channel := 0, channel := "", clip := "", flag := 0) {
+		global CN, CDS, CPS, CURSAVE, TEMPSAVE, IsCurCBActive
+		if (channel = "")
 			channel := CN.NG
 		c_info := this.getChInfo(channel)
-		if clip =
+		if (clip = "")
 			clip := c_info.realTEMPSAVE
-		else clip := c_info.realCURSAVE - clip + 1
+		else
+			clip := c_info.realCURSAVE - clip + 1
 		nc_info := this.getChInfo(new_channel)
 
-		origClip := "cache\clips" c_info.p "\" clip ".avc" , origThumb := "cache\thumbs" c_info.p "\" clip ".jpg"
-		newClip := "cache\clips" nc_info.p "\" nc_info.realCURSAVE + 1 ".avc"
-		newThumb := "cache\thumbs" nc_info.p "\" nc_info.realCURSAVE + 1 ".jpg"
+		origClip := "cache\clips" c_info.p "\" clip ".avc", origThumb := "cache\thumbs" c_info.p "\" clip ".jpg"
+		newClip := "cache\clips" nc_info.p "\" (nc_info.realCURSAVE + 1) ".avc"
+		newThumb := "cache\thumbs" nc_info.p "\" (nc_info.realCURSAVE + 1) ".jpg"
 
 		; process
 		if flag
 		{
-			FileTransfer(origClip, newClip) , FileTransfer(origThumb, newThumb)
-			CDS[new_channel][nc_info.realCURSAVE+1] := CDS[channel][clip]
-			CPS[new_channel][nc_info.realCURSAVE+1] := CPS[channel][clip]
-			manageFIXATE( nc_info.realCURSAVE + 1, new_channel, nc_info.p)
+			FileTransfer(origClip, newClip), FileTransfer(origThumb, newThumb)
+			CDS[new_channel][nc_info.realCURSAVE + 1] := CDS[channel][clip]
+			CPS[new_channel][nc_info.realCURSAVE + 1] := CPS[channel][clip]
+			manageFIXATE(nc_info.realCURSAVE + 1, new_channel, nc_info.p)
 		}
 		else
 		{
-			FileTransfer(origClip, newClip, 0) , FileTransfer(origThumb, newThumb, 0)
-			CPS[new_channel][nc_info.realCURSAVE+1] := CPS[channel][clip] , CPS[channel].remove(Clip) ; .remove() auto adjusts cavities in array
-			CDS[new_channel][nc_info.realCURSAVE+1] := CDS[channel][clip] , CDS[channel].remove(Clip) 
-			c_Folder1 := "cache\clips" c_info.p "\" , c_Folder2 := "cache\thumbs" c_info.p "\"
-			loop % c_info.realCURSAVE-clip
+			FileTransfer(origClip, newClip, 0), FileTransfer(origThumb, newThumb, 0)
+			CPS[new_channel][nc_info.realCURSAVE + 1] := CPS[channel][clip], CPS[channel].Remove(clip) ; .remove() auto adjusts cavities in array
+			CDS[new_channel][nc_info.realCURSAVE + 1] := CDS[channel][clip], CDS[channel].Remove(clip)
+			c_Folder1 := "cache\clips" c_info.p "\", c_Folder2 := "cache\thumbs" c_info.p "\"
+			loop c_info.realCURSAVE - clip
 			{
-				FileMove, % c_Folder1 clip+A_Index ".avc", % c_Folder1 clip+A_Index-1 ".avc", 1
-				FileMove, % c_Folder2 clip+A_Index ".jpg", % c_Folder2 clip+A_index-1 ".jpg", 1
+				try FileMove(c_Folder1 (clip + A_Index) ".avc", c_Folder1 (clip + A_Index - 1) ".avc", 1)
+				try FileMove(c_Folder2 (clip + A_Index) ".jpg", c_Folder2 (clip + A_Index - 1) ".jpg", 1)
 			}
 
-			if (new_channel == channel){
-				ClipTransfer(c_info.p, nc_info.realCURSAVE+1, c_info.p, nc_info.realCURSAVE, 0)
+			if (new_channel == channel) {
+				ClipTransfer(c_info.p, nc_info.realCURSAVE + 1, c_info.p, nc_info.realCURSAVE, 0)
 				; no need for changing arr as .remove() handles it
 				return
 			}
-			manageFIXATE( nc_info.realCURSAVE + 1, new_channel, nc_info.p )
+			manageFIXATE(nc_info.realCURSAVE + 1, new_channel, nc_info.p)
 			IsCurCBActive := 0
 		}
 		; fix vars
@@ -132,84 +123,88 @@ class API
 			CN["CURSAVE" c_info.p] -= 1
 			CN["TEMPSAVE" c_info.p] -= (CN["TEMPSAVE" c_info.p] > CN["CURSAVE" c_info.p]) ? 1 : 0 	; if the 29th file of 29 files was deleted and 29 was active
 			if c_info.isactive
-				CURSAVE -= 1 , TEMPSAVE -= (TEMPSAVE > CURSAVE) ? 1 : 0
+				CURSAVE -= 1, TEMPSAVE -= (TEMPSAVE > CURSAVE) ? 1 : 0
 		}
 		return
 	}
 
 	; if channel no is empty, it DEFAULTS to current channel
 	; you can also use name of a channel > like API.emptyChannel("web")
-	emptyChannel(chno=""){
-		if chno =
+	static emptyChannel(chno := "") {
+		global CN, CDS, CPS, CURSAVE, TEMPSAVE, LASTCLIP
+		if (chno = "")
 			chno := CN.NG
-		if chno is not Integer
+		if !IsInteger(chno)
 			chno := channel_find(chno)
-		CDS[chno] := {} , CPS[chno] := {}
+		CDS[chno] := CJMap(), CPS[chno] := CJMap()
 		f := this.getChInfo(chno)
-		FileDelete, % "cache\clips" f.p "\*.avc"
-		FileDelete, % "cache\thumbs" f.p "\*.jpg"
-		FileDelete, % "cache\clips" f.p "\prefs.ini"
-		;FileDelete, % "cache\fixate" f.p "\*.fxt"
+		try FileDelete("cache\clips" f.p "\*.avc")
+		try FileDelete("cache\thumbs" f.p "\*.jpg")
+		try FileDelete("cache\clips" f.p "\prefs.ini")
 		CN["CURSAVE" f.p] := CN["TEMPSAVE" f.p] := 0
 		if f.isactive
-			CURSAVE := TEMPSAVE := 0 , LASTCLIP := ""
+			CURSAVE := TEMPSAVE := 0, LASTCLIP := ""
 	}
 
 	;runs a plugin
 	; filename - filename of plugin with .ahk . Example > pformat.noformatting.ahk
 	; parameters - if no parameter is passed, function itself obtains them.
-	runPlugin(filename, parameters*){
-		for k,v in PLUGINS["<>"]
+	static runPlugin(filename, parameters*) {
+		global PLUGINS, TXT
+		fpath := "", plugin_displayname := "", dirNum := "", Silent := ""
+		for k, v in PLUGINS["<>"]
 		{
-			if ( v["plugin_path"] == filename )
-			{
-				fpath := v["*"] , plugin_displayname := v["name"] , dirNum := v["#"] , Silent := v["silent"]
+			if (v["plugin_path"] == filename) {
+				fpath := v["*"], plugin_displayname := v["name"], dirNum := v["#"], Silent := v["silent"]
 				break
 			}
 		}
 		; run
 		if FileExist(fpath) {
-			if !parameters.maxIndex() && !Silent {
+			params := ""
+			if !parameters.Length && !Silent {
 				loop 3
-					If PLUGINS["<>"][dirNum].hasKey("param" A_index) {
-						Inputbox, param, % "Plugin " plugin_displayname, % PLUGINS["<>"][dirNum]["param" A_index],, 500
-						if ErrorLevel=0
-							params .= " """ param """" 	;if OK
-						else return
+					if PLUGINS["<>"][dirNum].HasKey("param" A_Index) {
+						ib := InputBox(PLUGINS["<>"][dirNum]["param" A_Index], "Plugin " plugin_displayname, "w500")
+						if (ib.Result = "OK")
+							params .= ' "' ib.Value '"' 	;if OK
+						else
+							return
 					}
-					else break
+					else
+						break
 			} else {
-				for k,v in parameters
-					params .= " """ v """"
+				for k, v in parameters
+					params .= ' "' v '"'
 			}
 
-			try Run % A_AhkPath " """ A_WorkingDir "\" fpath """" params
-			catch 
-				MsgBox, 16, Error, % TXT.API_extPlugMiss . "`n" fpath
+			try Run(A_AhkPath ' "' A_WorkingDir "\" fpath '"' params)
+			catch
+				MsgBox(TXT.API_extPlugMiss . "`n" fpath, "Error", 16)
 		}
 		else {
-			if !IsFunc(fpath)
-			{
-				MsgBox, 16, Error, % TXT.API_plugCorrupt "`n" plugin_displayname
+			if !HasFuncByName(fpath) {
+				MsgBox(TXT.API_plugCorrupt "`n" plugin_displayname, "Error", 16)
 				return
 			}
-			; else execture
-			if !parameters.maxIndex() && !Silent {
-				funcobj := Func(fpath) , funcps := ""
-				loop % funcobj.maxParams
+			; else execute
+			funcps := ""
+			if !parameters.Length && !Silent {
+				funcobj := FuncByName(fpath)
+				loop funcobj.MaxParams
 				{
-					prompt := ""
-					prompt := PLUGINS["<>"][dirNum]["param" A_index]
-					if prompt=
-						prompt := "#" A_index " " TXT.PLG_fetchparam
-					InputBox, param, % "Plugin " plugin_displayname, % prompt,, 500
-					if ErrorLevel=0
-						funcps .= RegexReplace(param, ",", "ª") ","
-					else return
+					prompt := PLUGINS["<>"][dirNum]["param" A_Index]
+					if (prompt = "")
+						prompt := "#" A_Index " " TXT.PLG_fetchparam
+					ib := InputBox(prompt, "Plugin " plugin_displayname, "w500")
+					if (ib.Result = "OK")
+						funcps .= RegExReplace(ib.Value, ",", "ª") ","
+					else
+						return
 				}
 			} else {
-				for k,v in parameters
-					funcps .= Regexreplace(v, ",", "ª") ","
+				for k, v in parameters
+					funcps .= RegExReplace(v, ",", "ª") ","
 			}
 			ret := runfunc(fpath "(" RTrim(funcps, ",") ")")
 			return ret
@@ -217,24 +212,25 @@ class API
 	}
 
 	; shows paste mode tooltip with search at the passed channel and clip posn
-	showPasteTipAt(ch, cl, x="", y=""){
-		_tmpsv := TEMPSAVE , _cnl := CN.NG, _cursv := CURSAVE
-		CN["CURSAVE" CN.N] := CURSAVE , CN["TEMPSAVE" CN.N] := TEMPSAVE 	; load all values in CN obj
-		v := API.getChStrength(ch)-cl+1
+	static showPasteTipAt(ch, cl, x := "", y := "") {
+		global CN, CURSAVE, TEMPSAVE, SPM
+		_tmpsv := TEMPSAVE, _cnl := CN.NG, _cursv := CURSAVE
+		CN["CURSAVE" CN.N] := CURSAVE, CN["TEMPSAVE" CN.N] := TEMPSAVE 	; load all values in CN obj
+		v := API.getChStrength(ch) - cl + 1
 		changeChannel(ch, 0)
 		TEMPSAVE := v
 		SPM.ACTIVE := 1
-		SPM.X := x , SPM.Y := y
-		gosub paste
-		gosub searchpm
+		SPM.X := x, SPM.Y := y
+		paste()
+		searchpm()
 		SPM.TEMPSAVE := _tmpsv
 		SPM.Channel := _cnl
 	}
 
 	; returns the contents of first element with tag
-	getClipDataByTag(tag){
+	static getClipDataByTag(tag) {
 		robj := this.getClipByTag(tag)
-		for k,v in robj
+		for k, v in robj
 			return this.getClipAt(v[1], v[2])
 	}
 
@@ -242,43 +238,45 @@ class API
 	; RETURN
 	; channel at index 0 and clip at 1
 	; example - [ [0,1] , [0,2] ]
-	getClipByTag(tag){
-		robj := {}
-		for k,v in CPS
+	static getClipByTag(tag) {
+		global CPS
+		robj := []
+		for k, v in CPS
 		{
 			mindex := this.getChStrength(k)
-			for k2,item in v
-				if Instr(" " Trim(item["Tags"]) " ", " " tag " ")
-					robj.insert( [k, mindex-k2+1] )
+			for k2, item in v
+				if IsObject(item) && InStr(" " Trim(item["Tags"]) " ", " " tag " ")
+					robj.Push([k, mindex - k2 + 1])
 		}
 		return robj
 	}
 
 	; runs any other function like choosechannelgui() , changeChannel()
-	runFunction(funcString){
+	static runFunction(funcString) {
 		return runFunc(funcString)
 	}
 
-	; runs the Label
-	runLabel(label){
-		gosub % ( IsLabel(label) ? label : "emptylabel" )
+	; runs the Label (v1 label names resolve through the ACTIONS map)
+	static runLabel(label) {
+		actionFor(label)()
 	}
 
 	; gets total no of clips in a channel
-	getChStrength(channel){
+	static getChStrength(channel) {
 		o := API.getChInfo(channel)
 		return o.realCURSAVE
 	}
-	
+
 	; deletes a clip
-	deleteClip(channel, clip){
-		Critical
-		if (channel = "") or (clip = "")
+	static deleteClip(channel, clip) {
+		global CN, CURSAVE, TEMPSAVE
+		Critical "On"
+		if (channel = "") || (clip = "")
 			return 0
-		zbkCh := CN.NG , zbkClip := TEMPSAVE	; create backup of current channel
-		CN["CURSAVE" CN.N] := CURSAVE , CN["TEMPSAVE" CN.N] := TEMPSAVE
+		zbkCh := CN.NG, zbkClip := TEMPSAVE	; create backup of current channel
+		CN["CURSAVE" CN.N] := CURSAVE, CN["TEMPSAVE" CN.N] := TEMPSAVE
 		changeChannel(channel)
-		clearClip( API.getChStrength(channel) - clip + 1 )
+		clearClip(API.getChStrength(channel) - clip + 1)
 		changeChannel(zbkCh)
 		;if (channel != zbkCh)  ; this was bcuz when clip from channel that was already active was deleted, tempsave can get invalid
 			TEMPSAVE := zbkClip
@@ -287,174 +285,180 @@ class API
 
 	; adds clip to a chanel
 	; input = the string that is created as a new clip
-	; isbinary = 1 - makes the function take 'input' as binary
-	addClip(channel, byref input, isbinary := 0){
+	; isbinary = 1 - makes the function take 'input' as binary (a ClipboardAll object)
+	static addClip(channel, input, isbinary := 0) {
+		global CN, CDS, CURSAVE
 		cInfo := API.getChInfo(channel)
 		if isbinary {
 			ret := input
 			input := this.Binary2Text(ret)
 		}
 		else
-			API.Text2Binary(input, ret)
-		FileAppend, %ret%, % "cache\clips" cInfo.p "\" cInfo.realCURSAVE+1 ".avc"
-		CDS[channel][cInfo.realCURSAVE+1] := input
-		manageFIXATE( cInfo.realCURSAVE + 1, channel, cInfo.p )
+			API.Text2Binary(input, &ret)
+		FileAppend(ret, "cache\clips" cInfo.p "\" (cInfo.realCURSAVE + 1) ".avc")
+		CDS[channel][cInfo.realCURSAVE + 1] := input
+		manageFIXATE(cInfo.realCURSAVE + 1, channel, cInfo.p)
 		CN["CURSAVE" cInfo.p] += 1
 		if cInfo.isactive
 			CURSAVE += 1 	; also cursave if it is active
 	}
 
-	; sets a variable
-	setVar(var, value){
-		global
+	; sets a variable (supports obj.key and obj.key.key2 paths)
+	static setVar(var, value) {
 		value := valueOf(value)
-		if Instr(var,".")
-		{
-			loop, parse, var,`.
-				$j%A_index% := Trim(A_LoopField) , $n := A_index-1
-			if $n=1
-				%$j1%[$j2] := value
-			if $n=2
-				%$j1%[$j2][$j3] := value
+		if InStr(var, ".") {
+			parts := StrSplit(var, ".")
+			target := VarGet(Trim(parts[1]))
+			if !IsObject(target)
+				return
+			loop parts.Length - 2
+				target := target[Trim(parts[A_Index + 1])]
+			target[Trim(parts[parts.Length])] := value
 		}
-		else %var% := value
+		else
+			VarSet(var, value)
 	}
 
 	;gets a variable value
-	getVar(var){
+	static getVar(var) {
 		return valueOf("%" var "%")
 	}
 
 	; EXecute a section in the ClipjumpCustom.ini
-	ExecuteSection(secName){
-		customization_Run( CUSTOMS["_" secName] )
+	static ExecuteSection(secName) {
+		global CUSTOMS
+		customization_Run(CUSTOMS["_" secName])
 	}
-	
+
 	; p=1 enable incognito mode
-	IncognitoMode(p=1){
+	static IncognitoMode(p := 1) {
+		global NOINCOGNITO
 		NOINCOGNITO := p  		; make it the opp as incognito: will change the sign
-		gosub incognito
+		incognito()
 	}
 
 	; get Clips file location
-	getClipLoc(channel="", clipno=""){
-		if channel=
+	static getClipLoc(channel := "", clipno := "") {
+		global CN, CURSAVE
+		if (channel = "")
 			channel := CN.NG
-		if clipno=
+		if (clipno = "")
 			clipno := 1
 		p := !channel ? "" : channel
-		z := (CN.NG==channel) ? CURSAVE : CN["CURSAVE" p] 		;chnl CURSAVE is not updated everytime but when channel is changed. 
-		f := A_WorkingDir "\cache\clips" p "\" z-clipno+1 ".avc"
+		z := (CN.NG == channel) ? CURSAVE : CN["CURSAVE" p] 		;chnl CURSAVE is not updated everytime but when channel is changed.
+		f := A_WorkingDir "\cache\clips" p "\" (z - clipno + 1) ".avc"
 		return FileExist(f) ? f : ""
 	}
 
 	;disable Clipjump - status=1 means disable , status=-1 means toggle
-	disable(status=1){
+	static disable(status := 1) {
+		global CLIPJUMP_STATUS
 		status .= ""
 		if (status == "-1")
-			gosub disable_clipjump
-		else if (status=="1" && CLIPJUMP_STATUS)
-			gosub disable_clipjump
-		else if (status=="0" && !CLIPJUMP_STATUS)
-			gosub disable_clipjump
+			disable_clipjump()
+		else if (status == "1" && CLIPJUMP_STATUS)
+			disable_clipjump()
+		else if (status == "0" && !CLIPJUMP_STATUS)
+			disable_clipjump()
 	}
 
 	;blocks CB monitoring
-	blockMonitoring(yes=1, sleeptime=10){
-		Critical, Off 		; necessary to let onclipboard break process if needed
+	static blockMonitoring(yes := 1, sleeptime := 10) {
+		global CALLER, ONCLIPBOARD, CALLER_STATUS
+		Critical "Off" 		; necessary to let onclipboard break process if needed
 		if yes
 		{
-			CALLER := 0 , ONCLIPBOARD := ""
+			CALLER := 0, ONCLIPBOARD := ""
 			while CALLER
-				sleep % sleeptime
+				Sleep sleeptime
 		} else {
 			while !ONCLIPBOARD
 			{
-				sleep % sleeptime
-				if (sleeptime*A_index) > 1000
+				Sleep sleeptime
+				if (sleeptime * A_Index) > 1000
 					break
 			}
 			CALLER := CALLER_STATUS
 		}
 	}
-	
+
 	;pastes the given text without copying it to clipjump
-	pasteText(Text){
+	static pasteText(Text) {
 		this.blockMonitoring(1)
-		try 
-			oldclip := ClipboardAll
-		Clipboard := Text
-		this.blockMonitoring(0) , this.blockMonitoring(1) 	;2 times cb change, so reset onclipboard var
-		sleep 100
-		Send ^{vk56}
-		sleep 100
-		Clipboard := oldclip
+		oldclip := ""
+		try oldclip := ClipboardAll()
+		A_Clipboard := Text
+		this.blockMonitoring(0), this.blockMonitoring(1) 	;2 times cb change, so reset onclipboard var
+		Sleep 100
+		Send("^{vk56}")
+		Sleep 100
+		try A_Clipboard := oldclip
 		this.blockMonitoring(0)
 	}
 
 	;gets binary ClipboardAll data from simple text
 	; Text = the string you want to convert to ClipboardAll
 	; returnVar = byref variable to return ClipboardAll data
-	Text2Binary(Text, byref returnVar){
+	static Text2Binary(Text, &returnVar) {
 		this.blockMonitoring(1)
 		try {
-			oldclip := ClipboardAll
-			Clipboard := Text
-			this.blockMonitoring(0) , this.blockMonitoring(1)
-			returnVar := ClipboardAll
-			Clipboard := oldclip
+			oldclip := ClipboardAll()
+			A_Clipboard := Text
+			this.blockMonitoring(0), this.blockMonitoring(1)
+			returnVar := ClipboardAll()
+			A_Clipboard := oldclip
 			Error := 0
 		}
-		catch 
+		catch
 			Error := 1
 		this.blockMonitoring(0)
 		return Error
 	}
 
 	;Tooltip for plugins
-	showTip(Text, forTime=""){
+	static showTip(Text, forTime := "") {
 		if forTime
 			autoTooltip(Text, forTime, 7)
 		else
-			Tooltip, % Text,,, 7
-		;tooltip_setfont("s9", "Courier")
+			ToolTip(Text, , , 7)
 	}
 
 	; removes the above tip
-	removeTip(){
-		ToolTip,,,, 7
+	static removeTip() {
+		ToolTip(, , , 7)
 	}
 
 	; get the text from a ClipboardAll binary
-	Binary2Text(byref binary){
+	static Binary2Text(binary) {
 		this.blockMonitoring(1)
-		try 
-			Clipboard := binary
-		out := trygetvar("Clipboard")
+		try A_Clipboard := binary
+		out := tryGetClipboard()
 		this.blockMonitoring(0)
 		return out
 	}
 
 	;------------------------
-	;---- API HELPER FUNCS --	
+	;---- API HELPER FUNCS --
 	;------------------------
 
 
 	; returns obj full of channel information data
 	; ret=0 returns string
-	getChInfo(c="", ret=1){
-		if c=
+	static getChInfo(c := "", ret := 1) {
+		global CN, CURSAVE, TEMPSAVE
+		if (c = "")
 			c := CN.NG
-		o := {}
-		if CN.NG == c
+		o := CJMap()
+		if (CN.NG == c)
 			o.isactive := 1
 		o.p := p := !c ? "" : c
-		o.realCURSAVE := o.isactive ? CURSAVE : CN["CURSAVE" p] , o.channelCURSAVE := CN["CURSAVE" p]
-		o.realTEMPSAVE := o.isactive ? TEMPSAVE : CN["TEMPSAVE" p] , o.channelTEMPSAVE := CN["TEMPSAVE" p]
+		o.realCURSAVE := o.isactive ? CURSAVE : CN["CURSAVE" p], o.channelCURSAVE := CN["CURSAVE" p]
+		o.realTEMPSAVE := o.isactive ? TEMPSAVE : CN["TEMPSAVE" p], o.channelTEMPSAVE := CN["TEMPSAVE" p]
 		if ret
 			return o
 		; make string
-		for k,v in o
+		str := ""
+		for k, v in o
 			str .= k "`t" v "`n"
 		return str
 	}

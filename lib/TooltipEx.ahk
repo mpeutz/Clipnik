@@ -35,34 +35,34 @@
 ; Return values:
 ;     On success: The HWND of the ToolTip window.
 ;     On failure: False (ErrorLevel contains additional informations)
-; ======================================================================================================================
+; Ported to AutoHotkey v2 for Clipjump. Behavior unchanged; Buffers replace VarSetCapacity.
 
-ToolTipEx(Text:="", X:="", Y:="", WhichToolTip:=1, HFONT:="", BgColor:="", TxColor:="", HICON:="", CoordMode:="W") {
+ToolTipEx(Text := "", X := "", Y := "", WhichToolTip := 1, HFONT := "", BgColor := "", TxColor := "", HICON := "", CoordMode := "W") {
 	; ToolTip messages
-	Static ADDTOOL  := A_IsUnicode ? 0x0432 : 0x0404 ; TTM_ADDTOOLW : TTM_ADDTOOLA
+	Static ADDTOOL  := 0x0432 ; TTM_ADDTOOLW
 	Static BKGCOLOR := 0x0413 ; TTM_SETTIPBKCOLOR
 	Static MAXTIPW  := 0x0418 ; TTM_SETMAXTIPWIDTH
 	Static SETMARGN := 0x041A ; TTM_SETMARGIN
 	Static SETTHEME := 0x200B ; TTM_SETWINDOWTHEME
-	Static SETTITLE := A_IsUnicode ? 0x0421 : 0x0420 ; TTM_SETTITLEW : TTM_SETTITLEA
+	Static SETTITLE := 0x0421 ; TTM_SETTITLEW
 	Static TRACKACT := 0x0411 ; TTM_TRACKACTIVATE
 	Static TRACKPOS := 0x0412 ; TTM_TRACKPOSITION
 	Static TXTCOLOR := 0x0414 ; TTM_SETTIPTEXTCOLOR
-	Static UPDTIPTX := A_IsUnicode ? 0x0439 : 0x040C ; TTM_UPDATETIPTEXTW : TTM_UPDATETIPTEXTA
+	Static UPDTIPTX := 0x0439 ; TTM_UPDATETIPTEXTW
 	; Other constants
 	Static MAX_TOOLTIPS := 20 ; maximum number of ToolTips to appear simultaneously
 	Static SizeTI   := (4 * 6) + (A_PtrSize * 6) ; size of the TOOLINFO structure
 	Static OffTxt   := (4 * 6) + (A_PtrSize * 3) ; offset of the lpszText field
-	Static TT := [] ; ToolTip array
+	Static TT := [] ; ToolTip array: {HW, TX (Buffer holding the text)}
 	; HTML Colors (BGR)
-	Static HTML := {AQUA: 0xFFFF00, BLACK: 0x000000, BLUE: 0xFF0000, FUCHSIA: 0xFF00FF, GRAY: 0x808080, GREEN: 0x008000
-					  , LIME: 0x00FF00, MAROON: 0x000080, NAVY: 0x800000, OLIVE: 0x008080, PURPLE: 0x800080, RED: 0x0000FF
-					  , SILVER: 0xC0C0C0, TEAL: 0x808000, WHITE: 0xFFFFFF, YELLOW: 0x00FFFF}
+	Static HTML := Map("AQUA", 0xFFFF00, "BLACK", 0x000000, "BLUE", 0xFF0000, "FUCHSIA", 0xFF00FF, "GRAY", 0x808080, "GREEN", 0x008000
+					  , "LIME", 0x00FF00, "MAROON", 0x000080, "NAVY", 0x800000, "OLIVE", 0x008080, "PURPLE", 0x800080, "RED", 0x0000FF
+					  , "SILVER", 0xC0C0C0, "TEAL", 0x808000, "WHITE", 0xFFFFFF, "YELLOW", 0x00FFFF)
 	; -------------------------------------------------------------------------------------------------------------------
 	; Init TT on first call
-	If (TT.MaxIndex() = "")
-		Loop, 20
-			TT[A_Index] := {HW: 0, IC: 0, TX: ""}
+	If (TT.Length = 0)
+		Loop MAX_TOOLTIPS
+			TT.Push({HW: 0, TX: ""})
 	; -------------------------------------------------------------------------------------------------------------------
 	; Check params
 	TTTX := Text
@@ -74,109 +74,110 @@ ToolTipEx(Text:="", X:="", Y:="", WhichToolTip:=1, HFONT:="", BgColor:="", TxCol
 	TTTC := TxColor
 	TTIC := HICON
 	TTCM := CoordMode = "" ? "W" : SubStr(CoordMode, 1, 1)
-	If TTXP Is Not Digit
-		Return False, ErrorLevel := "Invalid parameter X-position!", False
-	If TTYP Is Not Digit
-		Return  False, ErrorLevel := "Invalid parameter Y-Position!", False
+	If (TTXP != "") && !IsDigit(String(TTXP))
+		Return False
+	If (TTYP != "") && !IsDigit(String(TTYP))
+		Return False
 	If (TTIX < 1) || (TTIX > MAX_TOOLTIPS)
-		Return False, ErrorLevel := "Max ToolTip number is " . MAX_TOOLTIPS . ".", False
+		Return False
 	If (TTHF) && !(DllCall("Gdi32.dll\GetObjectType", "Ptr", TTHF, "UInt") = 6) ; OBJ_FONT
-		Return False, ErrorLevel := "Invalid font handle!", False
-	If TTBC Is Integer
+		Return False
+	If IsInteger(TTBC)
 		TTBC := ((TTBC >> 16) & 0xFF) | (TTBC & 0x00FF00) | ((TTBC & 0xFF) << 16)
 	Else
-		TTBC := HTML.HasKey(TTBC) ? HTML[TTBC] : ""
-	If TTTC Is Integer
+		TTBC := HTML.Has(StrUpper(TTBC)) ? HTML[StrUpper(TTBC)] : ""
+	If IsInteger(TTTC)
 		TTTC := ((TTTC >> 16) & 0xFF) | (TTTC & 0x00FF00) | ((TTTC & 0xFF) << 16)
 	Else
-		TTTC := HTML.HasKey(TTTC) ? HTML[TTTC] : ""
+		TTTC := HTML.Has(StrUpper(TTTC)) ? HTML[StrUpper(TTTC)] : ""
 	If !InStr("CSW", TTCM)
-		Return False, ErrorLevel := "Invalid parameter CoordMode!", False
+		Return False
 	; -------------------------------------------------------------------------------------------------------------------
 	; Destroy the ToolTip window, if Text is empty
 	TTHW := TT[TTIX].HW
-	If (TTTX = "") && (TTHW) {
-		If DllCall("User32.dll\IsWindow", "Ptr", TTHW, "UInt")
+	If (TTTX = "") {
+		If TTHW && DllCall("User32.dll\IsWindow", "Ptr", TTHW, "UInt")
 			DllCall("User32.dll\DestroyWindow", "Ptr", TTHW)
 		TT[TTIX] := {HW: 0, TX: ""}
 		Return True
 	}
 	; -------------------------------------------------------------------------------------------------------------------
 	; Get the virtual desktop rectangle
-	SysGet, X, 76
-	SysGet, Y, 77
-	SysGet, W, 78
-	SysGet, H, 79
-	DTW := {L: X, T: Y, R: X + W, B: Y + H}
+	DTW := {L: SysGet(76), T: SysGet(77)}
+	DTW.R := DTW.L + SysGet(78), DTW.B := DTW.T + SysGet(79)
 	; -------------------------------------------------------------------------------------------------------------------
 	; Initialise the ToolTip coordinates. If either X or Y is empty, use the cursor position for the present.
 	PT := {X: 0, Y: 0}
+	Cursor := {X: 0, Y: 0}
 	If (TTXP = "") || (TTYP = "") {
-		VarSetCapacity(Cursor, 8, 0)
-		DllCall("User32.dll\GetCursorPos", "Ptr", &Cursor)
-		Cursor := {X: NumGet(Cursor, 0, "Int"), Y: NumGet(Cursor, 4, "Int")}
+		CursorBuf := Buffer(8, 0)
+		DllCall("User32.dll\GetCursorPos", "Ptr", CursorBuf)
+		Cursor := {X: NumGet(CursorBuf, 0, "Int"), Y: NumGet(CursorBuf, 4, "Int")}
 		PT := {X: Cursor.X + 16, Y: Cursor.Y + 16}
 	}
 	; -------------------------------------------------------------------------------------------------------------------
 	; If either X or Y  is specified, get the position of the active window considering CoordMode.
 	Origin := {X: 0, Y: 0}
-	If ((TTXP <> "") || (TTYP <> "")) && ((TTCM = "W") || (TTCM = "C")) { ; if (*aX || *aY) // Need the offsets.
+	If ((TTXP != "") || (TTYP != "")) && ((TTCM = "W") || (TTCM = "C")) {
 		HWND := DllCall("User32.dll\GetForegroundWindow", "UPtr")
 		If (TTCM = "W") {
-			WinGetPos, X, Y, , , ahk_id %HWND%
-			Origin := {X: X, Y: Y}
+			WX := 0, WY := 0
+			try WinGetPos(&WX, &WY, , , "ahk_id " HWND)
+			Origin := {X: WX, Y: WY}
 		}
 		Else {
-			VarSetCapacity(OriginPT, 8, 0)
-			DllCall("User32.dll\ClientToScreen", "Ptr", HWND, "Ptr", &OriginPT)
+			OriginPT := Buffer(8, 0)
+			DllCall("User32.dll\ClientToScreen", "Ptr", HWND, "Ptr", OriginPT)
 			Origin := {X: NumGet(OriginPT, 0, "Int"), Y: NumGet(OriginPT, 0, "Int")}
 		}
 	}
 	; -------------------------------------------------------------------------------------------------------------------
 	; If either X or Y is specified, use the window related position for this parameter.
-	If (TTXP <> "")
+	If (TTXP != "")
 		PT.X := TTXP + Origin.X
-	If (TTYP <> "")
+	If (TTYP != "")
 		PT.Y := TTYP + Origin.Y
 	; -------------------------------------------------------------------------------------------------------------------
-	; Create and fill a TOOLINFO structure.
-	TT[TTIX].TX := "T" . TTTX ; prefix with T to ensure it will be stored as a string in either case
-	VarSetCapacity(TI, SizeTI, 0) ; TOOLINFO structure
-	NumPut(SizeTI, TI, 0, "UInt")
-	NumPut(0x0020, TI, 4, "UInt") ; TTF_TRACK
-	NumPut(TT[TTIX].GetAddress("TX") + (1 << !!A_IsUnicode), TI, OffTxt, "Ptr")
+	; Create and fill a TOOLINFO structure. The text buffer must outlive the call, so it is kept in TT.
+	TXB := Buffer(StrPut(TTTX, "UTF-16"))
+	StrPut(TTTX, TXB, "UTF-16")
+	TT[TTIX].TX := TXB
+	TI := Buffer(SizeTI, 0) ; TOOLINFO structure
+	NumPut("UInt", SizeTI, TI, 0)
+	NumPut("UInt", 0x0020, TI, 4) ; TTF_TRACK
+	NumPut("Ptr", TXB.Ptr, TI, OffTxt)
 	; -------------------------------------------------------------------------------------------------------------------
 	; If the ToolTip window doesn't exist, create it.
 	If !(TTHW) || !DllCall("User32.dll\IsWindow", "Ptr", TTHW, "UInt") {
 		; ExStyle = WS_TOPMOST, Style = TTS_NOPREFIX | TTS_ALWAYSTIP
 		TTHW := DllCall("User32.dll\CreateWindowEx", "UInt", 8, "Str", "tooltips_class32", "Ptr", 0, "UInt", 3
-								, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "Ptr", A_ScriptHwnd, "Ptr", 0, "Ptr", 0, "Ptr", 0)
-		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", ADDTOOL, "Ptr", 0, "Ptr", &TI)
+								, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "Ptr", A_ScriptHwnd, "Ptr", 0, "Ptr", 0, "Ptr", 0, "Ptr")
+		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", ADDTOOL, "Ptr", 0, "Ptr", TI)
 		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", MAXTIPW, "Ptr", 0, "Ptr", A_ScreenWidth)
-		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKPOS, "Ptr", 0, "Ptr", PT.X | (PT.Y << 16))
-		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKACT, "Ptr", 1, "Ptr", &TI)
+		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKPOS, "Ptr", 0, "Ptr", (PT.X & 0xFFFF) | (PT.Y << 16))
+		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKACT, "Ptr", 1, "Ptr", TI)
 	}
 	; -------------------------------------------------------------------------------------------------------------------
 	; Update the text and the font and colors, if specified.
-	If (TTBC <> "") || (TTTC <> "") { ; colors
+	If (TTBC != "") || (TTTC != "") { ; colors
 		DllCall("UxTheme.dll\SetWindowTheme", "Ptr", TTHW, "Ptr", 0, "Str", "")
-		VarSetCapacity(RC, 16, 0)
-		NumPut(4, RC, 0, "Int"), NumPut(4, RC, 4, "Int"), NumPut(4, RC, 8, "Int"), NumPut(1, RC, 12, "Int")
-		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", SETMARGN, "Ptr", 0, "Ptr", &RC)
-		If (TTBC <> "")
+		RC := Buffer(16, 0)
+		NumPut("Int", 4, "Int", 4, "Int", 4, "Int", 1, RC)
+		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", SETMARGN, "Ptr", 0, "Ptr", RC)
+		If (TTBC != "")
 			DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", BKGCOLOR, "Ptr", TTBC, "Ptr", 0)
-		If (TTTC <> "")
+		If (TTTC != "")
 			DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TXTCOLOR, "Ptr", TTTC, "Ptr", 0)
 	}
-	If (TTIC <> "")
+	If (TTIC != "")
 		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", SETTITLE, "Ptr", TTIC, "Str", " ")
 	If (TTHF) ; font
 		DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", 0x0030, "Ptr", TTHF, "Ptr", 1) ; WM_SETFONT
-	DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", UPDTIPTX, "Ptr", 0, "Ptr", &TI)
+	DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", UPDTIPTX, "Ptr", 0, "Ptr", TI)
 	; -------------------------------------------------------------------------------------------------------------------
 	; Get the ToolTip window dimensions.
-	VarSetCapacity(RC, 16, 0)
-	DllCall("User32.dll\GetWindowRect", "Ptr", TTHW, "Ptr", &RC)
+	RC := Buffer(16, 0)
+	DllCall("User32.dll\GetWindowRect", "Ptr", TTHW, "Ptr", RC)
 	TTRC := {L: NumGet(RC, 0, "Int"), T: NumGet(RC, 4, "Int"), R: NumGet(RC, 8, "Int"), B: NumGet(RC, 12, "Int")}
 	TTW := TTRC.R - TTRC.L
 	TTH := TTRC.B - TTRC.T
@@ -195,9 +196,8 @@ ToolTipEx(Text:="", X:="", Y:="", WhichToolTip:=1, HFONT:="", BgColor:="", TxCol
 	}
 	; -------------------------------------------------------------------------------------------------------------------
 	; Show the Tooltip using the final coordinates.
-	DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKPOS, "Ptr", 0, "Ptr", PT.X | (PT.Y << 16))
-	DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKACT, "Ptr", 1, "Ptr", &TI)
+	DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKPOS, "Ptr", 0, "Ptr", (PT.X & 0xFFFF) | (PT.Y << 16))
+	DllCall("User32.dll\SendMessage", "Ptr", TTHW, "UInt", TRACKACT, "Ptr", 1, "Ptr", TI)
 	TT[TTIX].HW := TTHW
 	Return TTHW
 }
- 

@@ -10,206 +10,191 @@
 ;	CN.NG = contains real channel indexes 0,1,2
 ;	CN.Total = Total number of channels
 ; 	CN.pit_NG = contains item active before the Pit swap
-;   
+;
 ;   out of these CN.Total and TEMPSAVE,CURSAVE are only permananent var, all others are temporarily created at channel change.
 ;----------------------------------------------------------------------
 
-initChannels(){
+initChannels() {
 	global
-	CN := {}
-	loop,
-		if FileExist("cache\clips" (T := (A_index-1)?A_index-1:"" ) )
-		{
-			loop
-			{
-				IfNotExist, cache/Clips%T%/%A_Index%.avc
-				{
-					CN["TEMPSAVE" T] := CN["CURSAVE" T] := A_Index - 1
-					break
-				}
-			}
-			CN.Total := A_index
-		}
-		Else
+	local T, temp
+	CN := CJMap()
+	loop {
+		T := (A_Index - 1) ? A_Index - 1 : ""
+		if !FileExist("cache\clips" T)
 			break
-	CN.NG := 0 , CN.N := ""
+		loop {
+			if !FileExist("cache/Clips" T "/" A_Index ".avc") {
+				CN["TEMPSAVE" T] := CN["CURSAVE" T] := A_Index - 1
+				break
+			}
+		}
+		CN.Total := A_Index
+	}
+	CN.NG := 0, CN.N := ""
 
-	Iniread, temp, %CONFIGURATION_FILE%, channels, % CN.NG, %A_space%
-	CN.Name := (temp=="") or (temp==A_temp) ? "Default" : temp
+	temp := IniRead(CONFIGURATION_FILE, "channels", CN.NG, "")
+	CN.Name := (temp == "") ? "Default" : temp
 	ini_write("channels", "0", CN.Name)
 
 	CN["TOTALCLIPS"] := TOTALCLIPS
 }
 
-changeChannel(cIndex, backup_old:=1){
+changeChannel(cIndex, backup_old := 1) {
 ; changes channel
 ; creates new channel if needed
-	if cIndex is not Integer
+	global
+	local temp, T
+	if !IsInteger(cIndex)
 		return 0
-	if ( cIndex == CN.Total ) 	; new channel create
+	cIndex := Integer(cIndex)
+	if (cIndex == CN.Total) 	; new channel create
 	{
-		CN.Total+=1 , CDS[cIndex] := {} , CPS[cIndex] := {} 	; create storage objs
+		CN.Total += 1, CDS[cIndex] := CJMap(), CPS[cIndex] := CJMap() 	; create storage objs
 		CN["TEMPSAVE" cIndex] := CN["CURSAVE" cIndex] := 0
-	} else if ( cIndex > CN.Total )
+	} else if (cIndex > CN.Total)
 		return 0
-	Iniread, temp, %CONFIGURATION_FILE%, channels, %cIndex%, %A_space%
-	CN.Name := (temp=="") or (temp==A_temp) ? (!cIndex ? "Default" : cIndex) : temp
+	temp := IniRead(CONFIGURATION_FILE, "channels", cIndex, "")
+	CN.Name := (temp == "") ? (!cIndex ? "Default" : cIndex) : temp
 
 	if !cIndex
-		TOTALCLIPS := CN["TOTALCLIPS"]
-		, cIndex := ""
+		TOTALCLIPS := CN["TOTALCLIPS"], cIndex := ""
 	else
 		TOTALCLIPS := CN["TOTALCLIPS" cIndex] ? CN["TOTALCLIPS" cIndex] : 999999999999 			;if exist, use it
 
 	if backup_old
-		CN["TEMPSAVE" CN.N] := TEMPSAVE , CN["CURSAVE" CN.N] := CURSAVE	, CN.prevCh := CN.NG	;Saving Old - TEMPSAVE is auto-corrected at 
+		CN["TEMPSAVE" CN.N] := TEMPSAVE, CN["CURSAVE" CN.N] := CURSAVE, CN.prevCh := CN.NG	;Saving Old - TEMPSAVE is auto-corrected at
 		;the end of paste mode and so no need to fix it.
-	CN.N := cIndex , CN.NG := !CN.N?0:CN.N 				;note that cIndex has been emptied if 0
+	CN.N := cIndex, CN.NG := !CN.N ? 0 : CN.N 				;note that cIndex has been emptied if 0
 
-	TEMPSAVE := CN["TEMPSAVE" cIndex] + 0 , CURSAVE := CN["CURSAVE" cIndex] + 0		;Restoring current
+	TEMPSAVE := CN["TEMPSAVE" cIndex] + 0, CURSAVE := CN["CURSAVE" cIndex] + 0		;Restoring current
 
-	T := Substr(CLIPS_dir, 0)
-	if T is Integer
-		CLIPS_dir := Substr(CLIPS_dir, 1, -1) , THUMBS_dir := Substr(THUMBS_dir, 1, -1)
+	T := SubStr(CLIPS_dir, -1)
+	if IsInteger(T)
+		CLIPS_dir := SubStr(CLIPS_dir, 1, -1), THUMBS_dir := SubStr(THUMBS_dir, 1, -1)
 
-	CLIPS_dir .= cIndex , THUMBS_dir .= cIndex
+	CLIPS_dir .= cIndex, THUMBS_dir .= cIndex
 
-	FileCreateDir, %CLIPS_dir%
-	FileCreateDir, %THUMBS_dir%
+	DirCreate(CLIPS_dir)
+	DirCreate(THUMBS_dir)
 
 	LASTCLIP := LASTFORMAT := IScurCBACTIVE := "" 								;make all false as they are different for other channels
 	renameChannel(CN.NG, CN.Name)
 	if WinExist(TXT.ORG__name " ahk_class AutoHotkeyGUI") 		; change channel in ORG
-		gosub chorg_addchUseList
+		chOrg_addChUseList()
 	EmptyMem()
 	return 1
 }
 
-renameChannel(ch, nm){
+renameChannel(ch, nm) {
+	global
 	ini_write("Channels", ch, Trim(nm), 0)
-	if ( CN.NG == ch )
-	{
+	if (CN.NG == ch) {
 		CN.Name := nm
 		CopyMessage := !ini_IsMessage ? "" : MSG_TRANSFER_COMPLETE " {" CN.Name "}"
-		Menu, Tray, Tip, % PROGNAME " {" CN.Name "}"
+		A_IconTip := PROGNAME " {" CN.Name "}"
 	}
 }
 
 ;--------------------------- select channel box --------------------------------------------------------------
 
-choosechannelgui(guiname=""){
-	static channel_list
-	if guiname=
+; Modal list of channels. Returns the chosen channel index, or "" when cancelled.
+choosechannelgui(guiname := "") {
+	global CJGUI, TXT
+	if (guiname = "")
 		guiname := TXT.CHC_name
 	channel_list := ""
-	Gui, choosech:New
-	Gui, choosech: +ToolWindow -MaximizeBox
-	Gui, Add, Text, x7 y7, % TXT.CNL_choose
-	lst := channel_find()
-	StringReplace, lst, lst, |, ``|, All
-	StringReplace, lst, lst, `n, |, All
-	Gui, Add, Listbox, x+20 vchannel_list h150, % lst
-	Gui, Add, button, x7 y+10 gchoosechbuttonok Default, OK
-	Gui, Add, button, x+10 yp gchoosechbuttoncancel, % TXT.SET_cancel
-	Gui, Show,, % guiname
-	WinWaitActive, % guiname
-	WinWaitClose, % guiname
-	channel_list := Trim( Substr(channel_list, 1, Instr(channel_list, "-")-1) )
-	return is_notcancel ? "" : channel_list
+	cancelled := 0
+	done := 0
+	GuiDestroy("choosech")
+	g := Gui("+ToolWindow -MaximizeBox", guiname)
+	CJGUI["choosech"] := g
+	g.Add("Text", "x7 y7", TXT.CNL_choose)
+	lb := g.Add("ListBox", "x+20 h150", StrSplit(channel_find(), "`n"))
+	g.Add("Button", "x7 y+10 Default", "OK").OnEvent("Click", onOK)
+	g.Add("Button", "x+10 yp", TXT.SET_cancel).OnEvent("Click", onCancel)
+	g.OnEvent("Close", onCancel)
+	g.OnEvent("Escape", onCancel)
+	g.Show()
+	while !done
+		Sleep 50
+	channel_list := Trim(SubStr(channel_list, 1, InStr(channel_list, "-") - 1))
+	return cancelled ? "" : channel_list
 
-chooseChButtonOK:
-	Gui, choosech:submit, nohide
-	if channel_list
-		Gui, choosech:Destroy
-	return
+	onOK(*) {
+		channel_list := lb.Text
+		if (channel_list != "") {
+			GuiDestroy("choosech")
+			done := 1
+		}
+	}
 
-chooseChButtoncancel:
-choosechGuiClose:
-	is_notcancel := "-"
-	Gui, choosech:Destroy
-	return
+	onCancel(*) {
+		cancelled := 1
+		GuiDestroy("choosech")
+		done := 1
+	}
 }
 
 ;--------------------------- find a channel ------------------------------------------------------------------
 
-channel_find(name=""){
-	local str, rINI
+channel_find(name := "") {
+	global CN, CONFIGURATION_FILE
 	; returns list of channels if name is empty
 	rINI := Ini2Obj(CONFIGURATION_FILE)
 	name := Trim(name)
+	str := ""
 
-	if name is Number
+	if IsNumber(name)
 		return name
-	else if (name != "")
-	{
-		for k,v in rINI["Channels"]
-			if v = %name%
+	else if (name != "") {
+		for k, v in rINI["Channels"]
+			if (v = name)
 				return k
 	}
 	else
-		loop % CN.Total
-			str .= A_index-1 " - " rINI["Channels"][A_index-1] "`n"
-	return Rtrim( str, "`n" )
+		loop CN.Total
+			str .= A_Index - 1 " - " rINI["Channels"][A_Index - 1] "`n"
+	return RTrim(str, "`n")
 }
 
 ;--------------------------- Other functions ------------------------------------------------------
 
 ; moves a channel or deletes it; in moving dest channel if exists is deleted
-manageChannel(orig, new=""){
-	static l := "clips thumbs"
-	;global CN
+manageChannel(orig, new := "") {
+	global
+	static l := ["clips", "thumbs"]
+	local c, z, bk, d
 
-	if new=
-	{
+	if (new = "") {
 		if !orig
 			return 	; dnt delete 0
-		loop, parse, l, % A_space
-			FileRemoveDir, % "cache\" A_LoopField orig, 1
+		for d in l
+			try DirDelete("cache\" d orig, 1)
 		ini_delete("Channels", orig)
-		CDS[orig] := {} , CPS[orig] := {}
+		CDS[orig] := CJMap(), CPS[orig] := CJMap()
 		; move channels one step back
 		c := 0
-		loop % CN.Total-orig-1
+		loop CN.Total - orig - 1
 		{
-			c := A_index
-			loop, parse, l, % A_space
-				FileMoveDir, % "cache\" A_LoopField orig+c , % "cache\" A_LoopField orig+c-1, R
-			CDS[orig+c-1] := CDS[orig+c] , CPS[orig+c-1] := CPS[orig+c]
-			ini_write("Channels", orig+c-1, (z:=Ini_read("Channels", orig+c)) && (z != orig+c) ? z : orig+c-1, 0 )
+			c := A_Index
+			for d in l
+				try DirMove("cache\" d (orig + c), "cache\" d (orig + c - 1), "R")
+			CDS[orig + c - 1] := CDS[orig + c], CPS[orig + c - 1] := CPS[orig + c]
+			ini_write("Channels", orig + c - 1, (z := Ini_read("Channels", orig + c)) && (z != orig + c) ? z : orig + c - 1, 0)
 		}
 		;done ... final steps
-		ini_delete("Channels", orig+c) , CDS[orig+c] := {} , CPS[orig+c] := {}			; delete any name to avoid confusion
+		ini_delete("Channels", orig + c), CDS[orig + c] := CJMap(), CPS[orig + c] := CJMap()			; delete any name to avoid confusion
 
 		bk := CN.NG
 		initChannels()
-		if ( bk >= orig )
-			changeChannel(bk-1, 0) 		; change the channel using proper methodology as initchannels() disturbs it
-		else changeChannel(bk, 0)
+		if (bk >= orig)
+			changeChannel(bk - 1, 0) 		; change the channel using proper methodology as initchannels() disturbs it
+		else
+			changeChannel(bk, 0)
 		prefs2Ini()
 	}
 	else
 	{
 		;NOT IMPLEMENTED YET - implement CDS also
-		;loop, parse, l, % A_space
-		;	FileRemoveDir, % "cache\" A_LoopField new, 1
-		;loop, parse, l, % A_Space
-		;	FileMoveDir, % "cache\" A_loopfield orig, % "cache\" A_loopfield new, R
-		;ini_write("Channels", new, (z:=Ini_read("Channels", orig)) ? z : new, 0 )
-		;; final steps
-		;if CN.NG == orig
-		;	changeChannel(new)
 	}
 }
-
-;-------------------------- ACCESSIBILTY SHORTCUTS ------------------------------------------------
-
-; #if IsActive(PROGNAME " " TXT.CNL__name, "window")
-; 	Up::
-; 		GuiControl, channel:, ChannelUpdown, +1
-; 		gosub, ChannelUpdown
-; 		return
-; 	Down::
-; 		GuiControl, channel:, ChannelUpdown, +-1
-; 		gosub, ChannelUpdown
-; 		return
-; #if

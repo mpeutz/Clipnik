@@ -1,308 +1,315 @@
-﻿;#########################
-;LESS CHANGEABLE LABES AND FUNCTIONS
+;#########################
+;LESS CHANGEABLE LABELS AND FUNCTIONS (v1 labels are now functions with a variadic signature)
 ;#########################
 
 ; Used Labels
 
-run_searchpm:
-	gosub searchpm
-	return
+run_searchpm(*) {
+	searchpm()
+}
 
-settings:
+settings(*) {
 	gui_Settings()
-	return
+}
 
-history:
+history(*) {
 	gui_History()
-	return
+}
 
-classTool:
+classTool(*) {
 	API.runPlugin("external.ignoreWmanager.ahk")
-	return
+}
 
-plugin_deleteFileFolder:
+tray_deleteFileFolder(*) {
 	API.runPlugin("deleteFileFolder.ahk")
-	return
+}
 
-main:
+main(*) {
 	aboutGUI()
-	return
+}
 
-exit:
+exitClipjump(*) {
 	routines_Exit()
 	ExitApp
-	return
+}
 
-reloadCustom:
+reloadCustom(*) {
 	resetCustomizations()
 	loadCustomizations()
-	MsgBox, 64, % PROGNAME, % TXT.TIP_done
-	return
+	MsgBox(TXT.TIP_done, PROGNAME, 64)
+}
 
-chrHex(n){
-	return chr( base2Number(n, 16) )
+chrHex(n) {
+	return Chr(base2Number(n, 16))
 }
 
 GetHFONT(Options := "", Name := "") {
-   Gui, New
-   Gui, Font, % Options, % Name
-   Gui, Add, Text, +hwndHTX, Dummy
-   HFONT := DllCall("User32.dll\SendMessage", "Ptr", HTX, "UInt", 0x31, "Ptr", 0, "Ptr", 0, "UPtr") ; WM_GETFONT
-   Gui, Destroy
-   Return HFONT
+	g := Gui()
+	g.SetFont(Options, Name)
+	ctl := g.Add("Text", , "Dummy")
+	HFONT := DllCall("User32.dll\SendMessage", "Ptr", ctl.Hwnd, "UInt", 0x31, "Ptr", 0, "Ptr", 0, "UPtr") ; WM_GETFONT
+	g.Destroy()
+	Return HFONT
 }
 
 ;BeepAt()
 ;SoundBeep function
-BeepAt(value, freq, duration=150){
+BeepAt(value, freq, duration := 150) {
 	if value
-		SoundBeep, % freq, % duration
+		SoundBeep(freq, duration)
 }
 
 ;EmptyMem()
 ;	Emtpties free memory
 
-EmptyMem(){
-	return ini_ram_flush ? dllcall("psapi.dll\EmptyWorkingSet", "UInt", -1) : 0
+EmptyMem() {
+	global ini_ram_flush
+	return ini_ram_flush ? DllCall("psapi.dll\EmptyWorkingSet", "UInt", -1) : 0
 }
 
-FoolGUI(switch=1){
-
-	if !switch
-	{
-		Gui, foolgui:Destroy
+FoolGUI(enable := 1) {
+	global CJGUI
+	if !enable {
+		GuiDestroy("foolgui")
 		return
 	}
-
-	Gui, foolgui: -Caption +E0x80000 +LastFound +OwnDialogs +Owner +AlwaysOnTop
-	Gui, foolgui: Show, NA, foolgui
-	WinActivate, foolgui
+	GuiDestroy("foolgui")
+	g := Gui("-Caption +E0x80000 +OwnDialogs +Owner +AlwaysOnTop", "foolgui")
+	CJGUI["foolgui"] := g
+	g.Show("NA")
+	WinActivate("ahk_id " g.Hwnd)
 }
 
 ;Function for FileCopy, FileMove
-FileTransfer(src, dest="", keep_original=1, flag=1){
-	if dest =
-		FileDelete, % src
-	if keep_original
-		FileCopy, % src, % dest, % flag
-	else
-		FileMove, % src, % dest, % flag
+FileTransfer(src, dest := "", keep_original := 1, flag := 1) {
+	if (dest = "") {
+		try FileDelete(src)
+		return
+	}
+	try {
+		if keep_original
+			FileCopy(src, dest, flag)
+		else
+			FileMove(src, dest, flag)
+	}
 }
 
-;Try getting a Variable like Clipboard
-tryGetvar(varname, maxtries=100){
-	while !fetch_done
-	{
+;Try getting the Clipboard text, retrying while another process holds the clipboard
+tryGetClipboard(maxtries := 100) {
+	ret := ""
+	loop maxtries {
 		try {
-			if A_index>%maxtries%
-				break
-			ret := %varname%
-			fetch_done := 1
+			ret := A_Clipboard
+			break
 		} catch {
-			fetch_done := 0 	; I think fetch_done=1 runs even after error and so no use of the try catch happened before
 			MakeClipboardAvailable(0, 10)
 		}
 	}
 	return ret
 }
 
+; v1 compatibility: tryGetvar("Clipboard") is the only use in the codebase
+tryGetvar(varname, maxtries := 100) {
+	if (varname = "Clipboard")
+		return tryGetClipboard(maxtries)
+	return VarGet(varname)
+}
+
 ; Parses the string and converts the %....% to their respective values
 ; From   https://github.com/aviaryan/autohotkey-scripts/blob/master/Functions/ValueOf.ahk
+; Supports %var%, %obj.key% and %obj.key.key2%
 
-Valueof(VarinStr){
-global
-local Midpoint, emVar, $j, $n
-	loop,
+Valueof(VarinStr) {
+	loop
 	{
-		StringReplace, VarinStr, VarinStr,`%,`%, UseErrorLevel
-		Midpoint := ErrorLevel / 2
-		if Midpoint = 0
-			return ( emvar := VarinStr )
-		emVar := Substr(VarinStr, Instr(VarinStr, "%", 0, 1, Midpoint)+1, Instr(VarinStr, "%", 0, 1, Midpoint+1)-Instr(VarinStr, "%", 0, 1, Midpoint)-1)
+		StrReplace(VarinStr, "%", "%", , &cnt)
+		Midpoint := cnt // 2
+		if (Midpoint = 0)
+			return VarinStr
+		p1 := InStr(VarinStr, "%", , 1, Midpoint)
+		p2 := InStr(VarinStr, "%", , 1, Midpoint + 1)
+		emVar := SubStr(VarinStr, p1 + 1, p2 - p1 - 1)
 
-		if Instr(emVar, ".")
-		{
-			loop, parse, emVar,`.
-				$j%A_index% := Trim(A_LoopField) , $n := A_index-1
-			if $n=1
-				emVar := %$j1%[$j2]
-			if $n=2
-				emVar := %$j1%[$j2][$j3]
-		} 
-		else emVar := %emVar%
+		if InStr(emVar, ".") {
+			parts := StrSplit(emVar, ".")
+			emVar := VarGet(Trim(parts[1]))
+			loop parts.Length - 1
+				emVar := IsObject(emVar) ? emVar[Trim(parts[A_Index + 1])] : ""
+		}
+		else
+			emVar := VarGet(emVar)
 
-		VarinStr := Substr(VarinStr, 1, Instr(VarinStr, "%", 0, 1, Midpoint)-1) emVar Substr(VarinStr, Instr(VarinStr, "%", 0, 1, Midpoint+1)+1)
+		VarinStr := SubStr(VarinStr, 1, p1 - 1) emVar SubStr(VarinStr, p2 + 1)
 	}
 }
 
 
-multInputBox(Title, caption="", row=5, default="", owner=""){
-	static theEdit
-	local kw, oDone
-	
+multInputBox(Title, caption := "", row := 5, default := "", owner := "") {
+	global CJGUI, STORE, TXT
 	theEdit := ""
-	kw := A_ScreenWidth<1200 ? 600 : 700
-	Gui, mIBox:new
-	Gui, Font, s10, Consolas
-	Gui, Add, Text, x5 y5, % caption
-	Gui, Font, norm, Consolas
-	Gui, Add, Edit, xp y+30 w%kw% r%row% vtheEdit, % default
-	Gui, Add, Button, x5 y+30 Default, OK
-	Gui, Add, Button, x+30 yp gmIboxbuttonCancel, % TXT.SET_Cancel
+	oDone := 0
+	kw := A_ScreenWidth < 1200 ? 600 : 700
+	GuiDestroy("mIBox")
+	g := Gui("", Title)
+	CJGUI["mIBox"] := g
+	g.SetFont("s10", "Consolas")
+	g.Add("Text", "x5 y5", caption)
+	g.SetFont("norm", "Consolas")
+	editCtl := g.Add("Edit", "xp y+30 w" kw " r" row " vtheEdit", default)
+	g.Add("Button", "x5 y+30 Default", "OK").OnEvent("Click", onOK)
+	g.Add("Button", "x+30 yp", TXT.SET_Cancel).OnEvent("Click", onClose)
+	g.OnEvent("Close", onClose)
+	g.OnEvent("Escape", onClose)
 	if owner {
-		Gui, miBox:+owner%owner%
-		Gui, %owner%:+Disabled
+		g.Opt("+Owner" CJGUI[owner].Hwnd)
+		CJGUI[owner].Opt("+Disabled")
 	}
-	Gui, mIbox:Show,, % Title
+	g.Show()
 	while !oDone
-		sleep 50
+		Sleep 50
 	return theEdit
 
-mIboxbuttonOK:
-	Gui, miBox:Submit, nohide
-	STORE.ErrorLevel := 1
-	gosub mIboxGuiClose
-	return
+	onOK(*) {
+		theEdit := editCtl.Value
+		STORE.ErrorLevel := 1
+		onClose()
+	}
 
-mIboxGuiClose:
-mIboxbuttonCancel:
-	if owner
-		Gui, %owner%:-Disabled
-	Gui, mIBox:Destroy
-	oDone := 1
-	return
-
+	onClose(*) {
+		if owner
+			CJGUI[owner].Opt("-Disabled")
+		GuiDestroy("mIBox")
+		oDone := 1
+	}
 }
 
-errMsgBox(Text){
-	MsgBox, 48, % TXT["_clipjumpError"], % text "`n`n" TXT.TIP_genErrMsg
+errMsgBox(Text) {
+	MsgBox(Text "`n`n" TXT.TIP_genErrMsg, TXT["_clipjumpError"], 48)
 }
 
 /*
-a := {a: "b",c: "d"}
-ret := ObjectEditor(a)
+a := CJMap("a", "b", "c", "d")
+ret := ObjectEditView(a, ["Title", owner, prompt, width])
 for k,v in ret
-	msgbox % k "`n" v
+	msgbox k "`n" v
 return
 
-Options (opn)
+Options (opn), a 1-based Array
 	1: Title
 	2: owner
 	3: prompt
 	4: width
 */
 
-ObjectEditView(obj, opn, readonly=0){
-	global
-	local oDone
-
-	Gui, objEdit:new
-	Gui, Font, s10 underline, Consolas
-	Gui, Add, Text, x5 y5, % opn.3
-	Gui, Add, Text, xp y+15 section,
-	Gui, Font, norm, Consolas
+ObjectEditView(obj, opn, readonly := 0) {
+	global CJGUI, TXT
+	oDone := 0
+	opt(i) => opn.Has(i) ? opn[i] : ""
+	GuiDestroy("objEdit")
+	g := Gui("", opt(1))
+	CJGUI["objEdit"] := g
+	g.SetFont("s10 underline", "Consolas")
+	g.Add("Text", "x5 y5", opt(3))
+	g.Add("Text", "xp y+15 section")
+	g.SetFont("norm", "Consolas")
 
 	maxsize := 0
-	for k in obj {
-		if Strlen(k) > maxsize
-			maxsize := Strlen(k)
-	}
-	maxsize := maxsize*5+100
+	for k in obj
+		if StrLen(k) > maxsize
+			maxsize := StrLen(k)
+	maxsize := maxsize * 5 + 100
 
-	for k,v in obj {
-		Gui, Add, Text, xs y+7, % k
-		Gui, Add, Edit, % "x" maxsize " yp vfield" A_index  (readonly ? " +Readonly" : "") " w" (opn.4 ? opn.4 : 100), % v
+	fields := []
+	for k, v in obj {
+		g.Add("Text", "xs y+7", k)
+		fields.Push(g.Add("Edit", "x" maxsize " yp" (readonly ? " +Readonly" : "") " w" (opt(4) ? opt(4) : 100), v))
 	}
-	Gui, Add, Button, x5 y+30 Default gobjEditButtonSv, % readonly ? "OK" : TXT._save
-	Gui, Add, Button, x+30 yp gobjEditButtoncancel, % TXT.SET_Cancel
-	if opn.2 {
-		Gui, % "objEdit:+owner" opn.2
-		Gui, % opn.2 ":+Disabled"
+	g.Add("Button", "x5 y+30 Default", readonly ? "OK" : TXT._save).OnEvent("Click", onSave)
+	g.Add("Button", "x+30 yp", TXT.SET_Cancel).OnEvent("Click", onClose)
+	g.OnEvent("Close", onClose)
+	g.OnEvent("Escape", onClose)
+	if opt(2) {
+		g.Opt("+Owner" CJGUI[opt(2)].Hwnd)
+		CJGUI[opt(2)].Opt("+Disabled")
 	}
-	Gui, objEdit:Show,, % opn.1
+	g.Show()
 
 	while !oDone
-		sleep 50
+		Sleep 50
 	return obj
 
-objEditGuiEscape:
-objEditButtonCancel:
-objEditGuiClose:
-	if opn.2
-		Gui, % opn.2 ":-Disabled"
-	Gui, objEdit:Destroy
-	oDone := 1
-	return
+	onClose(*) {
+		if opt(2)
+			CJGUI[opt(2)].Opt("-Disabled")
+		GuiDestroy("objEdit")
+		oDone := 1
+	}
 
-objEditButtonSv:
-	Gui, objEdit:Submit, nohide
-	for k in obj
-		obj[k] := field%A_index%
-	gosub objEditGuiClose
-	return
-
+	onSave(*) {
+		i := 0
+		for k in obj
+			obj[k] := fields[++i].Value
+		onClose()
+	}
 }
 
 ;Try getting a file onto Clipboard
-try_ClipboardfromFile(file, maxtries=100){
-	;Critical, Off
+try_ClipboardfromFile(file, maxtries := 100) {
 	temp_ClipbrdLoaded := 0
-	while !temp_ClipbrdLoaded
-	{
+	loop maxtries {
 		try {
-			if A_index > %maxtries%
-				break
-			FileRead, Clipboard, *c %file%
+			A_Clipboard := ClipboardAll(FileRead(file, "RAW"))
 			temp_ClipbrdLoaded := 1
+			break
 		}
 	}
-	while !DllCall("OpenClipboard", "int", "")
-		sleep 10
+	while !DllCall("OpenClipboard", "Ptr", 0)
+		Sleep 10
 	DllCall("CloseClipboard")
 	return temp_ClipbrdLoaded
 }
 
-getRealCD(text){
+getRealCD(text) {
 ; Substitues [IMAGE] for blank data in CDS . Used by the search funcs in search paste mode and Organizer
-	return text="" ? TXT.HST_viewimage : text
+	return text = "" ? TXT.HST_viewimage : text
 }
 
-ClipTransfer(sub, cno, nsub="", ncno="", keep_original=1, flag=1){
+ClipTransfer(sub, cno, nsub := "", ncno := "", keep_original := 1, flag := 1) {
 ; Copy moves a clip along with the 3 or more files
 ; TODO Change params in prefs.ini also
 	FileTransfer("cache\clips" sub "\" cno ".avc", "cache\clips" nsub "\" ncno ".avc", keep_original, flag)
 	FileTransfer("cache\thumbs" sub "\" cno ".jpg", "cache\thumbs" nsub "\" ncno ".jpg", keep_original, flag)
 }
 
-ClipSwap(sub, cno, nsub="", ncno=""){
+ClipSwap(sub, cno, nsub := "", ncno := "") {
 	; Swaps two clips
 	ClipTransfer(sub, cno, sub, 100000, 0)
 	ClipTransfer(nsub, ncno, sub, cno, 0)
 	ClipTransfer(sub, 100000, nsub, ncno, 0)
 }
 
-ClipFolderTransfer(sub, nsub, keep_original=1, flag=1){
+ClipFolderTransfer(sub, nsub, keep_original := 1, flag := 1) {
 ; Copy moves a channel with the 3 folders
-	static d1 := "clips" , d2 := "thumbs" ;, d3 := "fixate"
-	loop 2 ;3
-		if keep_original
-			FileCopyDir, % "cache\" d%A_index% sub, % "cache\" d%A_index% nsub, % flag
-		else
-			FileMoveDir, % "cache\" d%A_index% sub, % "cache\" d%A_index% nsub, % flag
+	static dirs := ["clips", "thumbs"] ;, "fixate"
+	for d in dirs {
+		try {
+			if keep_original
+				DirCopy("cache\" d sub, "cache\" d nsub, flag)
+			else
+				DirMove("cache\" d sub, "cache\" d nsub, flag)
+		}
+	}
 }
 
 ;Checks and makes sure Clipboard is available
 ;Use 0 as the param when for calling the function, the aim is only to free clipboard and not get its contents
-MakeClipboardAvailable(doreturn=1, sleeptime=10){
-	;Critical, On
-	while !temp
-	{
-		temp := DllCall("OpenClipboard", "int", "")
-		sleep % sleeptime
-	}
+MakeClipboardAvailable(doreturn := 1, sleeptime := 10) {
+	while !DllCall("OpenClipboard", "Ptr", 0)
+		Sleep sleeptime
 	DllCall("CloseClipboard")
+	ret := ""
 	if doreturn
-		ret := Clipboard
+		try ret := A_Clipboard
 	return ret
 }
 
@@ -310,22 +317,23 @@ MakeClipboardAvailable(doreturn=1, sleeptime=10){
 ;	returns Text
 ;type=0
 ;	returns data types
-GetClipboardFormat(type=1){		;Thanks nnnik
-	Critical, On
-	DllCall("OpenClipboard", "int", "")
-	while c := DllCall("EnumClipboardFormats","Int",c?c:0)
+GetClipboardFormat(type := 1) {		;Thanks nnnik
+	Critical "On"
+	x := "", c := 0
+	DllCall("OpenClipboard", "Ptr", 0)
+	while c := DllCall("EnumClipboardFormats", "UInt", c, "UInt")
 		x .= "," c
 	DllCall("CloseClipboard")
 
-	if type=1
-		if Instr(x, ",1") and Instr(x, ",13")
+	if (type = 1) {
+		if InStr(x, ",1") && InStr(x, ",13")
 			return "[" TXT.TIP_text "]"
-		else If Instr(x, ",15")
+		else if InStr(x, ",15")
 			return "[" TXT.TIP_file_folder "]"
 		else
 			return ""
-	else
-		return x
+	}
+	return x
 }
 
 ;--------------------------------------------------------------------------
@@ -333,376 +341,387 @@ GetClipboardFormat(type=1){		;Thanks nnnik
 ;--------------------------------------------------------------------------
 
 ; Converts YYYYMMDDHHMMSS to YYYY-MM-DD HH:MM:SS
-convertTimeSql(t=""){
-	if (t == "") 
-		t:= A_Now
-	return SubStr(t, 1, 4) "-" SubStr(t,5,2) "-" SubStr(t,7,2) " " SubStr(t, 9, 2) ":" SubStr(t,11,2) ":" SubStr(t,13,2)
+convertTimeSql(t := "") {
+	if (t == "")
+		t := A_Now
+	return SubStr(t, 1, 4) "-" SubStr(t, 5, 2) "-" SubStr(t, 7, 2) " " SubStr(t, 9, 2) ":" SubStr(t, 11, 2) ":" SubStr(t, 13, 2)
 }
 
-escapeQuotesSql(s){
+escapeQuotesSql(s) {
 	; replace quote (") in data content with double quote ("")
 	; works like escaping
-	StringReplace, s, s, % """", % """""", All
-	return s
+	return StrReplace(s, '"', '""')
 }
 
-fileSizeFromStr(s){
+fileSizeFromStr(s) {
 	; in bytes
 	; + 3 comes from other file constraints
-	return strlen(s) + 3 
+	return StrLen(s) + 3
 }
 
-execSql(s, warn:=0){
+execSql(s, warn := 0) {
 	; execute sql
-	if (!DB.Exec(s))
-		if (warn)
-			msgbox % DB.ErrorCode "`n" DB.ErrorMsg
+	if !DB.Exec(s)
+		if warn
+			MsgBox(DB.ErrorCode "`n" DB.ErrorMsg)
 }
 
-getFromTable(tbl, cols, condition){
+getFromTable(tbl, cols, condition) {
 	; get from table
 	; get only particular columns if necessary
-	local recordSet, Row
-	
+	; returns the first matching row as an Array, or "" when nothing matches
 	q := "select " . cols . " from " . tbl . " where " condition
-	recordSet := ""
-	if !DB.Query(q, recordSet)
-		msgbox ERROR
-	if (recordSet.RowCount == 0)
+	if !DB.Query(q, &recordSet) {
+		MsgBox("ERROR")
 		return ""
-	else {
-		recordSet.Next(Row)
-		return Row
 	}
+	Row := ""
+	if (recordSet.Next(&Row) <= 0)
+		Row := ""
+	recordSet.Free()
+	return Row
 }
 
-saveBlobImage(blobobj, path){
-	; gets the blob obj 
-	; and saves the image from it at path
-
-	HFILE := FileOpen(path, "w")
-
-	If IsObject(blobobj){
-		Size := blobobj.Size
-		Addr := blobobj.GetAddress("Blob")
-		If !(Addr) || !(Size) {
-			MsgBox, 0, Error, BlobAddr = %Addr% - BlobSize = %Size%
-		} Else {
-			VarSetCapacity(MyBLOBVar, Size) ; added
-			DllCall("Kernel32.dll\RtlMoveMemory", "Ptr", &MyBLOBVar, "Ptr", Addr, "Ptr", Size) ; added
-			HFILE.RawWrite(&MyBLOBVar, Size) ; changed
-			;HFILE.RawWrite(Addr + 0, Size) ; original
-			blobobj := ""
-			HFILE.Close()
-			blobobj := ""
-		}
+saveBlobImage(blobobj, path) {
+	; saves the image held in a blob Buffer at path
+	if !IsObject(blobobj) || !blobobj.Size {
+		MsgBox("Empty blob", "Error")
+		return
 	}
+	HFILE := FileOpen(path, "w")
+	HFILE.RawWrite(blobobj)
+	HFILE.Close()
 }
 
 ;-------------------------------------------------------------
 
 
-getRandomStr(len){
+getRandomStr(len) {
 	rStr := "abcdefghijiklmnopqrstuvwxyz0123456789"
 	str := ""
-	loop % len
-	{
-		Random, num, 1, 36
-		str .= Substr(rStr, num, 1)
-	}
+	loop len
+		str .= SubStr(rStr, Random(1, 36), 1)
 	return str
 }
 
-genHTMLforPreview(code){
-	FileDelete, % PREV_FILE
-	FileAppend, % "<pre style=""word-break: break-all; word-wrap: break-word;"">" deActivateHtml(code), % PREV_FILE
+genHTMLforPreview(code) {
+	try FileDelete(PREV_FILE)
+	FileAppend('<pre style="word-break: break-all; word-wrap: break-word;">' deActivateHtml(code), PREV_FILE)
 }
 
-deactivateHtml(code){
-	StringReplace, code, code, >, % "&gt;", All
-	StringReplace, code, code, <, % "&lt;", All
+deactivateHtml(code) {
+	code := StrReplace(code, ">", "&gt;")
+	code := StrReplace(code, "<", "&lt;")
 	return code
 }
 
-TT_Console_PasteMode(text, keys){
-	tx := ini_pstMode_X ? ini_pstMode_X : SPM.X , ty := ini_pstMode_Y ? ini_pstMode_Y : SPM.Y
-	return TT_Console(text, keys, tx, ty,,, 1)
+TT_Console_PasteMode(text, keys) {
+	global ini_pstMode_X, ini_pstMode_Y, SPM
+	tx := ini_pstMode_X ? ini_pstMode_X : SPM.X, ty := ini_pstMode_Y ? ini_pstMode_Y : SPM.Y
+	return TT_Console(text, keys, tx, ty, , , 1)
+}
+
+; Sends a key sequence to the active window and returns the resulting clipboard text.
+; Clipboard content and Clipjump monitoring are restored afterwards.
+clipboardFromKeys(keys := "^c") {
+	backup := ClipboardAll()
+	API.blockMonitoring(1)
+	A_Clipboard := ""
+	Send(keys)
+	ClipWait(1)
+	result := tryGetClipboard()
+	A_Clipboard := backup
+	API.blockMonitoring(0)
+	return result
 }
 
 ;GetFile()
 ;	Gets file path of selected item in Explorer
 
-GetFile(hwnd=""){
+GetFile(hwnd := "") {
 	hwnd := hwnd ? hwnd : WinExist("A")
-	WinGetClass class, ahk_id %hwnd%
-	if (class="CabinetWClass" or class="ExploreWClass")
-	{
-		try for window in ComObjCreate("Shell.Application").Windows
-				if (window.hwnd==hwnd)
-					sel := window.Document.SelectedItems
-		for item in sel
-			ToReturn .= item.path "`n"
+	cls := WinGetClass("ahk_id " hwnd)
+	ToReturn := ""
+	if (cls = "CabinetWClass" || cls = "ExploreWClass") {
+		sel := ""
+		try for window in ComObject("Shell.Application").Windows
+			if (window.hwnd == hwnd)
+				sel := window.Document.SelectedItems
+		if IsObject(sel)
+			for item in sel
+				ToReturn .= item.path "`n"
 	}
 	else
-		Toreturn := Copytovar(4)
+		ToReturn := clipboardFromKeys("^c")
 
-	return Trim(ToReturn,"`n")
+	return Trim(ToReturn, "`n")
 }
 
 ;GetFolder()
 ;	Gets folder path of active window in Explorer
 
-GetFolder(){
-	WinGetClass,var,A
-	If var in CabinetWClass,ExplorerWClass,Progman
-	{
-		IfEqual,var,Progman
+GetFolder() {
+	var := WinGetClass("A")
+	if (var = "CabinetWClass" || var = "ExplorerWClass" || var = "Progman") {
+		v := ""
+		if (var = "Progman")
 			v := A_Desktop
-		else
-		{
-			winGetText,Fullpath,A
-			loop,parse,Fullpath,`r`n
+		else {
+			Fullpath := WinGetText("A")
+			loop parse Fullpath, "`n", "`r"
 			{
-				IfInString,A_LoopField,:\
-				{
-					StringGetPos,pos,A_Loopfield,:\,L
-					Stringtrimleft,v,A_loopfield,(pos - 1)
+				if (p := InStr(A_LoopField, ":\")) {
+					v := SubStr(A_LoopField, p - 1)
 					break
 				}
 			}
 		}
-	return v
+		return v
 	}
-	else
-	{
-		return Copytovar(2, "!{sc020}^{sc02e}{Esc}") 			;!d^c
-	}
+	return clipboardFromKeys("!{sc020}^{sc02e}{Esc}") 			;!d^c
 }
 
 ;BrowserRun()
 ;	Runs a web-site in default browser safely.
 
-BrowserRun(site){
-RegRead, OutputVar, HKCR, http\shell\open\command 
-IfNotEqual, Outputvar
-{
-	StringReplace, OutputVar, OutputVar,"
-	SplitPath, OutputVar,,OutDir,,OutNameNoExt, OutDrive
-	run,% OutDir . "\" . OutNameNoExt . ".exe" . " """ . site . """"
-}
-else
-	run,% "iexplore.exe" . " """ . site . """"	;internet explorer
+BrowserRun(site) {
+	OutputVar := ""
+	try OutputVar := RegRead("HKCR\http\shell\open\command")
+	if (OutputVar != "") {
+		OutputVar := StrReplace(OutputVar, '"')
+		SplitPath(OutputVar, , &OutDir, , &OutNameNoExt)
+		try Run(OutDir . "\" . OutNameNoExt . ".exe" . ' "' . site . '"')
+	}
+	else
+		try Run('iexplore.exe "' . site . '"')
 }
 
 ;hkZ()
-;	Hotkey command function
+;	Hotkey command function. fn is a function object (or a name resolved via ACTIONS).
 
-hkZ(HotKey, Label, Status=1) {
-	if Hotkey !=
-	{
+hkZ(HotKey, fn, Status := 1) {
+	if (HotKey = "")
+		return
+	if !(fn is Func)
+		fn := actionFor(fn)
+	try
+		Hotkey(HotKey, fn, Status ? "On" : "Off")
+	catch {
+		t := ""
+		loop parse HotKey
+			if IsAlpha(A_LoopField)
+				t .= "vk" GetVKList(A_LoopField)[1]
+			else
+				t .= A_LoopField
 		try
-			Hotkey,% HotKey,% Label,% Status ? "On" : "Off"
-		catch {
-			t := ""
-			loop, parse, hotkey
-				if A_LoopField is alpha
-					t .= "vk" GetVKList(A_LoopField)[1]
-				else t .= A_LoopField
-			Hotkey, % t,% Label,% (Status ? "On" : "Off") " UseErrorLevel"
-			if ErrorLevel = 2
-				MsgBox, 16, Clipjump Warning, It looks like the hotkey %t% doesn't exist ? `nRefer to troubleshooting page in help file.
-		}
+			Hotkey(t, fn, Status ? "On" : "Off")
+		catch
+			MsgBox("It looks like the hotkey " t " doesn't exist ? `nRefer to troubleshooting page in help file.", "Clipjump Warning", 16)
 	}
 }
 
 /**
  * hkz that prepends pstIdentfier
  */
-hkZ_pi(key, label, status=1){
-	return hkZ(pstIdentifier key, label, status)
+hkZ_pi(key, fn, status := 1) {
+	global pstIdentifier
+	return hkZ(pstIdentifier key, fn, status)
+}
+
+; Resolves a v1 label name to its function (ACTIONS map), falling back to keyblocker.
+actionFor(name) {
+	global ACTIONS
+	if (name is Func)
+		return name
+	if ACTIONS.Has(name)
+		return ACTIONS[name]
+	f := FuncByName(name)
+	return f ? f : keyblocker
 }
 
 ; Converts an Ini file to an object
-Ini2Obj(Ini){
-	out := {}
-	loop, read, % Ini
+Ini2Obj(Ini) {
+	out := CJMap()
+	curS := ""
+	if !FileExist(Ini)
+		return out
+	loop read Ini
 	{
-		if ( Instr(l := Trim(A_LoopReadLine), ";") == 1 ) or !l
+		if (InStr(l := Trim(A_LoopReadLine), ";") == 1) || !l
 			continue
-		if RegExMatch(l, "iU)\[.*\]", ov)
-		{
-			curS := Substr(ov, 2, -1) , out[curS] := {}
+		if RegExMatch(l, "iU)\[.*\]", &ov) {
+			curS := SubStr(ov[0], 2, -1), out[curS] := CJMap()
 			continue
 		}
-		out[curS][ k := Trim( Substr(l, 1, p:=Instr(l, "=")-1) ) ] := Trim( Substr(l, p+2) )
+		if !out.Has(curS)
+			out[curS] := CJMap()
+		out[curS][k := Trim(SubStr(l, 1, p := InStr(l, "=") - 1))] := Trim(SubStr(l, p + 2))
 	}
 	return out
 }
 
 ; Saves an object as an Ini file
-Obj2Ini(obj, Ini, saveBlank=false){
-	FileDelete, % Ini
-	for k,v in obj
+Obj2Ini(obj, Ini, saveBlank := false) {
+	try FileDelete(Ini)
+	t := ""
+	for k, v in obj
 	{
 		t .= "`n[" k "]`r`n"
-		for k2,v2 in v
-			if (saveBlank) || (v2 != "")
-				t .= k2 " = " v2 "`r`n"
+		if IsObject(v)
+			for k2, v2 in v
+				if (saveBlank) || (v2 != "")
+					t .= k2 " = " v2 "`r`n"
 	}
-	FileAppend, % Trim(t, "`r`n"), % Ini
+	FileAppend(Trim(t, "`r`n"), Ini)
 }
 
 ;Gdip_SetImagetoClipboard()
 ;	Sets some Image to Clipboard
 
-Gdip_SetImagetoClipboard( pImage ){
+Gdip_SetImagetoClipboard(pImage) {
 	;Sets some Image file to Clipboard
 	PToken := Gdip_Startup()
 	pBitmap := Gdip_CreateBitmapFromFile(pImage)
-	Gdip_SetBitmaptoClipboard(pBitmap)
-	Gdip_DisposeImage( pBitmap )
-	Gdip_Shutdown( PToken)
+	Gdip_SetBitmapToClipboard(pBitmap)
+	Gdip_DisposeImage(pBitmap)
+	Gdip_Shutdown(PToken)
 }
 
 ;Gdip_CaptureClipboard()
 ;	Captures Clipboard to file
 
-Gdip_CaptureClipboard(file, quality){
+Gdip_CaptureClipboard(file, quality) {
 	PToken := Gdip_Startup()
 	pBitmap := Gdip_CreateBitmapFromClipboard()
-	Gdip_SaveBitmaptoFile(pBitmap, file, quality)
-	Gdip_DisposeImage( pBitmap )
-	Gdip_Shutdown( PToken)
+	Gdip_SaveBitmapToFile(pBitmap, file, quality)
+	Gdip_DisposeImage(pBitmap)
+	Gdip_Shutdown(PToken)
 }
 
 ; Gdip_Getdimensions()
 
-Gdip_getLengths(img, byref width, byref height) {
-
+Gdip_getLengths(img, &width, &height) {
 	GDIPToken := Gdip_Startup()
-	pBM := Gdip_CreateBitmapFromFile( img )
-	width := Gdip_GetImageWidth( pBM )
-	height := Gdip_GetImageHeight( pBM )
-	Gdip_DisposeImage( pBM )
-	Gdip_Shutdown( GDIPToken )
+	pBM := Gdip_CreateBitmapFromFile(img)
+	width := Gdip_GetImageWidth(pBM)
+	height := Gdip_GetImageHeight(pBM)
+	Gdip_DisposeImage(pBM)
+	Gdip_Shutdown(GDIPToken)
 }
 
 ;	Flexible Active entity analyzer
 
-IsActive(what, oftype="classnn", ispattern=false){
-	if oftype = classnn
-		ControlGetFocus, O, A
-	else if oftype = window
-		WinGetActiveTitle, O 
-
+IsActive(what, oftype := "classnn", ispattern := false) {
+	O := ""
+	try {
+		if (oftype = "classnn")
+			O := ControlGetClassNN(ControlGetFocus("A"))
+		else if (oftype = "window")
+			O := WinGetTitle("A")
+	}
 	if ispattern
-		return Instr(O, what) ? 1 : 0
+		return InStr(O, what) ? 1 : 0
 	else
-		return ( O == what ) ? 1 : 0
+		return (O == what) ? 1 : 0
 }
 
 ;Taken from Miscellaneous Functions by Avi Aryan
-getParams(sum){
-	static a := 1
-	while sum>0
+getParams(sum) {
+	a := 1, p := ""
+	while sum > 0
 		loop
 		{
-			a*=2
-			if (a>sum)
-			{
-				a/=2,p.=Round(a)" ",sum-=a,a:=1
+			a *= 2
+			if (a > sum) {
+				a /= 2, p .= Round(a) " ", sum -= a, a := 1
 				break
 			}
 		}
-	return Substr(p,1,-1)
+	return SubStr(p, 1, -1)
 }
 
-autoTooltip(Text, Time, which=1){
-	ToolTip, % Text, , , % which
-	SetTimer,% "Tooltipoff" which ,% Time
+autoTooltip(Text, Time, which := 1) {
+	ToolTip(Text, , , which)
+	SetTimer(CJ_TooltipOff(which), -Time)
 }
 
-TooltipOff:
-TooltipOff1:
-TooltipOff2:
-TooltipOff3:
-TooltipOff4:
-TooltipOff5:
-TooltipOff6:
-TooltipOff7:
-TooltipOff8:
-TooltipOff9:
-TooltipOff10:
-TooltipOff11:
-	SetTimer, % A_ThisLabel, Off
-	ToolTip,,,, % ( Substr(A_ThisLabel, 0) == "f" ) ? 1 : RegExReplace(A_ThisLabel, "TooltipOff")
-	return
+; Returns the (cached) function that clears tooltip number n, usable with SetTimer on/off.
+CJ_TooltipOff(n := 1) {
+	static fns := Map()
+	if !fns.Has(n) {
+		fns[n] := off
+		off(*) {
+			SetTimer(fns[n], 0)
+			ToolTip(, , , n)
+		}
+	}
+	return fns[n]
+}
 
-emptylabel:
-keyblocker:
-	return
+emptylabel(*) {
+}
 
-simplePaste: 		; simple lable to paste CURRENT content on cb.
-	Send ^{vk56}
-	return
+keyblocker(*) {
+}
 
-shortcutblocker_settings:
-	ControlGetFocus, temp, A
-	GuiControl, settings:,% temp,% A_ThisHotkey
-	return
+simplePaste(*) { 		; simple label to paste CURRENT content on cb.
+	Send("^{vk56}")
+}
 
-IsHotkeyControlActive(){
+shortcutblocker_settings(ThisHotkey := "", *) {
+	try GuiCtrlFromHwnd(ControlGetFocus("A")).Value := ThisHotkey
+}
+
+IsHotkeyControlActive(*) {
 	return IsActive("msctls_hotkey", "classnn", true)
 }
 
-getQuant(str, what){
-	StringReplace, str, str,% what,% what, UseErrorLevel
-	return ErrorLevel
+getQuant(str, what) {
+	StrReplace(str, what, what, , &count)
+	return count
 }
 
 ;Used for Debugging
-debugTip(text, x="", y="", tooltipno=20){
-	Tooltip, % text,% x,% y, % tooltipno
+debugTip(text, x := "", y := "", tooltipno := 20) {
+	ToolTip(text, x, y, tooltipno)
 }
 
-fillwithSpaces(text="", limit=35){
-	loop % limit-Strlen(text)
-		r .= A_space
+fillwithSpaces(text := "", limit := 35) {
+	r := ""
+	loop limit - StrLen(text)
+		r .= A_Space
 	return text r
 }
 
 /**
  * TickCount in 64 bit precision
  */
-TickCount64(){
+TickCount64() {
 	return DllCall("GetTickCount64", "Cdecl UInt64")
 }
 
 /*
 SuperInstr()
 	Returns min/max position for a | separated values of Needle(s)
-	
+
 	return_min = true  ; return minimum position
 	return_max = false ; return maximum position
 
 */
-SuperInstr(Hay, Needles, return_min=true, Case=false, Startpoint=1, Occurrence=1){
-	
-	pos := return_min*Strlen(Hay)
-	Needles := Rtrim(Needles, " ")
-	
-	if return_min
-	{
-		loop, parse, Needles, %A_space%
-			if ( pos > (var := Instr(Hay, A_LoopField, Case, startpoint, Occurrence)) )
+SuperInstr(Hay, Needles, return_min := true, CaseSense := false, Startpoint := 1, Occurrence := 1) {
+	pos := return_min * StrLen(Hay)
+	Needles := RTrim(Needles, " ")
+
+	if return_min {
+		loop parse Needles, A_Space
+			if (pos > (var := InStr(Hay, A_LoopField, CaseSense, Startpoint, Occurrence)))
 				pos := var
 	}
-	else
-	{
-		if Needles=
-			return Strlen(Hay)
-		loop, parse, Needles, %A_space%
-			if ( (var := Instr(Hay, A_LoopField, Case, startpoint, Occurrence)) > pos )
+	else {
+		if (Needles = "")
+			return StrLen(Hay)
+		loop parse Needles, A_Space
+			if ((var := InStr(Hay, A_LoopField, CaseSense, Startpoint, Occurrence)) > pos)
 				pos := var
 	}
 	return pos
@@ -712,118 +731,114 @@ SuperInstr(Hay, Needles, return_min=true, Case=false, Startpoint=1, Occurrence=1
 Compare Versions
 */
 
-IsLatestRelease(prog_ver, cur_ver, exclude_keys="b|a") {
-
+IsLatestRelease(prog_ver, cur_ver, exclude_keys := "b|a") {
 	if RegExMatch(prog_ver, "(" exclude_keys ")")
 		return 1
 
-	StringSplit, prog_ver_array, prog_ver,`.
-	StringSplit, cur_ver_array, cur_ver  ,`.
+	prog := StrSplit(prog_ver, ".")
+	cur := StrSplit(cur_ver, ".")
 
-	loop % cur_ver_array0 - prog_ver_array0
-		var := prog_ver_array0+A_index , prog_ver_array%var% := 0
+	loop cur.Length - prog.Length
+		prog.Push(0)
 
-	Loop % cur_ver_array0
-		if !( prog_ver_array%A_index% >= cur_ver_array%A_index% )
+	loop cur.Length
+		if !(prog[A_Index] >= cur[A_Index])
 			return 0
-		else if ( prog_ver_array%A_index% > cur_ver_array%A_index% ) 	; in case cur_ver supplied is of old file
+		else if (prog[A_Index] > cur[A_Index]) 	; in case cur_ver supplied is of old file
 			return 1
 	return 1
 }
 
 ;get width and heights of controls
-getControlInfo(type="button", text="", ret="w", fontsize="", fontmore=""){
-	static test
-	Gui, wasteGUI:New
-	Gui, wasteGUI:Font, % fontsize, % fontmore
-	Gui, wasteGUI:Add, % type, vtest, % text
-	GuiControlGet, test, wasteGUI:pos
-	Gui, wasteGUI:Destroy
-	if ret=w
-		return testw
-	if ret=h
-		return testh
+getControlInfo(type := "button", text := "", ret := "w", fontsize := "", fontmore := "") {
+	g := Gui()
+	g.SetFont(fontsize, fontmore)
+	ctl := g.Add(type, , text)
+	ctl.GetPos(, , &w, &h)
+	g.Destroy()
+	if (ret = "w")
+		return w
+	if (ret = "h")
+		return h
 }
 
 ;GUI Message Box to allow selection
-guiMsgBox(title, text, owner="", isEditable=0, wait=0, w="", h=""){
-	static thebox
+guiMsgBox(title, text, owner := "", isEditable := 0, wait := 0, w := "", h := "") {
+	global CJGUI
 	wf := getControlInfo("edit", text, "w", "s9", "Lucida Console")
 	hf := getControlInfo("edit", text, "h", "s9", "Lucida Console")
-	w := !w ? (wf > A_ScreenWidth/1.5 ? A_ScreenWidth/1.5 : wf+200) : w 	;+10 for scl bar
-	h := !h ? (hf > A_ScreenHeight ? A_ScreenHeight : hf+65) : h 		;+10 for margin, +more for the button
+	w := !w ? (wf > A_ScreenWidth / 1.5 ? A_ScreenWidth / 1.5 : wf + 200) : w 	;+10 for scl bar
+	h := !h ? (hf > A_ScreenHeight ? A_ScreenHeight : hf + 65) : h 		;+10 for margin, +more for the button
+	w := Round(w), h := Round(h)
 
-	Gui, guiMsgBox:New
-	Gui, guiMsgBox:+Owner%owner%
-	Gui, -MaximizeBox +AlwaysOnTop
-	Gui, Font, s9, Lucida Console
-	Gui, Add, Edit, % "x5 y5 w" w-10 " h" h-35 (isEditable ? " -" : " +") "Readonly vthebox +multi -Border", % text
-	Gui, Add, button, % "x" w/2-20 " w40 y+5", OK
-	GuiControl, Focus, button1
-	Gui, guiMsgBox:Show, % "w" w " h" h, % title
+	GuiDestroy("guiMsgBox")
+	g := Gui("-MaximizeBox +AlwaysOnTop", title)
+	CJGUI["guiMsgBox"] := g
+	if (owner != "" && CJGUI.Has(owner))
+		g.Opt("+Owner" CJGUI[owner].Hwnd)
+	g.SetFont("s9", "Lucida Console")
+	box := g.Add("Edit", "x5 y5 w" (w - 10) " h" (h - 35) (isEditable ? " -" : " +") "Readonly +Multi -Border", text)
+	btn := g.Add("Button", "x" (w / 2 - 20) " w40 y+5", "OK")
+	btn.OnEvent("Click", onClose)
+	g.OnEvent("Close", onClose)
+	g.OnEvent("Escape", onClose)
+	btn.Focus()
+	g.Show("w" w " h" h)
+	GuiEnds := 0
+	result := text
 	if wait
-		while GuiEnds
-			sleep 100
-	return thebox
+		while !GuiEnds
+			Sleep 100
+	return result
 
-guiMsgBoxButtonOK:
-guiMsgBoxGuiClose:
-guiMsgBoxGuiEscape:
-	Gui, guiMsgBox:Submit, nohide
-	Gui, guiMsgBox:Destroy
-	GuiEnds := 1
-	return
+	onClose(*) {
+		result := box.Value
+		GuiDestroy("guiMsgBox")
+		GuiEnds := 1
+	}
 }
 
 
 ;inputbox function for use with customizer...
-inputBox(title, text){
-	Inputbox, o, % title, % text
-	if !ErrorLevel
-		return o
+cjInputBox(title, text) {
+	ib := InputBox(text, title)
+	if (ib.Result = "OK")
+		return ib.Value
+	return ""
 }
 
-Base2Number(H, base=16){
-	S:=Strlen(H),N:=0
-	loop,parse,H
-		N+=((A_LoopField*1="")?Asc(A_LoopField)-87:A_LoopField)*base**(S-A_index)
+Base2Number(H, base := 16) {
+	S := StrLen(H), N := 0
+	loop parse H
+		N += (IsDigit(A_LoopField) ? A_LoopField : Ord(StrLower(A_LoopField)) - 87) * base ** (S - A_Index)
 	return N
-}
-
-max(a, b){
-	return (a>b) ? a : b
 }
 
 ; Code by deo http://www.autohotkey.com/board/topic/74348-send-command-when-switching-to-russian-input-language/#entry474543
 
-GetVKList( letter ){
-	SetFormat, Integer, Hex
-	vk_list := Array()
+GetVKList(letter) {
+	vk_list := []
+	_list := ""
 	for i, hkl in KeyboardLayoutList()
 	{
-		retVK := DllCall("VkKeyScanExW","UShort",Asc(letter),"Ptr",hkl,"Short")
+		retVK := DllCall("VkKeyScanExW", "UShort", Ord(letter), "Ptr", hkl, "Short")
 		if (retVK = -1)
 			continue
-		vk := retVK & 0xFF
-		StringTrimLeft,vk,vk,2
-		if !instr(_list,"|" vk "|")
-		{
+		vk := Format("{:x}", retVK & 0xFF)
+		if !InStr(_list, "|" vk "|") {
 			_list .= "|" vk "|"
-			vk_list.insert(vk)
+			vk_list.Push(vk)
 		}
 	}
-	SetFormat, Integer, D
 	return vk_list
 }
 
-KeyboardLayoutList(){
+KeyboardLayoutList() {
 	hkl_num := 20
-	VarSetCapacity(hHkls,hkl_num*A_PtrSize,0)
-	num := DllCall("GetKeyboardLayoutList","Uint",hkl_num,"Ptr",&hHkls)
-	hkl_list := Array()
-	loop,% num
-		hkl_list.Insert(NumGet(hHkls,(A_index-1)*A_PtrSize,"UPtr"))
-	hHkls =
+	hHkls := Buffer(hkl_num * A_PtrSize, 0)
+	num := DllCall("GetKeyboardLayoutList", "UInt", hkl_num, "Ptr", hHkls)
+	hkl_list := []
+	loop num
+		hkl_list.Push(NumGet(hHkls, (A_Index - 1) * A_PtrSize, "UPtr"))
 	return hkl_list
 }
-; !Code by deo
