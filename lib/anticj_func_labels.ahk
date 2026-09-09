@@ -421,20 +421,6 @@ TT_Console_PasteMode(text, keys) {
 	return TT_Console(text, keys, tx, ty, , , 1)
 }
 
-; Sends a key sequence to the active window and returns the resulting clipboard text.
-; Clipboard content and Clipjump monitoring are restored afterwards.
-clipboardFromKeys(keys := "^c") {
-	backup := ClipboardAll()
-	API.blockMonitoring(1)
-	A_Clipboard := ""
-	Send(keys)
-	ClipWait(1)
-	result := tryGetClipboard()
-	A_Clipboard := backup
-	API.blockMonitoring(0)
-	return result
-}
-
 ;GetFile()
 ;	Gets file path of selected item in Explorer
 
@@ -452,7 +438,7 @@ GetFile(hwnd := "") {
 				ToReturn .= item.path "`n"
 	}
 	else
-		ToReturn := clipboardFromKeys("^c")
+		ToReturn := CopytoVar(4)
 
 	return Trim(ToReturn, "`n")
 }
@@ -478,7 +464,7 @@ GetFolder() {
 		}
 		return v
 	}
-	return clipboardFromKeys("!{sc020}^{sc02e}{Esc}") 			;!d^c
+	return CopytoVar(2, "!{sc020}^{sc02e}{Esc}") 			;!d^c
 }
 
 ;BrowserRun()
@@ -683,7 +669,7 @@ getQuant(str, what) {
 
 ;Used for Debugging
 debugTip(text, x := "", y := "", tooltipno := 20) {
-	ToolTip(text, x, y, tooltipno)
+	ToolTipAt(text, x, y, tooltipno)
 }
 
 fillwithSpaces(text := "", limit := 35) {

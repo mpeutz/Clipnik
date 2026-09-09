@@ -220,3 +220,11 @@ FuncByName(name) {
     } catch
         return ""
 }
+
+; ToolTip that accepts blank coordinates (v1 allowed "" to mean "near the cursor").
+ToolTipAt(text := "", x := "", y := "", which := 1) {
+	if (x = "" || y = "")
+		ToolTip(text, , , which)
+	else
+		ToolTip(text, x, y, which)
+}

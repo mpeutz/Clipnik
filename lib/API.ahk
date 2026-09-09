@@ -407,12 +407,12 @@ class API
 			this.blockMonitoring(0), this.blockMonitoring(1)
 			returnVar := ClipboardAll()
 			A_Clipboard := oldclip
-			Error := 0
+			err := 0
 		}
 		catch
-			Error := 1
+			err := 1
 		this.blockMonitoring(0)
-		return Error
+		return err
 	}
 
 	;Tooltip for plugins

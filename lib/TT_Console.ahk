@@ -21,38 +21,39 @@ Returns >
 ;return
 
 
-TT_Console(msg, keys, x="", y="", fontops="", fontname="", whichtooltip=1, followMouse=0) {
+TT_Console(msg, keys, x := "", y := "", fontops := "", fontname := "", whichtooltip := 1, followMouse := 0) {
+	what_pressed := ""
+	is_TTkey_pressed := 0
 
 	hFont := getHFONT(fontops, fontname)
 	TooltipEx(msg, x, y, whichtooltip, hFont)
 
 	;create hotkeys
-	loop, parse, keys, %A_space%, %a_space%
-		hkZ(A_LoopField, "TT_Console_Check", 1)
+	loop parse keys, A_Space, A_Space
+		if (A_LoopField != "")
+			hkZ(A_LoopField, check, 1)
 
-	is_TTkey_pressed := 0
 	while !is_TTkey_pressed
 	{
 		if followMouse
 		{
-			TooltipEx(msg,,, whichtooltip)
-			sleep 100
+			TooltipEx(msg, , , whichtooltip)
+			Sleep 100
 		} else {
-			sleep 20
+			Sleep 20
 		}
 	}
 
-	TooltipEx(,,, whichtooltip)
+	TooltipEx(, , , whichtooltip)
 
-	loop, parse, keys, %A_space%, %a_space%
-		hkZ(A_LoopField, "TT_Console_Check", 0)
+	loop parse keys, A_Space, A_Space
+		if (A_LoopField != "")
+			hkZ(A_LoopField, check, 0)
 
 	return what_pressed
 
-
-TT_Console_Check:
-	what_pressed := A_ThisHotkey
-	is_TTkey_pressed := 1
-	return
+	check(ThisHotkey := "", *) {
+		what_pressed := ThisHotkey
+		is_TTkey_pressed := 1
+	}
 }
-

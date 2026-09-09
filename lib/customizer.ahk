@@ -109,16 +109,16 @@ customization_Run(obj) {
 		k := LTrim(k, "0123456789") 	; correct key
 		isf := ((k == "run") && InStr(v, "("))
 		loop { 			; change %..% vars to keys
-			if !($op1 := InStr(v, "%", , 1, 1)) || !($op2 := InStr(v, "%", , 1, 2))
+			if !(op1 := InStr(v, "%", , 1, 1)) || !(op2 := InStr(v, "%", , 1, 2))
 				break
-			$match := SubStr(v, $op1, $op2 - $op1 + 1)
-			$var := SubStr($match, 2, -1)
+			mtch := SubStr(v, op1, op2 - op1 + 1)
+			vr := SubStr(mtch, 2, -1)
 
-			if RegExMatch($var, "iU)^[^ `t]+\(.*\)$")
-				$var := RunFunc($var)
+			if RegExMatch(vr, "iU)^[^ `t]+\(.*\)$")
+				vr := RunFunc(vr)
 			else
-				$var := resolveVarPath($var)
-			v := StrReplace(v, $match, (isf ? '"' $var '"' : $var), , , 1)
+				vr := resolveVarPath(vr)
+			v := StrReplace(v, mtch, (isf ? '"' vr '"' : vr), , , 1)
 		}
 
 		if (k = "run") {
