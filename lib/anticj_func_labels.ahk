@@ -138,6 +138,8 @@ Valueof(VarinStr) {
 		}
 		else
 			emVar := VarGet(emVar)
+		if IsObject(emVar)
+			emVar := "" 	; v1 rendered objects as an empty string
 
 		VarinStr := SubStr(VarinStr, 1, p1 - 1) emVar SubStr(VarinStr, p2 + 1)
 	}
