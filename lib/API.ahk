@@ -20,7 +20,7 @@ Act_API(D, k) {
 	r := API.%fname%(ps*)
 
 	if InStr(rFuncs, "|" fname "|")
-		FileAppend(r, cbF)
+		FileAppend((r is String || r is Number || r is ClipboardAll) ? r : "", cbF)   ; objects cannot cross the process boundary (v1 wrote nothing)
 	return r
 }
 
