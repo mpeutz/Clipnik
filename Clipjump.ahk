@@ -1799,8 +1799,15 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 	else
 		Act_CjControl(D)
 
-	while !FileExist(A_Temp "\clipjumpcom.txt")
+	if !(a is String || a is Number)
+		a := "" 	; objects cannot cross the process boundary (v1 wrote an empty string)
+	loop 50 {
+		if FileExist(A_Temp "\clipjumpcom.txt")
+			break
 		try FileAppend(a, A_Temp "\clipjumpcom.txt")
+		catch
+			Sleep 10
+	}
 
 	EmptyMem()
 	return 1

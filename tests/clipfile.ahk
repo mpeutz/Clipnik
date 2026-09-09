@@ -12,9 +12,10 @@ check(cond, msg) {
 }
 backup := ClipboardAll()
 ; v1 file from the real cache
-v1 := FileRead("cache\clips\27.avc", "RAW")
-check(!ClipFile_IsLayout(v1, 4) && ClipFile_IsLayout(v1, 8), "27.avc detected as v1 8-byte layout")
-A_Clipboard := ClipFileRead("cache\clips\27.avc")
+fx := A_ScriptDir "\fixtures\v1-text.avc"   ; written by Clipjump v1 on 64-bit AutoHotkey (8-byte size fields)
+v1 := FileRead(fx, "RAW")
+check(!ClipFile_IsLayout(v1, 4) && ClipFile_IsLayout(v1, 8), "fixture detected as v1 8-byte layout")
+A_Clipboard := ClipFileRead(fx)
 Sleep 50
 check(InStr(A_Clipboard, "clipflow-smoke-"), "v1 text clip loads: " SubStr(A_Clipboard, 1, 30))
 ; v2 round trip
