@@ -1,0 +1,110 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "Settings · General",
+      "x": 0,
+      "y": 0,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "SettingsHistory.dc.html",
+      "title": "Settings · Clipboard History",
+      "x": 860,
+      "y": 0,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "SettingsShortcuts.dc.html",
+      "title": "Settings · Shortcuts",
+      "x": 1720,
+      "y": 0,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "SettingsChannels.dc.html",
+      "title": "Settings · Channels",
+      "x": 0,
+      "y": 780,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "SettingsAppearance.dc.html",
+      "title": "Settings · Appearance",
+      "x": 860,
+      "y": 780,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "SettingsAdvanced.dc.html",
+      "title": "Settings · Advanced",
+      "x": 1720,
+      "y": 780,
+      "w": 760,
+      "h": 620
+    },
+    {
+      "file": "About.dc.html",
+      "title": "About",
+      "x": 0,
+      "y": 1560,
+      "w": 440,
+      "h": 380
+    },
+    {
+      "file": "PluginManager.dc.html",
+      "title": "Plugin Manager",
+      "x": 540,
+      "y": 1560,
+      "w": 680,
+      "h": 470
+    },
+    {
+      "file": "IgnoredWindows.dc.html",
+      "title": "Ignored Windows",
+      "x": 1320,
+      "y": 1560,
+      "w": 420,
+      "h": 400
+    },
+    {
+      "file": "Dialogs.dc.html",
+      "title": "Small dialogs",
+      "x": 0,
+      "y": 2180,
+      "w": 1380,
+      "h": 340
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -280,
+      "w": 520,
+      "text": "Phase 3 native windows. Palette and type from Theme.ahk (the paste-mode card). Every artboard has a Dark switch and an Accent swatch in its tweak row: flip them to see the light theme or another Windows accent.\nWin32 limits: GroupBoxes become section headers, the Hotkey control becomes a click-to-record field, spinners are Edit + two small buttons."
+    },
+    {
+      "id": "settings-note",
+      "x": 2600,
+      "y": 0,
+      "w": 300,
+      "text": "Settings: left nav, one page per topic, 8px grid, min 720×520 and resizable. Apply enables only after a change (shown enabled on the Appearance page).\nNew in 13.0: the Appearance page (theme, notification position, pinned card position) and the private-clips switch under General."
+    },
+    {
+      "id": "dialogs-note",
+      "x": 1480,
+      "y": 2180,
+      "w": 280,
+      "text": "Small dialogs keep their behavior; they only pick up the theme, Segoe UI and consistent button rows. Ignored Windows moves in-process so adding a class no longer restarts Clipjump."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
