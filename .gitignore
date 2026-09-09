@@ -11,3 +11,4 @@ tests/_v.out
 # Generated design canvas payloads and previews (rebuild with design/*/build.mjs)
 design/**/preview-*.html
 design/phase3/clipjump-settings-windows.html
+design/phase4/clipjump-history-and-organizer.html

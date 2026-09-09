@@ -77,6 +77,7 @@ load_Settings(all := false) {
 	ini_toastPosition := IniRead(CONFIGURATION_FILE, "Main", "ToastPosition", "cursor")
 	ini_respectExclusion := IniRead(CONFIGURATION_FILE, "Main", "respectExclusionFormats", 1)
 	ini_searchUsesWindow := IniRead(CONFIGURATION_FILE, "Advanced", "SearchUsesWindow", 0)
+	ini_prewarmWebViews := IniRead(CONFIGURATION_FILE, "Advanced", "PrewarmWebViews", 1) ? 1 : 0
 }
 
 ; v is a Map of the values collected by the Settings window (see SettingsWin.Collect for the keys).
@@ -268,6 +269,7 @@ save_Default(full := 1){
 	ini_write("Main", "ToastPosition", "cursor")
 	ini_write("Main", "respectExclusionFormats", 1)
 	ini_write("Advanced", "SearchUsesWindow", 0)
+	ini_write("Advanced", "PrewarmWebViews", 1)
 
 	; DELETE KEYS removed v10.7.2.6
 	Ini_delete("Advanced", "Start_with_formatting")

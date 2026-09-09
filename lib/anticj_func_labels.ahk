@@ -13,7 +13,7 @@ settings(*) {
 }
 
 history(*) {
-	gui_History()
+	HistoryWin.Open()
 }
 
 classTool(*) {
@@ -405,20 +405,6 @@ getRandomStr(len) {
 		str .= SubStr(rStr, Random(1, 36), 1)
 	return str
 }
-
-genHTMLforPreview(code) {
-	try FileDelete(PREV_FILE)
-	FileAppend('<pre style="word-break: break-all; word-wrap: break-word;">' deActivateHtml(code), PREV_FILE)
-}
-
-deactivateHtml(code) {
-	code := StrReplace(code, ">", "&gt;")
-	code := StrReplace(code, "<", "&lt;")
-	return code
-}
-
-;GetFile()
-;	Gets file path of selected item in Explorer
 
 GetFile(hwnd := "") {
 	hwnd := hwnd ? hwnd : WinExist("A")

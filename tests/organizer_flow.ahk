@@ -1,0 +1,64 @@
+; Channel Organizer (WebView2): opens the window, selects the first clip, creates a clip with Ctrl+N through the
+; native dialog, checks it is listed, deletes it again with Del, then closes with Esc. Needs an idle desktop.
+#Requires AutoHotkey v2.0
+#Include ..\publicAPI.ahk
+#Include ..\lib\vendor\Gdip_All.ahk
+SendLevel 1
+SetTitleMatchMode 1
+cj := Clipjump()
+title := cj["TXT.ORG__name"] " ahk_class AutoHotkeyGUI"
+logFile := A_Temp "\Clipjump\webhost.log"
+fails := 0
+check(name, cond) {
+	global fails
+	FileAppend((cond ? "PASS " : "FAIL ") name "`n", "*")
+	if !cond
+		fails++
+}
+readLog() {
+	global logFile
+	return FileExist(logFile) ? FileRead(logFile) : ""
+}
+snap(name) {
+	global title
+	WinGetPos(&x, &y, &w, &h, title)
+	p := Gdip_Startup(), b := Gdip_BitmapFromScreen(x "|" y "|" w "|" h)
+	Gdip_SaveBitmapToFile(b, A_ScriptDir "\out\organizer-" name ".png"), Gdip_DisposeImage(b), Gdip_Shutdown(p)
+}
+before := Integer(cj.runFunction("API.getChStrength(0)"))
+try FileDelete(logFile)
+cj.runLabel("channelOrganizer")
+check("window opens", WinWait(title, , 8) != 0)
+WinActivate(title)
+Sleep 2500
+check("channels sent to the page", InStr(readLog(), '"cmd":"channels"'))
+check("clips sent to the page", InStr(readLog(), '"cmd":"clips"'))
+Send("{Down}")
+Sleep 600
+check("clip preview requested", InStr(readLog(), '"cmd":"clip"'))
+snap("selected")
+marker := "organizer-flow-" A_TickCount
+Send("^n")
+dlg := WinWait("Create New Clip ahk_class AutoHotkeyGUI", , 5)
+check("new clip dialog opens", dlg != 0)
+if dlg {
+	ControlSetText(marker, "Edit1", "ahk_id " dlg)
+	Sleep 200
+	ControlClick("OK", "ahk_id " dlg)
+	Sleep 1200
+}
+check("clip added to channel 0", Integer(cj.runFunction("API.getChStrength(0)")) = before + 1)
+check("page received the new list", InStr(readLog(), marker))
+WinActivate(title)
+Sleep 300
+Send("{Home}")
+Sleep 500
+Send("{Delete}")
+Sleep 1200
+check("clip deleted again", Integer(cj.runFunction("API.getChStrength(0)")) = before)
+snap("after")
+Send("{Esc}")
+Sleep 800
+check("Esc closes the window", !WinExist(title))
+FileAppend((fails ? "FAILED " fails : "ALL PASSED") "`n", "*")
+ExitApp fails

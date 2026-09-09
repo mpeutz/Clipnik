@@ -295,8 +295,8 @@ class API
 			ret := input
 			input := this.Binary2Text(ret)
 		}
-		else
-			API.Text2Binary(input, &ret)
+		else if API.Text2Binary(input, &ret)
+			return 0
 		FileAppend(ret, "cache\clips" cInfo.p "\" (cInfo.realCURSAVE + 1) ".avc")
 		CDS[channel][cInfo.realCURSAVE + 1] := input
 		manageFIXATE(cInfo.realCURSAVE + 1, channel, cInfo.p)
@@ -401,18 +401,37 @@ class API
 	;gets binary ClipboardAll data from simple text
 	; Text = the string you want to convert to ClipboardAll
 	; returnVar = byref variable to return ClipboardAll data
+	; v2 throws when another process holds the clipboard, so every step retries for a moment
 	static Text2Binary(Text, &returnVar) {
 		this.blockMonitoring(1)
-		try {
-			oldclip := ClipboardAll()
-			A_Clipboard := Text
-			this.blockMonitoring(0), this.blockMonitoring(1)
-			returnVar := ClipboardAll()
-			A_Clipboard := oldclip
-			err := 0
+		err := 1, oldclip := ""
+		loop 10 {                                   ; the original content is captured once, so a retry cannot overwrite it
+			try {
+				oldclip := ClipboardAll()
+				break
+			}
+			catch
+				Sleep 50
 		}
-		catch
-			err := 1
+		loop 10 {
+			try {
+				A_Clipboard := Text
+				this.blockMonitoring(0), this.blockMonitoring(1)
+				returnVar := ClipboardAll()
+				err := 0
+				break
+			}
+			catch
+				Sleep 50
+		}
+		loop 10 {
+			try {
+				A_Clipboard := oldclip
+				break
+			}
+			catch
+				Sleep 50
+		}
 		this.blockMonitoring(0)
 		return err
 	}

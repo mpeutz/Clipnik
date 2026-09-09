@@ -79,7 +79,7 @@ global MSG_TRANSFER_COMPLETE := ""
 
 ;History Tool
 global hidden_date_no := 4, history_w := "", history_partial := 1 ;start off with partial=1 <> much better
-global PREV_FILE := "cache\prev.html", GHICON_PATH := A_ScriptDir "\icons\octicons-local.ttf"
+global GHICON_PATH := A_ScriptDir "\icons\octicons-local.ttf"
 global DBPATH := "cache\data.db"
 
 /*
@@ -125,11 +125,6 @@ global CALLER := CALLER_STATUS := 1, IN_BACK := 0, MULTIPASTE := 0, PASTEMODE_AC
 global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED := 0, ctrlRef := ""		;specific purpose global vars
 global wasManualClipboard := false
 global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu(), Help_Tray := Menu()
-global HoverTip_Text := ""
-;Channel Organizer (v1 statics of channelOrganizer() and its menus)
-global chOrg_Width := "", chOrg_Height := "", chOrg_w_ofSearch := ""
-		, chOrg_t_horizButtons := 8, chOrg_t_startBtn := 2, chOrg_t_commonBtn := 3
-global chOrgLVMenu := Menu(), chOrgLBMenu := Menu(), chOrgSubM := Menu()
 
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
@@ -138,7 +133,7 @@ global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Thres
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
 		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_respectExclusion := 1, ini_searchUsesWindow := 0
-		, ini_showPastingTip := 0, ini_instapasteWritesClipboard := 0, ini_winForPasteMode := 0, ini_priority := "N", IGNORE_GROUP := "ignoreGroup"
+		, ini_showPastingTip := 0, ini_instapasteWritesClipboard := 0, ini_winForPasteMode := 0, ini_priority := "N", IGNORE_GROUP := "ignoreGroup", ini_prewarmWebViews := 1
 global ini_limitMaxClips := "", ini_KeepSession := ""
 global new_limitMaxClips := "", new_MaxClips := "", new_Threshold := "", new_Quality := "", new_startSearch := "", new_revFormat2def := "", new_copyBeep := ""
 	, new_IsMessage := "", new_KeepSession := "", new_PreserveClipPos := "", new_winClipjump := "", new_default_pformat := "", new_DaysToStore := "", new_IsImageStored := ""
@@ -234,6 +229,8 @@ Theme.Init(ini_theme, ini_accent)
 Toast.Position := ini_toastPosition
 Hud.Init()
 ClipExclusion.Init()
+if ini_prewarmWebViews
+	SetTimer(WebHost_Prewarm, -3000)
 
 loop
 {
@@ -322,7 +319,7 @@ OnExit(onExitHandler)
 
 return
 
-;Tooltip No 1 is used for Paste Mode tips, 2 is used for notifications , 3 is used for updates , 4 is used in WM_MOUSEMOVE , 5 is used in Action Mode
+;Tooltip No 1 is used for Paste Mode tips, 2 is used for notifications , 3 is used for updates , 4 was the hover tip , 5 is used in Action Mode
 ;6 used in Class Tool, 7 in API (Plugin) , 8 used in Customizer, 9 used in history tool, 10 in edit clips, 11 in Channel Organizer
 
 ;End Of Auto-Execute================================================================================================================
@@ -1744,7 +1741,6 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 ;##############################################################################
 
 #Include %A_ScriptDir%\lib\v2compat.ahk
-#Include %A_ScriptDir%\lib\WM_MOUSEMOVE.ahk
 #Include %A_ScriptDir%\lib\Searchpastemode.ahk
 #Include %A_ScriptDir%\lib\Customizer.ahk
 #Include %A_ScriptDir%\lib\API.ahk
@@ -1762,9 +1758,13 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
 #Include %A_ScriptDir%\src\core\settings.ahk
-#Include %A_ScriptDir%\lib\history gui plug.ahk
+#Include %A_ScriptDir%\src\core\history.ahk
+#Include %A_ScriptDir%\lib\vendor\WebView2\WebView2.ahk
+#Include %A_ScriptDir%\lib\vendor\JSON.ahk
+#Include %A_ScriptDir%\src\ui\web\WebHost.ahk
+#Include %A_ScriptDir%\src\ui\web\HistoryWin.ahk
 #Include %A_ScriptDir%\lib\pluginManager.ahk
-#Include %A_ScriptDir%\lib\channelOrganizer.ahk
+#Include %A_ScriptDir%\src\ui\web\OrganizerWin.ahk
 #Include %A_ScriptDir%\lib\SQLiteDB\SQLiteDB.ahk
 #Include %A_ScriptDir%\lib\settingsHelper.ahk
 #Include *i %A_ScriptDir%\plugins\_registry.ahk

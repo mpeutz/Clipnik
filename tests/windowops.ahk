@@ -1,5 +1,5 @@
 ; Key operations inside the tool windows, against a RUNNING Clipjump:
-; Settings Apply/OK round trip, History preview + Ctrl+C copy, Organizer new clip + preview + delete.
+; Settings Apply/OK round trip (the History and Organizer flows live in history_flow.ahk and organizer_flow.ahk).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\windowops.ahk
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
@@ -61,78 +61,7 @@ Sleep 800
 check(IniRead(root "\settings.ini", "Main", "CopyBeep", "") = orig, "CopyBeep restored")
 check(!errorDialog(), "no error after Settings round trip")
 
-step("History: preview of the newest text entry opens and closes; Ctrl+C copies it")
-A_Clipboard := stamp " history"
-Sleep 700
-cj.runLabel("history")
-hist := cj["TXT.HST__name"] " ahk_class AutoHotkeyGUI"
-WinWait(hist, , 5)
-WinActivate(hist)
-Sleep 600
-ControlFocus("SysListView321", hist)
-Sleep 200
-SendEvent("{Home}")
-Sleep 300
-ControlClick(cj["TXT.HST_preview"], hist)
-prev := cj["TXT.PRV__name"] " ahk_class AutoHotkeyGUI"
-check(WinWait(prev, , 5), "preview window opened")
-Sleep 800
-WinClose(prev)
-check(WinWaitClose(prev, , 5), "preview window closed")
-WinActivate(hist)
-Sleep 300
-ControlFocus("SysListView321", hist)
-Sleep 200
-A_Clipboard := ""
-SendEvent("^c")
-Sleep 1200
-check(InStr(A_Clipboard, stamp " history"), "Ctrl+C in history copied the entry: [" A_Clipboard "]")
-WinClose(hist)
-WinWaitClose(hist, , 5)
-check(!errorDialog(), "no error after History")
-
-step("Organizer: Ctrl+N new clip, Enter preview, Del delete")
-before := strength()
-cj.runLabel("channelOrganizer")
-org := cj["TXT.ORG__name"] " ahk_class AutoHotkeyGUI"
-WinWait(org, , 5)
-WinActivate(org)
-Sleep 600
-SendEvent("^n")
-if WinWait(cj["TXT.ORG_createnew"] " ahk_class AutoHotkeyGUI", , 5) {
-    Sleep 400
-    SendEvent(stamp " organizer")
-    Sleep 200
-    ControlClick("OK", cj["TXT.ORG_createnew"] " ahk_class AutoHotkeyGUI")
-    Sleep 1500
-    check(strength() = before + 1, "new clip added (" before " -> " strength() ")")
-    check(cj.getClipAt(0, 1) = stamp " organizer", "new clip is clip 1: " cj.getClipAt(0, 1))
-} else
-    check(false, "new clip dialog did not open")
-WinActivate(org)
-Sleep 300
-ControlFocus("SysListView321", org)
-Sleep 200
-SendEvent("{Home}")
-Sleep 300
-SendEvent("{Enter}")
-check(WinWait(prev, , 5), "organizer preview opened")
-Sleep 600
-WinClose(prev)
-WinWaitClose(prev, , 5)
-WinActivate(org)
-Sleep 300
-ControlFocus("SysListView321", org)
-Sleep 200
-SendEvent("{Home}")
-Sleep 300
-n := strength()
-SendEvent("{Del}")
-Sleep 1500
-check(strength() = n - 1, "Del removed the clip (" n " -> " strength() ")")
-WinClose(org)
-WinWaitClose(org, , 5)
-check(!errorDialog(), "no error after Organizer")
+; History and Organizer are WebView2 pages now: see history_flow.ahk and organizer_flow.ahk
 
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

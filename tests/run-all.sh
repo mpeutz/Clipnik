@@ -11,9 +11,9 @@ run() {
 }
 failed=0
 echo "=== validate"; MSYS_NO_PATHCONV=1 timeout 60 ./runtime/AutoHotkey64.exe /ErrorStdOut /validate Clipjump.ahk && echo "validate ok" || { echo "!!! validate failed"; failed=1; }
-run cjmap.ahk; run hotkeyparser.ahk; run sqlitedb.ahk; run clipfile.ahk
+run cjmap.ahk; run hotkeyparser.ahk; run sqlitedb.ahk; run clipfile.ahk; run webhost_demo.ahk 60
 if tasklist | grep -qi "AutoHotkey64.exe"; then
-  run api_client.ahk; run e2e.ahk 120; run pastemode.ahk 240; run modes.ahk 240; run image.ahk 120; run windows.ahk 180; run windowops.ahk 240; run settings_flow.ahk 180; run ignored_flow.ahk 120
+  run api_client.ahk; run e2e.ahk 120; run pastemode.ahk 240; run modes.ahk 240; run image.ahk 120; run windows.ahk 180; run windowops.ahk 240; run settings_flow.ahk 180; run ignored_flow.ahk 120; run history_flow.ahk 120; run organizer_flow.ahk 120
 else
   echo "Clipjump is not running: interactive tests skipped"
 fi

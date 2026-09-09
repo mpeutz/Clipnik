@@ -1,0 +1,53 @@
+<!doctype html>
+<html class="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Clipboard History</title>
+  <link rel="stylesheet" href="../common/theme.css">
+  <script src="../common/util.js"></script>
+  <script src="../common/bridge.js"></script>
+  <style>
+    #hdr, #rows .tr { grid-template-columns: minmax(0, 1fr) 150px 70px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 14 14"></path></svg>
+      <input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="Search history">
+      <button class="chip on" id="partial" data-i18n="HST_partial">Partial</button>
+      <button class="chip" id="exact" data-i18n="HST_exact">Exact</button>
+    </div>
+    <button class="btn" id="refresh" data-i18n="HST_refresh">Refresh</button>
+    <button class="btn" id="clear" data-i18n="HST_clear">Clear history…</button>
+  </div>
+  <div class="split">
+    <div class="pane">
+      <div class="table" id="table" tabindex="0">
+        <div class="hdr" id="hdr">
+          <span data-sort="clip" data-i18n="HST_clip">Clip</span>
+          <span data-sort="time" class="sorted" data-i18n="HST_date">Date</span>
+          <span data-sort="size" data-i18n="HST_size">Size</span>
+        </div>
+        <div id="rows"></div>
+      </div>
+    </div>
+    <div class="preview" id="preview">
+      <div class="ph" id="ph"><span class="dim" data-i18n="HST_selectHint">Select a clip to preview it</span></div>
+      <div class="body mono" id="body"></div>
+      <div class="actions">
+        <button class="btn primary" id="copy" data-act="copy"><span data-i18n="HST_copy">Copy</span><kbd>Ctrl+C</kbd></button>
+        <button class="btn" id="insta" data-act="instaPaste"><span data-i18n="HST_insta">Insta-Paste</span><kbd>Space</kbd></button>
+        <button class="btn" id="hold" data-act="hold"><span data-i18n="HST_hold">Hold</span><kbd>Alt+C</kbd></button>
+        <button class="btn" id="edit" data-act="edit"><span data-i18n="HST_edit">Edit</span><kbd>Ctrl+H</kbd></button>
+        <button class="btn" id="export" data-act="export"><span data-i18n="HST_export">Export</span><kbd>Ctrl+E</kbd></button>
+        <button class="btn" id="delete" data-act="delete"><span data-i18n="HST_delete">Delete</span><kbd>Del</kbd></button>
+      </div>
+    </div>
+  </div>
+  <div class="status"><span id="count"></span><span class="right" id="disk"></span></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
