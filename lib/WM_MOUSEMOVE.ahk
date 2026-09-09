@@ -74,7 +74,6 @@ WM_MOUSEMOVE(wParam, lParam, msg, hwnd) {
 	}
 }
 
-global HoverTip_Text := ""
 
 HoverTip_Show(*) {
 	global HoverTip_Text

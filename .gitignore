@@ -6,3 +6,5 @@ cache/
 plugins/hotPaste.lib/
 # Test screenshots
 tests/out/
+tests/_v.ahk
+tests/_v.out

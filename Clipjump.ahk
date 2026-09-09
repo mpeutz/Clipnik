@@ -122,6 +122,8 @@ global CALLER_STATUS := 1, CLIPJUMP_STATUS := 1
 global CALLER := CALLER_STATUS := 1, IN_BACK := 0, MULTIPASTE := 0, PASTEMODE_ACT := 0
 global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED := 0, ctrlRef := ""		;specific purpose global vars
 global wasManualClipboard := false
+global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu(), Help_Tray := Menu()
+global HoverTip_Text := ""
 
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
