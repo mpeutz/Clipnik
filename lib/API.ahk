@@ -38,7 +38,7 @@ class API
 		this.blockMonitoring(1)
 		if (channel = "") && (clipno = "") {
 			if !IsCurCBActive
-				try A_Clipboard := ClipboardAll(FileRead(A_WorkingDir "\" CLIPS_dir "\" TEMPSAVE ".avc", "RAW"))
+				try A_Clipboard := ClipFileRead(A_WorkingDir "\" CLIPS_dir "\" TEMPSAVE ".avc")
 		}
 		else {
 			r := this.getClipLoc(channel, clipno)
@@ -59,7 +59,7 @@ class API
 		else {
 			this.blockMonitoring(1)
 			r := this.getClipLoc(channel, clipno)
-			try A_Clipboard := ClipboardAll(FileRead(r, "RAW"))
+			try A_Clipboard := ClipFileRead(r)
 			err := GetClipboardFormat() = "" ? 0 : 1
 			ret := ClipboardAll()
 			this.blockMonitoring(0)

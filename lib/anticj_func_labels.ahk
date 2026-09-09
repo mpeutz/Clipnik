@@ -258,7 +258,7 @@ try_ClipboardfromFile(file, maxtries := 100) {
 	temp_ClipbrdLoaded := 0
 	loop maxtries {
 		try {
-			A_Clipboard := ClipboardAll(FileRead(file, "RAW"))
+			A_Clipboard := ClipFileRead(file)
 			temp_ClipbrdLoaded := 1
 			break
 		}

@@ -78,7 +78,7 @@ global MSG_TRANSFER_COMPLETE := ""
  , MSG_HISTORY_PREVIEW_IMAGE := ""
  , MSG_FILE_PATH_COPIED := ""
  , MSG_FOLDER_PATH_COPIED := ""
- Translations_fixglobalVars() ; copymessage will be globalized and fixed in validateSettings()
+; Translations_fixglobalVars() runs after the global declarations below (see "GET THE PROGRAM WORKING")
 
 ;History Tool
 global hidden_date_no := 4, history_w := "", history_partial := 1 ;start off with partial=1 <> much better
@@ -90,6 +90,9 @@ global DBPATH := "cache\data.db"
 BASIC STRUCTURE
 ****************
 */
+
+; v1 registered its OnClipboardChange label at load time; the clip loader below relies on the callback being live
+OnClipboardChange(cjClipboardChanged)
 
 ;Creating Storage Directories
 DirCreate("cache")
@@ -148,6 +151,8 @@ global is_pstMode_active := 0, realActive := 0, realclipno := 0, halfClip := "",
 		, jumpClip_sign := 0, lastClipboardTime := 0, prefs_changed := 0, onetimeOn := 0, isnewdb := 0, temp21 := ""
 		, editclip_pid := 0, editclip_cancelled := 0, holdclip_continue := 0, matched_pformat := 0
 		, __x := "", __y := "", __fontops := "", __fontname := "", emptyvar := "", empty := "", blank := "", ablankvar := ""
+
+Translations_fixglobalVars() ; copymessage will be globalized and fixed in validateSettings()
 
 ; v1 label names resolved to functions for customizer "run = label", API.runLabel and action mode
 global ACTIONS := CJMap(
@@ -302,7 +307,6 @@ LAST WORDS
 fillHISTORYOBJ()
 historyCleanup() ;Clean History
 OnMessage(0x4a, Receive_WM_COPYDATA)  ; 0x4a is WM_COPYDATA
-OnClipboardChange(cjClipboardChanged)
 ; Portable Startup
 if FileExist(A_Startup "/Clipjump.lnk")
 {
@@ -1567,7 +1571,7 @@ addToWinClip(lastEntry, extraTip) {
 	API.blockMonitoring()
 	PasteModeToolTip(Valueof(extraTip), 1)
 	if CURSAVE
-		try A_Clipboard := ClipboardAll(FileRead(A_WorkingDir "/" CLIPS_dir "/" lastentry ".avc", "RAW"))
+		try A_Clipboard := ClipFileRead(A_WorkingDir "/" CLIPS_dir "/" lastentry ".avc")
 	Sleep 1000
 	ToolTip()
 	API.blockMonitoring(0)

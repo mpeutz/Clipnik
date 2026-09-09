@@ -228,3 +228,56 @@ ToolTipAt(text := "", x := "", y := "", which := 1) {
 	else
 		ToolTip(text, x, y, which)
 }
+
+; Reads a clip file (.avc / .cj) and returns a ClipboardAll object.
+; Clipjump v1 running on 64-bit AutoHotkey wrote each block as format(4) size(8) data; v2 expects format(4) size(4) data.
+; Files are sniffed for the 8-byte layout and converted on the fly, so caches created by v1 keep working.
+ClipFileRead(path) {
+	data := FileRead(path, "RAW")
+	if ClipFile_IsLayout(data, 4)
+		return ClipboardAll(data)
+	if ClipFile_IsLayout(data, 8)
+		return ClipboardAll(ClipFile_Convert8to4(data))
+	return ClipboardAll(data)
+}
+
+; True when the buffer parses cleanly as a chain of format/size/data blocks with the given size-field width,
+; ending with a 4-byte zero terminator at the end of the buffer.
+ClipFile_IsLayout(buf, sizeBytes) {
+	total := buf.Size
+	pos := 0
+	if (total < 4)
+		return false
+	loop {
+		if (pos + 4 > total)
+			return false
+		fmt := NumGet(buf, pos, "UInt")
+		if (fmt = 0)
+			return (pos + 4 = total)
+		if (pos + 4 + sizeBytes > total)
+			return false
+		size := (sizeBytes = 8) ? NumGet(buf, pos + 4, "UInt64") : NumGet(buf, pos + 4, "UInt")
+		pos += 4 + sizeBytes + size
+		if (pos > total)
+			return false
+	}
+}
+
+ClipFile_Convert8to4(buf) {
+	out := Buffer(buf.Size)
+	src := 0, dst := 0
+	loop {
+		fmt := NumGet(buf, src, "UInt")
+		NumPut("UInt", fmt, out, dst)
+		dst += 4, src += 4
+		if (fmt = 0)
+			break
+		size := NumGet(buf, src, "UInt64")
+		NumPut("UInt", size, out, dst)
+		dst += 4, src += 8
+		DllCall("RtlMoveMemory", "Ptr", out.Ptr + dst, "Ptr", buf.Ptr + src, "Ptr", size)
+		dst += size, src += size
+	}
+	out.Size := dst
+	return out
+}
