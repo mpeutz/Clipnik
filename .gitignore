@@ -1,0 +1,8 @@
+# Runtime data (clips, thumbnails, history database)
+cache/
+# Editor backups
+*.ahk~
+# User-generated hotPaste templates
+plugins/hotPaste.lib/
+# Test screenshots
+tests/out/

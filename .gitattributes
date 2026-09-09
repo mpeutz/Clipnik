@@ -1,0 +1,8 @@
+* text=auto
+*.ahk text
+*.exe binary
+*.dll binary
+*.ico binary
+*.ttf binary
+*.chm binary
+settings.ini -text
