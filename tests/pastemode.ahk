@@ -24,6 +24,9 @@ tipText() {
     return StrReplace(t, "`r`n", "|")
 }
 cj := Clipjump()
+; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+    cj.runFunction("compacter()")
 clipNo() => Integer(cj["realclipno"])
 
 stamp := "pm-" A_TickCount
@@ -44,10 +47,10 @@ Sleep 400
 step("action mode: Ctrl+Shift+A shows the console, Esc closes it")
 SendEvent("^+a")
 Sleep 700
-check(InStr(tipText(), cj["TXT.ACT__name"]), "action mode console shown")
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode card shown")
 SendEvent("{Esc}")
 Sleep 500
-check(!InStr(tipText(), cj["TXT.ACT__name"]), "action mode closed by Esc")
+check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode closed by Esc")
 check(!errorDialog(), "no error after action mode")
 
 step("Ctrl+V then A goes to clip 1, V moves to clip 2")
@@ -63,10 +66,10 @@ check(clipNo() = 2, "V moves to clip 2 (realclipno=" clipNo() ")")
 step("F1 help sets the rebuild flag, next V clears it")
 SendEvent("{F1}")
 Sleep 400
-check(cj["STORE.pstTipRebuild"] = 1, "F1 marks the tip for rebuild")
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "F1 keeps the card open (help mode)")
 SendEvent("v")
 Sleep 400
-check(cj["STORE.pstTipRebuild"] = 0 && clipNo() = 3, "V after F1 rebuilds and moves to clip 3")
+check(clipNo() = 3, "V after F1 moves to clip 3")
 SendEvent("c")
 Sleep 400
 check(clipNo() = 2, "C moves back to clip 2")
@@ -134,7 +137,7 @@ SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("f")
 Sleep 800
-check(WinExist("Clipjump_SPM ahk_class AutoHotkeyGUI"), "F opens the search window")
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "F keeps the card open with the search row")
 check(cj["SPM.ACTIVE"] = 1, "SPM.ACTIVE set")
 SendEvent("{Ctrl up}")
 Sleep 300
@@ -143,7 +146,7 @@ Sleep 1000
 check(InStr(cj["temp_clipboard"], stamp " alpha"), "search jumps to the alpha clip: [" cj["temp_clipboard"] "]")
 SendEvent("{Enter}")
 Sleep 1500
-check(!WinExist("Clipjump_SPM ahk_class AutoHotkeyGUI"), "Enter closes the search window")
+check(cj["SPM.ACTIVE"] = "", "Enter ends the search")
 check(InStr(ed.Value, stamp " alpha"), "search + Enter pasted alpha: [" ed.Value "]")
 
 step("S suspends: clip goes to the system clipboard without pasting")

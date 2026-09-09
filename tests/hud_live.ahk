@@ -5,6 +5,9 @@
 SetTitleMatchMode 2
 SendLevel 1
 cj := Clipjump()
+; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+    cj.runFunction("compacter()")
 errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
 fails := 0
 check(cond, msg) {
@@ -47,11 +50,17 @@ snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-clip2")
 SendEvent("x")
 Sleep 500
 snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-cancelmode")
-loop 5 {
+seen := ""
+loop 6 {
+    SendEvent("x")
+    Sleep 300
+    seen .= cj["ctrlRef"] " "
+}
+check(InStr(seen, "delete cut copy deleteAll cancel"), "X cycles through the modes: " seen)
+while (cj["ctrlRef"] != "cancel") {
     SendEvent("x")
     Sleep 300
 }
-check(cj["ctrlRef"] = "cancel", "X five times cycles back to cancel (ctrlRef=" cj["ctrlRef"] ")")
 SendEvent("{Ctrl up}")
 Sleep 900
 check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "card hidden after release")

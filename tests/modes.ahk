@@ -15,6 +15,9 @@ check(cond, msg) {
 }
 errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
 cj := Clipjump()
+; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+    cj.runFunction("compacter()")
 strength() => Integer(cj.runFunction("API.getChStrength(0)"))
 stamp := "md-" A_TickCount
 A_Clipboard := stamp " one"

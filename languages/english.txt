@@ -40,7 +40,6 @@ ABT_reset = Reset &Clipjump
 ABT_resetM = Are you sure you want to reset Clipjump by removing all its clips and settings ?
 ABT_removeStart = A startup entry for Clipjump was found. Do you want to remove it as well ?
 ABT_resetfinal = will be closed now.
-ABT_noupdate = No updates available
 
 HST__name = Clipboard History
 HST_preview = &Preview
@@ -123,7 +122,6 @@ CNL_choose = &Choose Multi-Clipboard Channel
 TRY_incognito = &Incognito mode
 TRY_disable = &Disable
 TRY_startup = Run at startup
-TRY_updates = Check for &updates
 TRY_help = Help
 TRY_restart = &Restart
 TRY_exit = &Exit

@@ -61,9 +61,6 @@ if !ini_LANG
 	ini_LANG := "english"
 global TXT := Translations_load("languages/" ini_LANG ".txt") 		;Load translations
 
-global UPDATE_FILE := "http://sourceforge.net/projects/clipjump/files/version.txt/download"
-global PRODUCT_PAGE := "http://clipjump.sourceforge.net"
-global HELP_PAGE := "http://clipjump.sourceforge.net/docs"
 global AUTHOR_PAGE := "http://aviaryan.in"
 
 global MSG_TRANSFER_COMPLETE := ""
@@ -160,7 +157,7 @@ global ACTIONS := CJMap(
 	, "nativeCopy", nativeCopy, "nativeCut", nativeCut, "Formatting", Formatting, "fixate", fixate, "TogglejumpClip", TogglejumpClip, "AddjumpClip", AddjumpClip
 	, "move_to_first", move_to_first, "navigate_to_first", navigate_to_first, "setClipTag", setClipTag, "multiPaste", multiPaste_run, "endPastemode", endPastemode
 	, "Ssuspnd", Ssuspnd, "pstMode_Help", pstMode_Help, "channel_up", channel_up, "channel_down", channel_down, "pitSwap", pitSwap, "holdClip", holdClip
-	, "actionmode", actionmode_run, "copyFile", copyFile, "copyFolder", copyFolder, "CopyFileData", CopyFileData, "hlp", hlp, "strtup", strtup, "updt", updt
+	, "actionmode", actionmode_run, "copyFile", copyFile, "copyFolder", copyFolder, "CopyFileData", CopyFileData, "hlp", hlp, "strtup", strtup
 	, "oneTime", oneTime, "incognito", incognito, "export", export, "editclip", editclip_pm, "windows_copy", windows_copy, "windows_cut", windows_cut
 	, "disable_clipjump", disable_clipjump, "run_searchpm", run_searchpm, "settings", settings, "history", history, "classTool", classTool
 	, "plugin_deleteFileFolder", tray_deleteFileFolder, "main", main, "exit", exitClipjump, "reload", reloadClipjump, "reloadCustom", reloadCustom
@@ -1500,28 +1497,6 @@ strtup(*) {
 		FileCreateShortcut(startupTarget(), A_Startup "/Clipjump.lnk", A_ScriptDir)
 }
 
-updt(*) {
-	global
-	local temp := "", lversion_changes, latestVersion := ""
-	ToolTip("Checking for Updates ...... ", , , 3)
-	try Download(UPDATE_FILE, A_WorkingDir "/cache/latestversion.txt")
-	ToolTip(, , , 3)
-	try temp := FileRead(A_WorkingDir "/cache/latestversion.txt")
-	lversion_changes := "`n`nCHANGES`n"
-	loop parse temp, "`n", "`r"
-		if (A_Index = 1)
-			latestVersion := A_LoopField
-		else
-			lversion_changes .= "`n" A_LoopField
-
-	if (latestVersion != "") && !IsLatestRelease(VERSION, latestversion, "b|a")
-	{
-		if (MsgBox("Your Version: `t`t" VERSION "`nCurrent version: `t`t" latestVersion . lversion_changes, "Clipjump Update available", 49) = "OK")
-			BrowserRun(PRODUCT_PAGE)
-	}
-	else
-		MsgBox(TXT.ABT_noupdate, PROGNAME, 64)
-}
 
 ;************************************** Helper FUNCTIONS ****************************************
 

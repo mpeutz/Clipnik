@@ -12,6 +12,9 @@ check(cond, msg) {
         fails++
 }
 cj := Clipjump()
+; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+    cj.runFunction("compacter()")
 before := Integer(cj.runFunction("API.getChStrength(0)"))
 stamp := "e2e-" A_TickCount
 A_Clipboard := stamp " first"

@@ -6,7 +6,7 @@ aboutGUI() {
 	local w_ofreset, w_versiontxt, versiontxt, g, ddl
 	;About GUI
 	w_ofreset := getControlinfo("button", TXT.ABT_reset, "w", "s10", "Arial")
-	w_versiontxt := getControlinfo("Link", versiontxt := '<a href="' PRODUCT_PAGE '">' PROGNAME "</a> v" VERSION, "w", "s18", "Consolas")
+	w_versiontxt := getControlinfo("Text", versiontxt := PROGNAME " v" VERSION, "w", "s18", "Consolas")
 
 	GuiDestroy("2")
 	g := Gui("", PROGNAME " [ Channel: " CN.Name " ]")
@@ -15,7 +15,7 @@ aboutGUI() {
 	g.SetFont("s18", "Courier New")
 	g.SetFont("S18", "Consolas")
 	g.Add("Edit", "x0 y0 w0 h0")
-	g.Add("Link", "x" Round((522 - w_versiontxt) / 2) " y5", versiontxt).OnEvent("Click", updt)
+	g.Add("Text", "x" Round((522 - w_versiontxt) / 2) " y5", versiontxt)
 	g.SetFont("S12")
 	g.Add("Link", "x180 y+3", '<a href="' AUTHOR_PAGE '">Avi Aryan</a> (C) ' A_Year).OnEvent("Click", blog)
 
@@ -123,7 +123,6 @@ trayMenu(destroy := 0) {
 	A_TrayMenu.Add(TXT.SET_actmd "`t" Hparse_Rev(actionmode_k), actionmode_run)
 	A_TrayMenu.Add()		; separator
 		Maintanence_Tray.Add(TXT.PLG_delFileFolder, tray_deleteFileFolder)
-		Maintanence_Tray.Add(TXT.TRY_updates, updt)
 	A_TrayMenu.Add(TXT._maintenance, Maintanence_Tray)
 		Options_Tray.Add(TXT.TRY_incognito, incognito)
 		Options_Tray.Add(TXT.TRY_disable " " PROGNAME, disable_clipjump)

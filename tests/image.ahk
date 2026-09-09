@@ -13,6 +13,9 @@ check(cond, msg) {
 }
 errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
 cj := Clipjump()
+; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+    cj.runFunction("compacter()")
 strength() => Integer(cj.runFunction("API.getChStrength(0)"))
 root := A_ScriptDir "\.."
 before := strength()
@@ -42,12 +45,12 @@ ed.Focus()
 Sleep 400
 SendEvent("{Ctrl down}v")
 Sleep 900
-check(WinExist("Display_Cj ahk_class AutoHotkeyGUI"), "image preview window shown in paste mode")
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "HUD card shown for the image clip")
 SendEvent("x")
 Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 1000
-check(!WinExist("Display_Cj ahk_class AutoHotkeyGUI"), "preview window closed after cancel")
+check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "HUD card hidden after cancel")
 check(!errorDialog(), "no error dialogs")
 Gdip_Shutdown(pToken)
 g.Destroy()

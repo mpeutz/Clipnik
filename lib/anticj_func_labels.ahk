@@ -700,27 +700,6 @@ SuperInstr(Hay, Needles, return_min := true, CaseSense := false, Startpoint := 1
 	return pos
 }
 
-/*
-Compare Versions
-*/
-
-IsLatestRelease(prog_ver, cur_ver, exclude_keys := "b|a") {
-	if RegExMatch(prog_ver, "(" exclude_keys ")")
-		return 1
-
-	prog := StrSplit(prog_ver, ".")
-	cur := StrSplit(cur_ver, ".")
-
-	loop cur.Length - prog.Length
-		prog.Push(0)
-
-	loop cur.Length
-		if !(prog[A_Index] >= cur[A_Index])
-			return 0
-		else if (prog[A_Index] > cur[A_Index]) 	; in case cur_ver supplied is of old file
-			return 1
-	return 1
-}
 
 ;get width and heights of controls
 getControlInfo(type := "button", text := "", ret := "w", fontsize := "", fontmore := "") {
