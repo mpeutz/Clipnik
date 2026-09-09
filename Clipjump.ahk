@@ -229,7 +229,7 @@ loadPlugins()
 
 ; ---- modern UI: theme, HUD card, toasts (settings keys are read here until the Settings page exposes them) ----
 global ini_theme := IniRead(CONFIGURATION_FILE, "Main", "Theme", "system")
-global ini_toastPosition := IniRead(CONFIGURATION_FILE, "Main", "ToastPosition", "bottomright")
+global ini_toastPosition := IniRead(CONFIGURATION_FILE, "Main", "ToastPosition", "cursor")
 global ini_respectExclusion := IniRead(CONFIGURATION_FILE, "Main", "respectExclusionFormats", 1)
 global ini_searchUsesWindow := IniRead(CONFIGURATION_FILE, "Advanced", "SearchUsesWindow", 0)
 Theme.Init(ini_theme)

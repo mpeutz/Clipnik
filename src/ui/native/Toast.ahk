@@ -2,13 +2,13 @@
 ;
 ;   Toast.Show(text, ms := 1500, kind := "info", slot := "")   kind: info | warn | error ; ms 0 = sticky until Hide(slot)
 ;   Toast.Hide(slot)
-;   Toast.Position := "bottomright" | "cursor"                  ([Main] ToastPosition)
+;   Toast.Position := "cursor" | "bottomright"                  ([Main] ToastPosition, default cursor)
 ;
 ; At most Toast.MaxVisible cards are shown, stacked upward from the bottom-right corner of the work area of the
 ; monitor that holds the active window (or the cursor). A card with the same slot name replaces the older one.
 
 class Toast {
-	static Position := "bottomright"
+	static Position := "cursor"
 	static MaxVisible := 3
 	static cards := []          ; visible cards, oldest first
 	static Width := 300
@@ -56,6 +56,10 @@ class Toast {
 
 	static Layout() {
 		s := Theme.Scale
+		if (Toast.Position = "cursor") {
+			Toast.LayoutAtCursor()
+			return
+		}
 		Toast.Anchor(&ax, &ay, &right, &bottom)
 		y := bottom - Round(Toast.Margin * s)
 		loop Toast.cards.Length {
@@ -67,23 +71,38 @@ class Toast {
 		}
 	}
 
+	; cursor mode: the newest card sits just below-right of the pointer (like the v1 tooltip), older ones stack below it
+	static LayoutAtCursor() {
+		if !Toast.cards.Length
+			return
+		s := Theme.Scale
+		MouseGetPos(&mx, &my)
+		Theme.WorkAreaAt(mx, my, &l, &t, &r, &b)
+		x := mx + Round(16 * s), y := my + Round(20 * s)
+		total := 0
+		for card in Toast.cards
+			total += card.h + Round(Toast.Gap * s)
+		if (x + Toast.cards[1].w > r - 8)
+			x := mx - Round(16 * s) - Toast.cards[1].w
+		if (y + total > b - 8)
+			y := my - Round(20 * s) - total
+		x := Max(l, x), y := Max(t, y)
+		loop Toast.cards.Length {
+			card := Toast.cards[Toast.cards.Length - A_Index + 1]   ; newest first
+			card.gui.Show("NoActivate x" x " y" y " w" card.w " h" card.h)
+			y += card.h + Round(Toast.Gap * s)
+		}
+	}
+
 	; bottom-right corner of the work area that should hold the stack
 	static Anchor(&x, &y, &right, &bottom) {
 		x := 0, y := 0
-		if (Toast.Position = "cursor") {
+		try {
+			WinGetPos(&wx, &wy, &ww, &wh, "A")
+			x := wx + ww // 2, y := wy + wh // 2
+		} catch
 			MouseGetPos(&x, &y)
-		} else {
-			try {
-				WinGetPos(&wx, &wy, &ww, &wh, "A")
-				x := wx + ww // 2, y := wy + wh // 2
-			} catch
-				MouseGetPos(&x, &y)
-		}
 		Theme.WorkAreaAt(x, y, &l, &t, &right, &bottom)
-		if (Toast.Position = "cursor") {
-			right := Min(right, Round(x + (Toast.Width + Toast.Margin + 24) * Theme.Scale))
-			bottom := Min(bottom, Round(y + (Toast.Margin + 90) * Theme.Scale))
-		}
 	}
 
 	static Remove(card) {
