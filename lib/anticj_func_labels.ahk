@@ -43,15 +43,6 @@ chrHex(n) {
 	return Chr(base2Number(n, 16))
 }
 
-GetHFONT(Options := "", Name := "") {
-	g := Gui()
-	g.SetFont(Options, Name)
-	ctl := g.Add("Text", , "Dummy")
-	HFONT := DllCall("User32.dll\SendMessage", "Ptr", ctl.Hwnd, "UInt", 0x31, "Ptr", 0, "Ptr", 0, "UPtr") ; WM_GETFONT
-	g.Destroy()
-	Return HFONT
-}
-
 ;BeepAt()
 ;SoundBeep function
 BeepAt(value, freq, duration := 150) {
@@ -417,12 +408,6 @@ deactivateHtml(code) {
 	return code
 }
 
-TT_Console_PasteMode(text, keys) {
-	global ini_pstMode_X, ini_pstMode_Y, SPM
-	tx := ini_pstMode_X ? ini_pstMode_X : SPM.X, ty := ini_pstMode_Y ? ini_pstMode_Y : SPM.Y
-	return TT_Console(text, keys, tx, ty, , , 1)
-}
-
 ;GetFile()
 ;	Gets file path of selected item in Explorer
 
@@ -629,8 +614,8 @@ getParams(sum) {
 }
 
 autoTooltip(Text, Time, which := 1) {
-	ToolTip(Text, , , which)
-	SetTimer(CJ_TooltipOff(which), -Time)
+	; v1 compatibility shim: transient notifications are toasts now (customizer "tip =", plugins, pit swap ...)
+	Toast.Show(Text, Time, "info", "tip" which)
 }
 
 ; Returns the (cached) function that clears tooltip number n, usable with SetTimer on/off.

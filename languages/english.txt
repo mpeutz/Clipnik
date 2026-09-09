@@ -433,3 +433,17 @@ SET_T_winClipjump = Use Win+C and Win+X to copy and cut to Clipjump
                   = Refer to help file for more info.
 ACT_switchChannel = Switch Channel
 PLG_delfilefolder = Delete [File/Folder]
+;========
+;13.0 - modern HUD, toasts, exclusion
+;========
+HUD_hint_normal = V next  ·  C back  ·  X mode  ·  Space pin  ·  F search  ·  F1 help
+HUD_hint_search = Type to search  ·  Up/Down next match  ·  Enter paste  ·  Esc cancel
+HUD_hint_nextmode = X next mode
+HUD_hint_help = Release Ctrl to paste  ·  V to continue
+TIP_clipExcluded = Clip skipped (excluded by the app)
+SET_respectExclusion = Skip clips that apps mark as private (password managers)
+SET_T_respectExclusion = Honors the ExcludeClipboardContentFromMonitorProcessing and CanIncludeInClipboardHistory clipboard flags set by KeePass, 1Password, Bitwarden and others.
+SET_theme = Theme
+SET_theme_system = Follow Windows
+SET_theme_dark = Dark
+SET_theme_light = Light

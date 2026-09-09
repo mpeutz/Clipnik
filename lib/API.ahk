@@ -221,6 +221,8 @@ class API
 		TEMPSAVE := v
 		SPM.ACTIVE := 1
 		SPM.X := x, SPM.Y := y
+		if (x != "" && y != "")
+			Hud.Anchor(x, y)
 		paste()
 		searchpm()
 		SPM.TEMPSAVE := _tmpsv
@@ -417,15 +419,12 @@ class API
 
 	;Tooltip for plugins
 	static showTip(Text, forTime := "") {
-		if forTime
-			autoTooltip(Text, forTime, 7)
-		else
-			ToolTip(Text, , , 7)
+		Toast.Show(Text, forTime ? forTime : 0, "info", "api")
 	}
 
 	; removes the above tip
 	static removeTip() {
-		ToolTip(, , , 7)
+		Toast.Hide("api")
 	}
 
 	; get the text from a ClipboardAll binary

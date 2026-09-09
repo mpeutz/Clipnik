@@ -230,6 +230,16 @@ load_Settings(1)
 validate_Settings()
 loadPlugins()
 
+; ---- modern UI: theme, HUD card, toasts (settings keys are read here until the Settings page exposes them) ----
+global ini_theme := IniRead(CONFIGURATION_FILE, "Main", "Theme", "system")
+global ini_toastPosition := IniRead(CONFIGURATION_FILE, "Main", "ToastPosition", "bottomright")
+global ini_respectExclusion := IniRead(CONFIGURATION_FILE, "Main", "respectExclusionFormats", 1)
+global ini_searchUsesWindow := IniRead(CONFIGURATION_FILE, "Advanced", "SearchUsesWindow", 0)
+Theme.Init(ini_theme)
+Toast.Position := ini_toastPosition
+Hud.Init()
+ClipExclusion.Init()
+
 loop
 {
 	if !FileExist("cache/Clips/" A_Index ".avc")
@@ -381,7 +391,6 @@ paste(*) {
 		return
 	}
 
-	GuiDestroy("imgprv")
 	CALLER := 0
 	if !ctrlRef
 		firstPasteMode := 1
@@ -431,9 +440,7 @@ paste(*) {
 		fixStatus := fixCheck()
 		realclipno := CURSAVE - TEMPSAVE + 1
 
-		if (temp_clipboard = "")
-			showPreview()
-		else
+		if (temp_clipboard != "")
 		{
 			if StrLen(temp_clipboard) > 200
 				halfClip := SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW
@@ -485,6 +492,12 @@ cjClipboardChanged(DataType) {
 	; ignore windows
 	if WinActive("ahk_group IgnoreGroup")
 		return
+	; content marked private by the source app (password managers): never record it
+	if ini_respectExclusion && CALLER && ClipExclusion.IsExcluded() {
+		LASTCLIP := "", LASTFORMAT := ""
+		Toast.Show(TXT.TIP_clipExcluded, 1200, "warn", "copy")
+		return
+	}
 
 	if CALLER
 	{
@@ -562,7 +575,8 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 
 			BeepAt(ini_CopyBeep, beepFrequency)
-			ToolTip(copyMessage)
+			if (copyMessage != "")
+				Toast.Show(copyMessage, 900, "info", "copy")
 
 			if (CLIP_ACTION = "CUT")
 			{
@@ -590,7 +604,8 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 
 			BeepAt(ini_CopyBeep, beepFrequency)
-			ToolTip(copyMessage)
+			if (copyMessage != "")
+				Toast.Show(copyMessage, 900, "info", "copy")
 			thumbGenerator()
 
 			if NOINCOGNITO && ini_IsImageStored && (CN.Name != "pit") {
@@ -602,7 +617,6 @@ clipChange(CErrorlevel, clipboard_copy) {
 
 			returnV := 2
 	}
-	SetTimer(CJ_TooltipOff(1), -500)
 	emptyMem()
 	return returnV
 }
@@ -612,7 +626,6 @@ moveBack(*) {
 	Critical "On"
 	if WinActive("ahk_group IgnoreGroup")
 		return
-	GuiDestroy("imgprv")
 	IN_BACK := true
 	TEMPSAVE := realActive + 1
 	if (realActive = CURSAVE)
@@ -624,9 +637,7 @@ moveBack(*) {
 
 	fixStatus := fixCheck()
 	realClipNo := CURSAVE - TEMPSAVE + 1
-	if (temp_clipboard = "")
-		showPreview()
-	else
+	if (temp_clipboard != "")
 	{
 		if StrLen(temp_clipboard) > 200
 			halfClip := SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW
@@ -670,8 +681,8 @@ multiPaste_run(*) {
 
 cancel(*) {
 	global
-	PasteModeTooltip(TXT.TIP_cancelm "`t(1)`n" TXT.TIP_modem, 1)
 	ctrlref := "cancel"
+	Hud.SetMode("cancel")
 	if SPM.ACTIVE
 		SPM_dispose() 	; dispose it if There - Note that this step ends the label as ctrlCheck dies so ctrlRef is kept upwards to be updated
 	hkZ_pasteMode(0, 0), hkZ_pi(pastemodekey.x, delete_mode, 1)
@@ -679,29 +690,29 @@ cancel(*) {
 
 delete_mode(*) {
 	global
-	PasteModeTooltip(TXT.TIP_delm "`t`t(2)`n" TXT.TIP_modem, 1)
 	ctrlref := "delete"
+	Hud.SetMode("delete")
 	hkZ_pi(pastemodekey.x, delete_mode, 0), hkZ_pi(pastemodekey.x, cutclip, 1)
 }
 
 cutclip(*) {
 	global
-	PasteModeTooltip(TXT.TIP_move "`t`t(3)`n" TXT.TIP_modem, 1)
 	ctrlref := "cut"
+	Hud.SetMode("cut")
 	hkZ_pi(pastemodekey.x, cutclip, 0), hkZ_pi(pastemodekey.x, copyclip, 1)
 }
 
 copyclip(*) {
 	global
-	PasteModeTooltip(TXT.TIP_copy "`t`t(4)`n" TXT.TIP_modem, 1)
 	ctrlref := "copy"
+	Hud.SetMode("copy")
 	hkZ_pi(pastemodekey.x, copyclip, 0), hkZ_pi(pastemodekey.x, deleteall, 1)
 }
 
 deleteall(*) {
 	global
-	PasteModeTooltip(TXT.TIP_delallm "`t`t(5)`n" TXT.TIP_modem, 1)
 	ctrlref := "deleteAll"
+	Hud.SetMode("deleteall")
 	hkZ_pi(pastemodekey.x, deleteall, 0), hkZ_pi(pastemodekey.x, cancel, 1)
 }
 
@@ -849,12 +860,10 @@ clipSaver() {
 	HASCOPYFAILED := 0
 	temp21 := ""
 
-	ToolTip(TXT["_processing"], , , 7)
 	while !copied
 	{
 		if (A_Index = 100) || HASCOPYFAILED {
 			HASCOPYFAILED := 1
-			ToolTip(, , , 7)
 			return
 		}
 		try {
@@ -872,7 +881,7 @@ clipSaver() {
 			{
 				Critical "Off"
 				BeepAt(protected_DoBeep, 2000, 200)
-				temp21 := TT_Console("{" CN.Name "}`n " TXT.TIP_confirmcopy, "Y N Insert")
+				temp21 := Hud.Confirm("{" CN.Name "}`n" TXT.TIP_confirmcopy, "Y N Insert")
 				Critical "On"
 			}
 			if (temp21 = "Y") || (temp21 = "")
@@ -884,7 +893,7 @@ clipSaver() {
 			else {
 				LASTCLIP := "", LASTFORMAT := "", HASCOPYFAILED := 1 	; lastclip was not captured by cj
 				if (temp21 = "Insert") {
-					ToolTip(TXT["_processing"])
+					Toast.Show(TXT["_processing"], 0, "info", "api")
 					SetTimer(addClipLater, -50)
 				}
 			}
@@ -893,7 +902,6 @@ clipSaver() {
 				foolGUI(0)
 		}
 	}
-	ToolTip(, , , 7)
 	; check for empty file
 	try test := FileRead(CLIPS_dir "/" CURSAVE ".avc", "RAW")
 	if !IsObject(test) || !test.Size {
@@ -946,28 +954,12 @@ fixCheck() {
 	return ""
 }
 
-;Shows tooltips in Clipjump Paste Modes
+;Shows the paste-mode card. notpaste=1 shows a plain message instead of the clip preview.
 PasteModeTooltip(cText, notpaste := 0) {
-	global
-	local tx, ty, tagText, t
-	if STORE["pstTipRebuild"] {
-		ToolTip()
-		TooltipEx()
-		STORE["pstTipRebuild"] := 0
-	}
-	; SPM.X and y contain place to show a/c searchbox
-	tx := ini_pstMode_X ? ini_pstMode_X : SPM.X, ty := ini_pstMode_Y ? ini_pstMode_Y : SPM.Y
-	if (notpaste == 1) {
-		ToolTipAt(cText, tx, ty)
-	} else {
-		tagText := (t := clipPref(CN.NG, realActive, "Tags")) != "" ? "(" t ")" : ""
-		if (cText == "")
-			ToolTipAt("{" CN.Name "} Clip " realclipno " of " CURSAVE fillWithSpaces("", 7) tagText " " fixStatus
-		. (WinExist("Display_Cj") ? "" : "`n`n" MSG_ERROR "`n`n"), tx, ty)
-		else
-			ToolTipAt("{" CN.Name "} Clip " realclipno " of " CURSAVE fillWithSpaces("", 7) GetClipboardFormat() fillWithSpaces("", 5) (curPformat ? "[" curPformat "]" : "")
-			. fillWithSpaces("", 5) tagText " " fixstatus "`n`n" halfclip, tx, ty)
-	}
+	if (notpaste == 1)
+		Hud.Message(cText)
+	else
+		Hud.Render(Hud.FromPasteVars())
 }
 
 ctrlCheck(*) {
@@ -978,7 +970,6 @@ ctrlCheck(*) {
 		Critical "On"
 		SetTimer(ctrlCheck, 0)
 		CALLER := false, sleeptime := 300, TEMPSAVE := realActive 				; keep the current clip pos saved
-		GuiDestroy("imgprv")
 		; Change vars a/c MULTIPASTE
 		if MULTIPASTE && !GetKeyState(pstKeyName) && !temp_spmWasActive 		;if spmIsActive user is not expected to cancel by releasing Ctrl
 			if (ctrlRef = "pastemode")
@@ -994,7 +985,7 @@ ctrlCheck(*) {
 			Critical "Off" 			;End Critical so that the below function can overlap this thread
 			IScurCBACTIVE := 0 		; now not active in clipjump
 
-			temp21 := TT_Console_PasteMode(TXT.TIP_delallprompt, "Y N")
+			temp21 := Hud.Confirm(TXT.TIP_delallprompt, "Y N")
 			if (temp21 = "Y")
 			{
 				PasteModeTooltip(MSG_ALL_DELETED, 1)
@@ -1013,7 +1004,7 @@ ctrlCheck(*) {
 		}
 		else if (ctrlRef = "cut" || ctrlRef = "copy")
 		{
-			ToolTip()
+			Hud.Hide()
 			Critical "Off"
 			temp21 := choosechannelgui()
 			if (temp21 != "") && (InStr(temp21, "-") != 1)
@@ -1074,7 +1065,8 @@ ctrlCheck(*) {
 				try A_Clipboard := oldclip_data       ;The command opens, writes and closes clipboard . The ONCC Label is launched when writing takes place.
 
 		Sleep sleeptime
-		ToolTip()
+		Hud.Hide()
+		Hud.ClearAnchor()
 
 		restoreCaller := PASTEMODE_ACT := 0 	; restoreCaller - make it 0 in case Clipboard was not touched (Pasting was done)
 		if !GetKeyState(pstKeyName) && !SPM.ACTIVE
@@ -1100,8 +1092,8 @@ ctrlCheck(*) {
 endPastemode(*) {
 	; ends the paste abruptly - as required by export and suspend
 	global
-	GuiDestroy("imgprv")
-	ToolTip()
+	Hud.Hide()
+	Hud.ClearAnchor()
 	SetTimer(ctrlCheck, 0)
 	if SPM.ACTIVE
 		SPM_dispose()
@@ -1129,10 +1121,7 @@ Ssuspnd(*) {
 }
 
 pstMode_Help(*) {
-	global
-	ToolTip()
-	TooltipEx(TXT.SET_shortcuts "`n" TXT.TIP_help, __x, __y, 1, getHFONT("s8", "Consolas"))
-	STORE["pstTipRebuild"] := 1
+	Hud.SetMode("help")
 }
 
 addClipLater(*) {
@@ -1227,7 +1216,7 @@ holdClip(*) {
 	}
 	holdclip_continue := 1, hkZ((paste_k ? "$" pstIdentifier paste_k : ""), paste, 0) 	; disable paste mode
 	try temp_cb := tryGetClipboard()
-	keyPressed := TT_Console(TXT.TIP_holdclip "`n`n" SubStr(temp_cb, 1, 200) " ...", "Insert F2 Esc", __x, __y, __fontops, __fontname, 1, 1)
+	keyPressed := Hud.Confirm(TXT.TIP_holdclip "`n`n" SubStr(temp_cb, 1, 200) " ...", "Insert F2 Esc")
 	if (keyPressed = "F2")
 	{
 		guiMsgBox(TXT["_output"], API.runPlugin("pformat.commonformats.ahk", A_Clipboard))
@@ -1347,41 +1336,6 @@ AddClipPref(Ch, Cl, Pr, val) {
 
 ;~ ;**************** GUI Functions ***************************************************************************
 
-showPreview() {
-	global
-	static scrnhgt := A_ScreenHeight / 2, scrnwdt := A_ScreenWidth / 2
-	local img, widthOfThumb, heightOfThumb, displayH, displayW, ax, ay, tx, ty, g, pic
-
-	GuiDestroy("imgprv")
-	g := Gui("+AlwaysOnTop -Caption +ToolWindow +Border", "Display_Cj")
-	CJGUI["imgprv"] := g
-	pic := g.Add("Picture", "x0 y0 w400 h300")
-
-	if FileExist((img := A_WorkingDir "\" THUMBS_dir "\" TEMPSAVE ".jpg"))
-	{
-		Gdip_getLengths(img, &widthOfThumb, &heightOfThumb)
-
-		if (heightOfThumb > scrnHgt) || (widthOfThumb > scrnWdt)
-			displayH := heightOfThumb / 2
-			, displayW := widthOfThumb / 2
-		else
-			displayH := heightofthumb
-			, displayW := widthOfThumb
-		displayH := Round(displayH), displayW := Round(displayW)
-
-		pic.Value := "*w" displayW " *h" displayH " " THUMBS_dir "\" TEMPSAVE ".jpg"
-		MouseGetPos(&ax, &ay)
-		ay := ay + (scrnHgt / 10)
-		if (scrnwdt * 2 - ax < displayw / 2)
-			ax := 2
-		if (scrnhgt * 2 - ay < displayh / 2)
-			ay := 2
-		; Try ensures we dont see the error if it happens due to thread overlaps
-		tx := ini_pstMode_X ? ini_pstMode_X : ax, ty := ini_pstMode_Y ? ini_pstMode_Y : ay
-
-		try g.Show("x" Round(tx) " y" Round(ty) " h" displayh " w" displayw " NoActivate")
-	}
-}
 
 historyCleanup() {
 ;Cleans history in bunch
@@ -1411,7 +1365,7 @@ actionmode_run(*) {
 	global
 	local temp_am, act
 	update_actionmode()
-	temp_am := TT_Console(ACTIONMODE.text, ACTIONMODE.keys, __x, __y, "s9", "Consolas", 5)
+	temp_am := Hud.Menu(ACTIONMODE.items, ACTIONMODE.keys, PROGNAME " " TXT.ACT__name)
 	act := ACTIONMODE[temp_am]
 	if (act != "Exit_actmd")
 	{
@@ -1443,12 +1397,13 @@ init_actionmode() {
 update_actionmode() {
 	global
 	static numadd := "0123456789"
-	local thetext, thekeys := "", k, v
+	local thetext, thekeys := "", k, v, items
 	thetext := ""
 	.  PROGNAME " " TXT.ACT__name
 	. "`n-----------"
 	. "`n"
-	ACTIONMODE.Remove("text"), ACTIONMODE.Remove("keys")
+	ACTIONMODE.Remove("text"), ACTIONMODE.Remove("keys"), ACTIONMODE.Remove("items")
+	items := [{key: "0..9", caption: TXT.ACT_switchChannel}]
 
 	thetext .= "`n" fillWithSpaces(TXT.ACT_switchChannel, 25) " -  " "0..9"
 
@@ -1456,13 +1411,17 @@ update_actionmode() {
 	if !InStr(k, "_") && (k != "Esc") && v {
 		thekeys .= k " "
 		thetext .= "`n" fillwithSpaces(ACTIONMODE[k "_caption"] ? ACTIONMODE[k "_caption"] : v, 25) " -  " k
+		items.Push({key: k, caption: ACTIONMODE[k "_caption"] ? ACTIONMODE[k "_caption"] : v})
 	}
-	if ACTIONMODE.Esc
+	if ACTIONMODE.Esc {
 		thetext .= "`n`n" fillwithSpaces(ACTIONMODE.Esc_caption ? ACTIONMODE.Esc_caption : ACTIONMODE.Esc, 25) " -  Esc", thekeys .= "Esc"
+		items.Push({key: "Esc", caption: ACTIONMODE.Esc_caption ? ACTIONMODE.Esc_caption : ACTIONMODE.Esc})
+	}
 	loop parse numadd
 		thekeys .= " " A_LoopField
 	ACTIONMODE.keys := Trim(thekeys)
 	ACTIONMODE.text := thetext
+	ACTIONMODE.items := items
 }
 
 ;****************COPY FILE/FOLDER/DATA***************************************************************************
@@ -1569,11 +1528,11 @@ updt(*) {
 addToWinClip(lastEntry, extraTip) {
 	global
 	API.blockMonitoring()
-	PasteModeToolTip(Valueof(extraTip), 1)
+	Hud.Message(Valueof(extraTip))
 	if CURSAVE
 		try A_Clipboard := ClipFileRead(A_WorkingDir "/" CLIPS_dir "/" lastentry ".avc")
 	Sleep 1000
-	ToolTip()
+	Hud.Hide()
 	API.blockMonitoring(0)
 }
 
@@ -1628,8 +1587,7 @@ export(*) {
 	loop
 		if !FileExist(temp := A_MyDocuments "\export" A_Index ".cj")
 			break
-	ToolTip("{" CN.Name "} Clip " realClipNo " " TXT._exportedto "`n" temp)
-	SetTimer(CJ_TooltipOff(1), -2500)
+	Toast.Show("{" CN.Name "} Clip " realClipNo " " TXT._exportedto "`n" temp, 2500)
 	try FileAppend(ClipboardAll(), temp)
 }
 
@@ -1651,7 +1609,7 @@ editClip(cnl, clip, owner := "none") {
 		API.blockMonitoring(0)
 	}
 	temp_clipboard := tryGetClipboard()
-	ToolTip(TXT.TIP_editing, , , 10)
+	Toast.Show(TXT.TIP_editing, 0, "info", "edit")
 	if (owner = "pstmd")
 	{
 		IScurCBACTIVE := 1
@@ -1706,6 +1664,7 @@ editClip(cnl, clip, owner := "none") {
 		CDS[cnl][tmpsv] := temp_clipboard2
 	}
 
+	Toast.Hide("edit")
 	autoTooltip(TXT.TIP_editdone, 800, 10)
 	if (owner = "pstmd")
 		IScurCBACTIVE := false
@@ -1823,7 +1782,10 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\lib\translations.ahk
 #Include %A_ScriptDir%\lib\multi.ahk
 #Include %A_ScriptDir%\lib\aboutgui.ahk
-#Include %A_ScriptDir%\lib\TT_Console.ahk
+#Include %A_ScriptDir%\src\ui\native\Theme.ahk
+#Include %A_ScriptDir%\src\ui\native\Toast.ahk
+#Include %A_ScriptDir%\src\ui\native\Hud.ahk
+#Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
@@ -1831,7 +1793,6 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\lib\history gui plug.ahk
 #Include %A_ScriptDir%\lib\pluginManager.ahk
 #Include %A_ScriptDir%\lib\channelOrganizer.ahk
-#Include %A_ScriptDir%\lib\TooltipEx.ahk
 #Include %A_ScriptDir%\lib\SQLiteDB\SQLiteDB.ahk
 #Include %A_ScriptDir%\lib\settingsHelper.ahk
 #Include *i %A_ScriptDir%\plugins\_registry.ahk
