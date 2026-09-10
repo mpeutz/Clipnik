@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.33px; line-height: 1.35; }
+    a { color: var(--accent); } a:hover { color: var(--accent); text-decoration: underline; }
+    .win { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+    .title { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 0 0 12px; font-size: 12px; }
+    .title .caption { flex-grow: 1; }
+    .title .wc { width: 46px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text); }
+    .nav { width: 168px; flex: 0 0 auto; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+    .nav .item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 4px; color: var(--text); position: relative; }
+    .nav .item.sel { background: var(--hover); }
+    .nav .item.sel::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--accent); }
+    .nav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .content { flex: 1 1 0; min-width: 0; background: var(--surface); border-left: 1px solid var(--border); border-top: 1px solid var(--border); border-top-left-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px 0; }
+    .section { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px 0; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 32px; } .row .lbl { flex: 1 1 0; min-width: 0; } .row > :not(.lbl) { flex: 0 0 auto; }
+    .row .lbl { flex-grow: 1; }
+    .row .hint { color: var(--muted); font-size: 12px; }
+    .check { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+    .box { width: 16px; height: 16px; border: 1px solid var(--muted); border-radius: 3px; background: var(--surfaceAlt); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .box.on { background: var(--accent); border-color: var(--accent); }
+    .box svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .edit { height: 24px; padding: 0 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: flex; align-items: center; box-sizing: border-box; }
+    .edit.num { width: 80px; justify-content: space-between; }
+    .edit.num .spin { display: flex; flex-direction: column; gap: 1px; margin-right: -4px; color: var(--muted); }
+    .edit.num .spin svg { width: 10px; height: 8px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+    .edit.ddl { width: 180px; justify-content: space-between; }
+    .edit.ddl svg { width: 12px; height: 12px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+    .edit.hk { width: 180px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; }
+    .edit.hk.empty { color: var(--muted); font-family: inherit; font-size: 13.33px; }
+    .btn { height: 26px; min-width: 76px; padding: 0 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+    .btn.dis { opacity: .45; }
+    .footer { height: 52px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 24px; background: var(--bg); }
+    .list { border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); display: flex; flex-direction: column; overflow: hidden; }
+    .list .hdr { display: grid; height: 26px; align-items: center; padding: 0 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+    .list .li { display: grid; height: 28px; align-items: center; padding: 0 10px; }
+    .list .li.sel { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+    .status { height: 24px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg); }
+    .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); }
+    .badge.accent { background: var(--accent); color: var(--accentText); }
+  
+    .stage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 48px; padding: 28px 32px 32px 32px; background: var(--bg); color: var(--text); box-sizing: border-box; }
+    .lbl { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; letter-spacing: .02em; }
+    .desk { background: #1a1d24; background-image: radial-gradient(circle at 30% 20%, #2a3140 0, transparent 55%); padding: 24px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; min-height: 120px; }
+    .kbd { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 4px; background: var(--surfaceAlt); color: var(--text); font-size: 11px; }
+    .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); white-space: nowrap; }
+    .badge.accent { background: var(--accent); color: var(--accentText); }
+    .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .note b { color: var(--text); font-weight: 600; }
+    .budget { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+  </style>
+</helmet>
+<div class="stage" style="width: 1120px; height: 800px; {{vars}}">
+
+  <div style="grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px;"><span style="font-size: 18px; font-weight: 600;">A · Refined solid</span><span class="note">Today's toolkit, tidied: window-level rounding and border from DWM, opaque fills, Lucide glyphs, key chips.</span></div>
+  <div><div class="lbl">Copy toast, near the cursor</div><div class="desk">
+    <div style="width: 300px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; display: flex; overflow: hidden;">
+      <div style="width: 4px; background: var(--accent); flex: 0 0 auto;"></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; flex-grow: 1; color: var(--text);"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--accent);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg><span>Copied to Default</span></div>
+    </div></div></div>
+  <div><div class="lbl">Warning toast, clip skipped</div><div class="desk">
+    <div style="width: 300px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; display: flex; overflow: hidden;">
+      <div style="width: 4px; background: #E0A526; flex: 0 0 auto;"></div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; flex-grow: 1; color: var(--text);"><svg viewBox="0 0 24 24" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: #E0A526;"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><span>Private clip skipped (KeePass)</span></div>
+    </div></div></div>
+  <div><div class="lbl">Paste mode, holding Ctrl</div><div class="desk"><div style="width: 480px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 6px;"><b>{Default}</b><span class="dim">3 / 40</span><span style="width: 6px;"></span><span class="badge">TEXT</span><span class="badge accent">Trim Formatting</span><span class="badge accent" style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" style="width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; "><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>FIXED</span><span class="dim" style="font-size: 12px; margin-left: auto;">#work #urgent</span></div>
+    
+    <div style="line-height: 1.4;">Brings the Latest Resources widget in line with the Figma mockup: the shared resource card is restyled and the grid now collapses to a single column below 720px.</div>
+    <div style="height: 1px; background: var(--border);"></div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 11.5px; color: var(--muted);"><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">V</span>next</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">C</span>back</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">X</span>mode</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">Space</span>pin</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">F</span>search</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">F1</span>help</span></div></div></div></div>
+  <div><div class="lbl">Search inside paste mode (F)</div><div class="desk"><div style="width: 480px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px;">
+    <div style="display: flex; align-items: center; gap: 6px;"><b>{Default}</b><span class="dim">3 / 40</span><span style="width: 6px;"></span><span class="badge">TEXT</span><span class="badge accent">Trim Formatting</span><span class="badge accent" style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" style="width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; "><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>FIXED</span><span class="dim" style="font-size: 12px; margin-left: auto;">#work #urgent</span></div>
+    <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; background: var(--surfaceAlt); border-radius: 4px; border-bottom: 2px solid var(--accent);"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--muted);"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><span>figma<span style="border-left: 1px solid var(--text); margin-left: 1px;"></span></span><span class="dim" style="margin-left: auto; font-size: 12px;">2 / 7</span></div>
+    <div style="line-height: 1.4;">Brings the Latest Resources widget in line with the <mark style='background: color-mix(in srgb, var(--accent) 35%, transparent); color: inherit; border-radius: 2px;'>Figma</mark> mockup: the shared resource card is restyled and the grid now collapses to a single column below 720px.</div>
+    <div style="height: 1px; background: var(--border);"></div>
+    <div style="display: flex; gap: 10px; align-items: center; font-size: 11.5px; color: var(--muted);"><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">Enter</span>paste</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">Up / Down</span>match</span><span style="display: inline-flex; align-items: center; gap: 5px;"><span class="kbd">Home</span>cancel</span></div></div></div></div>
+  <div class="budget"><div class="note"><b>What it can do</b><br>Solid fills per element, 1px rules, one rounded outer corner radius and border via DWM, accent strips, glyph icons, Consolas or Segoe text, native scrolling in the preview.</div><div class="note"><b>What it cannot</b><br>No shadow, no translucency, no per-element rounding (badges and chips stay square-cornered in the real thing), no anti-aliased shapes beyond text.</div><div class="note"><b>Cost</b><br>Small: the current card already does most of this. Toast strip and icon are two extra controls; hint chips are a row of small Text controls.</div><div class="note"><b>Risk</b><br>Low. Same render path as now, so paste mode stays fast.</div></div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#C42B1C","options":["#C42B1C","#0078D4","#107C10","#8764B8"],"section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const d = this.props.dark ?? true;
+    const p = d ? {"bg":"#202020","surface":"#2B2B2B","surfaceAlt":"#363636","border":"#3F3F3F","text":"#F0F0F0","muted":"#9A9A9A","hover":"#333333"} : {"bg":"#F3F3F3","surface":"#FFFFFF","surfaceAlt":"#EDEDED","border":"#D9D9D9","text":"#1B1B1B","muted":"#6B6B6B","hover":"#E9E9E9"};
+    const accent = this.props.accent ?? '#C42B1C';
+    const vars = Object.entries(p).map(([k, v]) => '--' + k + ':' + v).join(';') + ';--accent:' + accent + ';--accentText:#FFFFFF';
+    return { vars };
+  }
+}
+</script>
+</body>
+</html>

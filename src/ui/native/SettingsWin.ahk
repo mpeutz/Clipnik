@@ -29,6 +29,8 @@ class SettingsWin {
 	static listening := false
 
 	static Open() {
+		if (SettingsWin.g && !GuiAlive(SettingsWin.g))
+			SettingsWin.Close()                 ; the window went away without us (owner closed, external destroy)
 		if SettingsWin.g {
 			SettingsWin.g.Show()
 			try WinActivate(SettingsWin.g.Hwnd)
@@ -94,8 +96,8 @@ class SettingsWin {
 		g := SettingsWin.g
 		navW := SettingsWin.NavW, itemH := SettingsWin.ItemH
 		titles := Map("general", TXT.SET_general, "history", TXT.SET_cb, "shortcuts", TXT.SET_shortcuts, "channels", TXT.SET_channels, "appearance", TXT.SET_appearance, "advanced", TXT.SET_advancedPage)
-		icons := Map("general", "f02f", "history", "f07e", "shortcuts", "f00d", "channels", "f064", "appearance", "f0d1", "advanced", "f031")
-		hasIcons := Theme.FontExists("github-octicons")
+		icons := Map("general", "settings", "history", "history", "shortcuts", "keyboard", "channels", "layout-grid", "appearance", "palette", "advanced", "sliders-horizontal")
+		hasIcons := Theme.HasIcons()
 		y := 0
 		SettingsWin.Tile(0, 0, navW, 8)                                      ; top pad
 		y := 8
@@ -106,8 +108,8 @@ class SettingsWin {
 			SettingsWin.Tile(8, y + 26, 3, 10)
 			icon := ""
 			if hasIcons {
-				g.SetFont("s11 c" Theme.Hex("text"), "github-octicons")
-				icon := g.Add("Text", "x11 y" y " w34 h" itemH " +0x200 +0x100 +Center Background" Theme.Hex("bg"), chrHex(icons[id]))
+				g.SetFont("s12 c" Theme.Hex("text"), Theme.IconFont)
+				icon := g.Add("Text", "x11 y" y " w34 h" itemH " +0x200 +0x100 +Center Background" Theme.Hex("bg"), Theme.Icon(icons[id]))
 				icon.OnEvent("Click", SettingsWin_NavClick.Bind(id))
 				g.SetFont("s10 norm c" Theme.Hex("text"), Theme.FontName)
 			}

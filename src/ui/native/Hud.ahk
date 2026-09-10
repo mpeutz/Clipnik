@@ -11,16 +11,21 @@
 ;   Hud.Hide(), Hud.Anchor(x, y), Hud.GetPos(&x, &y, &w, &h)
 ;
 ; state fields: channel, index, total, format, pformat, tags, fixed, mode, text, imagePath, searchTerm,
-;               matchIndex, matchCount, message, keys, items, mono
+;               matchIndex, matchCount, message, keys, items, mono, title
 ; modes: normal | cancel | delete | cut | copy | deleteall | search | help | pasting | message | menu | confirm
+;
+; Look: a rounded, shadowed, slightly translucent card (Theme.Popup). Header: channel pill, count, format and
+; paste-format pills, pinned flag. Body: preview panel, thumbnail, or a list of key rows. Footer: tags and key
+; chips. Everything is a native control (fast redraws); pills and chips are Buttons painted by Theme.
 
 class Hud {
 	static g := ""
 	static c := Map()
+	static rows := []             ; lazily created key rows for help / menu: [{chip, text}]
 	static State := ""
 	static anchorX := "", anchorY := ""
 	static visible := false
-	static MaxWidth := 480, MinWidth := 300, MaxLines := 8, MaxImage := 300
+	static MaxWidth := 480, MinWidth := 320, MaxLines := 8, MaxImage := 300, MaxChips := 6
 	static lineH := 0, monoLineH := 0
 	static lastImage := ""
 	static pressed := ""
@@ -40,41 +45,83 @@ class Hud {
 	static Restyle() {
 		g := Hud.g
 		for name, ctl in Hud.c
-			try ctl.Visible := false
-		Hud.c := Map()
+			Theme.Discard(ctl)
+		for r in Hud.rows
+			Theme.Discard(r.chip), Theme.Discard(r.text)
+		Hud.c := Map(), Hud.rows := []
 		g.BackColor := Theme.Hex("surface")
-		Theme.ApplyToHwnd(g.Hwnd, 3, true)
-		text := Theme.Hex("text"), muted := Theme.Hex("muted"), accent := Theme.Hex("accent"), alt := Theme.Hex("surfaceAlt")
-		g.SetFont("s10 bold c" text, Theme.FontName)
-		Hud.c["channel"] := g.Add("Text", "x0 y0 +0x200", "")
-		g.SetFont("s10 norm c" muted, Theme.FontName)
-		Hud.c["count"] := g.Add("Text", "x0 y0 +0x200", "")
-		g.SetFont("s8 norm c" text, Theme.FontName)
-		Hud.c["format"] := g.Add("Text", "x0 y0 +0x200 +Center Background" alt, "")
-		g.SetFont("s8 norm c" Theme.Hex("accentText"), Theme.FontName)
-		Hud.c["pformat"] := g.Add("Text", "x0 y0 +0x200 +Center Background" accent, "")
-		Hud.c["fixed"] := g.Add("Text", "x0 y0 +0x200 +Center Background" accent, "")
-		g.SetFont("s9 norm c" muted, Theme.FontName)
-		Hud.c["tags"] := g.Add("Text", "x0 y0 +0x200", "")
-		g.SetFont("s10 norm c" text, Theme.FontName)
-		Hud.c["search"] := g.Add("Text", "x0 y0 +0x200 Background" alt, "")
-		g.SetFont("s9 norm c" muted, Theme.FontName)
-		Hud.c["match"] := g.Add("Text", "x0 y0 +0x200 +Right", "")
-		g.SetFont("s10 norm c" text, Theme.FontName)
-		Hud.c["preview"] := g.Add("Edit", "x0 y0 w100 h20 +ReadOnly -VScroll -HScroll -E0x200 +Multi -TabStop Background" Theme.Hex("surface"), "")
-		Hud.c["pic"] := g.Add("Picture", "x0 y0 w10 h10", "")
+		Theme.Popup(g)
+		c := Hud.c
+		text := Theme.Hex("text"), muted := Theme.Hex("muted"), accent := Theme.Hex("accent"), alt := Theme.Hex("surfaceAlt"), surface := Theme.Hex("surface")
+		font := Theme.FontName, icons := Theme.HasIcons()
+		; header
+		g.SetFont("s9 bold c" Theme.Hex("accentText"), font)
+		c["channel"] := Theme.AddPill(g, "x0 y0 w10 h10", "", "accent", "accentText")
+		g.SetFont("s12 bold c" text, font)
+		c["countN"] := g.Add("Text", "x0 y0 +0x200", "")
+		g.SetFont("s9 norm c" muted, font)
+		c["countT"] := g.Add("Text", "x0 y0 +0x200", "")
+		g.SetFont("s8 norm c" text, font)
+		c["format"] := Theme.AddPill(g, "x0 y0 w10 h10", "", "surfaceAlt", "text")
+		c["pformat"] := Theme.AddPill(g, "x0 y0 w10 h10", "", "surfaceAlt", "text")
+		g.SetFont("s9 norm c" accent, icons ? Theme.IconFont : font)
+		c["pinGlyph"] := g.Add("Text", "x0 y0 +0x200 +Center", icons ? Theme.Icon("pin") : "")
+		g.SetFont("s9 norm c" accent, font)
+		c["pinText"] := g.Add("Text", "x0 y0 +0x200", TXT.HUD_pinned)
+		; search row
+		g.SetFont("s9 norm c" muted, icons ? Theme.IconFont : font)
+		c["sGlyph"] := g.Add("Text", "x0 y0 +0x200 +Center Background" alt, icons ? Theme.Icon("search") : "")
+		g.SetFont("s10 norm c" text, font)
+		c["sTerm"] := g.Add("Text", "x0 y0 +0x200 Background" alt, "")
+		g.SetFont("s9 norm c" muted, font)
+		c["sMatch"] := g.Add("Text", "x0 y0 +0x200 +Right Background" alt, "")
+		c["sLine"] := g.Add("Progress", "x0 y0 w10 h1 -Theme Background" accent " c" accent, 100)
+		; body
+		g.SetFont("s10 norm c" text, font)
+		c["preview"] := g.Add("Edit", "x0 y0 w100 h20 +ReadOnly -VScroll -HScroll -E0x200 +Multi -TabStop Background" alt, "")
+		c["pic"] := g.Add("Picture", "x0 y0 w10 h10", "")
 		g.SetFont("s9 norm c" text, "Consolas")
-		Hud.c["mono"] := g.Add("Edit", "x0 y0 w100 h20 +ReadOnly -VScroll -HScroll -E0x200 +Multi -TabStop Background" Theme.Hex("surface"), "")
-		g.SetFont("s9 norm c" muted, Theme.FontName)
-		Hud.c["hint"] := g.Add("Text", "x0 y0 +0x200", "")
-		Hud.c["rule"] := g.Add("Progress", "x0 y0 w10 h1 -Theme Background" Theme.Hex("border") " c" Theme.Hex("border"), 100)
-		for name, ctl in Hud.c
+		c["mono"] := g.Add("Edit", "x0 y0 w100 h20 +ReadOnly -VScroll -HScroll -E0x200 +Multi -TabStop Background" alt, "")
+		; message / confirm / list headers: glyph + bold text + right note
+		g.SetFont("s12 norm c" accent, icons ? Theme.IconFont : font)
+		c["hdGlyph"] := g.Add("Text", "x0 y0 +0x200 +Center", "")
+		g.SetFont("s10 bold c" text, font)
+		c["hdText"] := g.Add("Edit", "x0 y0 w100 h20 +ReadOnly -VScroll -HScroll -E0x200 +Multi -TabStop Background" surface, "")
+		g.SetFont("s9 norm c" muted, font)
+		c["hdRight"] := g.Add("Text", "x0 y0 +0x200 +Right", "")
+		c["modeText"] := g.Add("Text", "x0 y0 +0x200", "")
+		; footer: tags and key chips
+		g.SetFont("s9 norm c" muted, icons ? Theme.IconFont : font)
+		c["tagGlyph"] := g.Add("Text", "x0 y0 +0x200 +Center", icons ? Theme.Icon("tag") : "#")
+		g.SetFont("s9 norm c" muted, font)
+		c["tagText"] := g.Add("Text", "x0 y0 +0x200", "")
+		loop Hud.MaxChips {
+			g.SetFont("s8 bold c" text, font)
+			c["k" A_Index] := Theme.AddPill(g, "x0 y0 w10 h10", "", "surfaceAlt", "text")
+			g.SetFont("s9 norm c" muted, font)
+			c["l" A_Index] := g.Add("Text", "x0 y0 +0x200", "")
+		}
+		for name, ctl in c
 			ctl.Visible := false
-		Hud.lineH := Hud.TextHeight(Hud.c["preview"])
-		Hud.monoLineH := Hud.TextHeight(Hud.c["mono"])
+		Hud.lineH := Hud.TextHeight(c["preview"])
+		Hud.monoLineH := Hud.TextHeight(c["mono"])
 		Hud.lastImage := ""
 		if Hud.visible && IsObject(Hud.State)
 			Hud.Render(Hud.State)
+	}
+
+	; key rows for help and menu, created on first use
+	static Row(i) {
+		while (Hud.rows.Length < i) {
+			g := Hud.g
+			g.SetFont("s8 bold c" Theme.Hex("text"), Theme.FontName)
+			chip := Theme.AddPill(g, "x0 y0 w10 h10", "", "surfaceAlt", "text")
+			g.SetFont("s9 norm c" Theme.Hex("text"), Theme.FontName)
+			t := g.Add("Text", "x0 y0 +0x200", "")
+			chip.Visible := false, t.Visible := false
+			Hud.rows.Push({chip: chip, text: t})
+		}
+		return Hud.rows[i]
 	}
 
 	; ---------- measuring ----------
@@ -105,7 +152,7 @@ class Hud {
 		s := CJMap()
 		s.mode := "normal", s.channel := "", s.index := "", s.total := "", s.format := "", s.pformat := ""
 		s.tags := "", s.fixed := 0, s.text := "", s.imagePath := "", s.searchTerm := "", s.matchIndex := "", s.matchCount := ""
-		s.message := "", s.keys := "", s.items := "", s.mono := "", s.searchActive := 0
+		s.message := "", s.keys := "", s.items := "", s.mono := "", s.searchActive := 0, s.title := ""
 		return s
 	}
 
@@ -142,27 +189,22 @@ class Hud {
 		Hud.Render(Hud.State)
 	}
 
-	static Hints() {
-		static h := ""
-		if IsObject(h)
-			return h
-		h := Map()
-		h["normal"] := TXT.HUD_hint_normal
-		h["search"] := TXT.HUD_hint_search
-		h["cancel"] := StrSplit(TXT.TIP_modem, "`n")[1] "  ·  " TXT.HUD_hint_nextmode
-		h["delete"] := h["cancel"], h["cut"] := h["cancel"], h["copy"] := h["cancel"], h["deleteall"] := h["cancel"]
-		h["help"] := TXT.HUD_hint_help
-		h["pasting"] := "", h["message"] := "", h["menu"] := "", h["confirm"] := ""
-		return h
+	; "key|label;key|label" strings from the language file
+	static Chips(spec) {
+		out := []
+		loop parse spec, ";"
+			if InStr(A_LoopField, "|")
+				out.Push([Trim(SubStr(A_LoopField, 1, InStr(A_LoopField, "|") - 1)), Trim(SubStr(A_LoopField, InStr(A_LoopField, "|") + 1))])
+		return out
 	}
 
-	static ModeTitle(mode) {
+	static ModeInfo(mode) {
 		switch mode {
-			case "cancel": return TXT.TIP_cancelm "  (1)"
-			case "delete": return TXT.TIP_delm "  (2)"
-			case "cut": return TXT.TIP_move "  (3)"
-			case "copy": return TXT.TIP_copy "  (4)"
-			case "deleteall": return TXT.TIP_delallm "  (5)"
+			case "cancel": return {title: TXT.TIP_cancelm, glyph: "x", fill: "surfaceAlt", color: "text"}
+			case "delete": return {title: TXT.TIP_delm, glyph: "trash-2", fill: "danger", color: "accentText"}
+			case "cut": return {title: TXT.TIP_move, glyph: "scissors", fill: "warn", color: "accentText"}
+			case "copy": return {title: TXT.TIP_copy, glyph: "copy", fill: "accent", color: "accentText"}
+			case "deleteall": return {title: TXT.TIP_delallm, glyph: "trash-2", fill: "danger", color: "accentText"}
 		}
 		return ""
 	}
@@ -172,61 +214,71 @@ class Hud {
 		Hud.Init()
 		Hud.State := state
 		g := Hud.g, c := Hud.c, sc := Theme.Scale
-		pad := Round(12 * sc), gap := Round(6 * sc), rowGap := Round(8 * sc)
+		pad := Round(14 * sc), gap := Round(8 * sc), rowGap := Round(8 * sc)
 		Hud.AnchorPoint(&ax, &ay)
 		Theme.WorkAreaAt(ax, ay, &wl, &wt, &wr, &wb)
 		W := Round(Min(Hud.MaxWidth * sc, (wr - wl) * 0.45))
 		W := Max(W, Round(Hud.MinWidth * sc))
-		bodyW := W - 2 * pad
 		for name, ctl in c
 			ctl.Visible := false
-		y := pad
+		for r in Hud.rows
+			r.chip.Visible := false, r.text.Visible := false
 		mode := state.mode
-		showHeader := (state.channel != "") && (mode != "message" && mode != "menu" && mode != "confirm")
+		y := pad
+		if (mode = "menu" || mode = "help")
+			W := (mode = "help") ? Round(600 * sc) : Round(320 * sc)
+		else if (mode = "message" || mode = "confirm")
+			W := Round(380 * sc)
+		bodyW := W - 2 * pad
+		info := Hud.ModeInfo(mode)
 
-		if showHeader {
-			x := pad, rowH := Round(20 * sc)
-			Hud.Place("channel", "{" state.channel "}", x, y, , rowH), x += c["channel"].w + gap
-			if (state.total != "")
-				Hud.Place("count", state.index " / " state.total, x, y, , rowH), x += c["count"].w + gap * 2
+		if (state.channel != "" && mode != "message" && mode != "menu" && mode != "confirm") {
+			x := pad, rowH := Round(22 * sc)
+			if info {
+				Theme.SetPill(c["channel"], info.fill, info.color)
+				Hud.Pill("channel", info.title, x, y, rowH), x += c["channel"].w + gap
+			} else {
+				Theme.SetPill(c["channel"], "accent", "accentText")
+				Hud.Pill("channel", state.channel, x, y, rowH), x += c["channel"].w + gap
+			}
+			if (state.total != "") {
+				Hud.Place("countN", "" state.index, x, y, , rowH), x += c["countN"].w
+				Hud.Place("countT", " / " state.total, x, y, , rowH), x += c["countT"].w + gap
+			}
 			if (state.format != "")
-				Hud.Badge("format", state.format, x, y, rowH), x += c["format"].w + gap
+				Hud.Pill("format", state.format, x, y, rowH), x += c["format"].w + gap
 			if (state.pformat != "")
-				Hud.Badge("pformat", state.pformat, x, y, rowH), x += c["pformat"].w + gap
-			if state.fixed
-				Hud.Badge("fixed", Trim(TXT.TIP_fixed, "[] "), x, y, rowH), x += c["fixed"].w + gap
-			if (state.tags != "") {
-				tw := W - pad - x
-				if (tw > 30 * sc)
-					Hud.Place("tags", "#" StrReplace(Trim(state.tags), " ", " #"), x, y, tw, rowH)
+				Hud.Pill("pformat", state.pformat, x, y, rowH), x += c["pformat"].w + gap
+			if (state.fixed && !info) {
+				pw := Hud.TextWidth(c["pinText"], TXT.HUD_pinned) + Round(2 * sc), gw := Round(16 * sc)
+				if (x + gw + pw <= W - pad) {
+					Hud.Place("pinText", TXT.HUD_pinned, W - pad - pw, y, pw, rowH)
+					Hud.Place("pinGlyph", c["pinGlyph"].Text, W - pad - pw - gw, y, gw, rowH)
+				}
 			}
 			y += rowH + rowGap
 		}
 
 		if state.searchActive || (mode = "search") {
-			rowH := Round(26 * sc)
+			rowH := Round(28 * sc), gw := Round(26 * sc)
 			matchTxt := (state.matchCount != "") ? state.matchIndex " / " state.matchCount : ""
-			mw := matchTxt != "" ? Hud.TextWidth(c["match"], matchTxt) + gap : 0
-			Hud.Place("search", "  " state.searchTerm "▏", pad, y, bodyW - mw, rowH)
-			if (matchTxt != "")
-				Hud.Place("match", matchTxt, pad + bodyW - mw + gap, y, mw - gap, rowH)
-			y += rowH + rowGap
+			mw := matchTxt != "" ? Hud.TextWidth(c["sMatch"], matchTxt) + Round(12 * sc) : Round(8 * sc)
+			Hud.Place("sGlyph", c["sGlyph"].Text, pad, y, gw, rowH)
+			Hud.Place("sTerm", state.searchTerm "▏", pad + gw, y, bodyW - gw - mw, rowH)
+			Hud.Place("sMatch", matchTxt, pad + bodyW - mw, y, mw, rowH)
+			c["sLine"].Move(pad, y + rowH, bodyW, 1), c["sLine"].Visible := true
+			y += rowH + 1 + rowGap
 		}
 
-		title := Hud.ModeTitle(mode)
-		if (title != "") {
-			Hud.MultiLine("preview", title, pad, y, bodyW, Hud.lineH, 2)
-			y += c["preview"].h + rowGap
+		if (mode = "message") {
+			y := Hud.Headline(state.message, pad, y, bodyW, "loader", "accent", "")
 		}
-		else if (mode = "message") {
-			Hud.MultiLine("preview", StrReplace(RTrim(state.message, "`r`n"), "`r`n", "`n"), pad, y, bodyW, Hud.lineH, 6)
-			y += c["preview"].h + rowGap
+		else if (mode = "confirm") {
+			y := Hud.Headline(state.mono, pad, y, bodyW, "trash-2", "danger", "")
 		}
-		else if (mode = "help" || mode = "menu" || mode = "confirm") {
-			body := (mode = "help") ? TXT.SET_shortcuts "`n" TXT.TIP_help : state.mono
-			body := StrReplace(RTrim(body, "`r`n"), "`r`n", "`n")
-			Hud.MultiLine("mono", body, pad, y, bodyW, Hud.monoLineH, 40)
-			y += c["mono"].h + rowGap
+		else if (mode = "help" || mode = "menu") {
+			y := Hud.Headline(mode = "help" ? TXT.HUD_helpTitle : (state.title != "" ? state.title : TXT.ACT__name), pad, y, bodyW, mode = "help" ? "circle-help" : "zap", "accent", mode = "help" ? TXT.HUD_helpClose : TXT.HUD_menuClose)
+			y := Hud.KeyRows(mode = "help" ? Hud.HelpItems() : state.items, pad, y, bodyW, mode = "help" ? 2 : 1)
 		}
 		else if (state.imagePath != "") {
 			if FileExist(state.imagePath) {
@@ -237,26 +289,118 @@ class Hud {
 				y += c["preview"].h + rowGap
 			}
 		}
-		else if (state.text != "" || mode = "normal") {
+		else if (state.text != "" || mode = "normal" || info) {
 			Hud.MultiLine("preview", state.text, pad, y, bodyW, Hud.lineH, Hud.MaxLines)
 			y += c["preview"].h + rowGap
 		}
 
-		hint := ""
-		if (mode = "confirm" || mode = "menu")
-			hint := state.keys
+		if info {
+			Hud.Place("modeText", StrSplit(TXT.TIP_modem, "`n")[1], pad, y, bodyW, Round(18 * sc))
+			y += Round(18 * sc) + Round(4 * sc)
+		}
+
+		; footer: tags on the left, key chips on the right
+		chips := []
+		if (mode = "confirm")
+			chips := Hud.KeysAsChips(state.keys)
 		else if state.searchActive
-			hint := Hud.Hints()["search"]
-		else
-			hint := Hud.Hints().Has(mode) ? Hud.Hints()[mode] : ""
-		if (hint != "") {
-			c["rule"].Move(pad, y, bodyW, 1), c["rule"].Visible := true
-			y += Round(6 * sc)
-			Hud.Place("hint", hint, pad, y, bodyW, Round(18 * sc))
-			y += c["hint"].h
+			chips := Hud.Chips(TXT.HUD_keys_search)
+		else if info
+			chips := Hud.Chips(TXT.HUD_keys_mode)
+		else if (mode = "normal")
+			chips := Hud.Chips(TXT.HUD_keys_normal)
+		tags := (mode = "normal" || info) && state.tags != "" ? StrReplace(Trim(state.tags), " ", " · ") : ""
+		if (chips.Length || tags != "") {
+			y += Round(2 * sc)
+			y := Hud.Footer(chips, tags, pad, y, bodyW)
 		}
 		H := y + pad
 		Hud.Show(W, H, ax, ay, wl, wt, wr, wb)
+	}
+
+	; glyph + bold text (+ muted note at the right); returns the next y
+	static Headline(text, x, y, w, glyph, color, right) {
+		c := Hud.c, sc := Theme.Scale
+		gw := Theme.HasIcons() ? Round(24 * sc) : 0
+		if gw {
+			c["hdGlyph"].SetFont("c" Theme.Hex(color)), c["hdGlyph"].Redraw()
+			Hud.Place("hdGlyph", Theme.Icon(glyph), x, y, gw, Round(22 * sc))
+		}
+		rw := right != "" ? Hud.TextWidth(c["hdRight"], right) + Round(4 * sc) : 0
+		if rw
+			Hud.Place("hdRight", right, x + w - rw, y, rw, Round(22 * sc))
+		Hud.MultiLine("hdText", StrReplace(RTrim(text, "`r`n"), "`r`n", "`n"), x + gw + (gw ? Round(4 * sc) : 0), y + Round(2 * sc), w - gw - rw - Round(8 * sc), Hud.lineH, 6)
+		return y + Max(Round(22 * sc), c["hdText"].h + Round(2 * sc)) + Round(8 * sc)
+	}
+
+	; items: Array of {key, caption}; cols 1 or 2; returns the next y
+	static KeyRows(items, x, y, w, cols) {
+		sc := Theme.Scale, rowH := Round(26 * sc), colW := (w - (cols - 1) * Round(18 * sc)) // cols
+		n := 0
+		for it in items {
+			n++
+			r := Hud.Row(n)
+			col := Mod(n - 1, cols), rowI := (n - 1) // cols
+			cx := x + col * (colW + Round(18 * sc)), cy := y + rowI * rowH
+			kw := Max(Round(22 * sc), Hud.TextWidth(r.chip, it.key) + Round(12 * sc))
+			r.chip.Text := it.key, r.chip.Move(cx, cy + Round(3 * sc), kw, rowH - Round(6 * sc)), r.chip.w := kw, r.chip.Visible := true
+			r.text.Text := it.caption, r.text.Move(cx + kw + Round(8 * sc), cy, colW - kw - Round(8 * sc), rowH), r.text.Visible := true
+		}
+		rowsN := (n + cols - 1) // cols
+		return y + rowsN * rowH + Round(4 * sc)
+	}
+
+	static HelpItems() {
+		static items := ""
+		if IsObject(items)
+			return items
+		items := []
+		loop parse TXT.TIP_help, "`n", "`r" {
+			line := Trim(A_LoopField)
+			if (line = "" || !InStr(line, " - "))
+				continue
+			p := InStr(line, " - ")
+			items.Push({key: Trim(SubStr(line, 1, p)), caption: Trim(SubStr(line, p + 3))})
+		}
+		return items
+	}
+
+	static KeysAsChips(keys) {
+		out := []
+		loop parse keys, A_Space
+			if (A_LoopField != "")
+				out.Push([A_LoopField, ""])
+		return out
+	}
+
+	static Footer(chips, tags, x, y, w) {
+		c := Hud.c, sc := Theme.Scale, rowH := Round(20 * sc), gap := Round(4 * sc), gapBetween := Round(10 * sc)
+		; chips right-aligned
+		total := 0, widths := []
+		for i, ch in chips {
+			if (i > Hud.MaxChips)
+				break
+			kw := Hud.TextWidth(c["k" i], ch[1]) + Round(12 * sc)
+			lw := ch[2] != "" ? Hud.TextWidth(c["l" i], ch[2]) + Round(2 * sc) : 0
+			widths.Push([kw, lw])
+			total += kw + (lw ? gap + lw : 0) + (i > 1 ? gapBetween : 0)
+		}
+		cx := x + w - total
+		for i, wd in widths {
+			ch := chips[i]
+			Hud.Pill("k" i, ch[1], cx, y + Round(2 * sc), rowH - Round(4 * sc), wd[1]), cx += wd[1]
+			if wd[2]
+				Hud.Place("l" i, ch[2], cx + gap, y, wd[2], rowH), cx += gap + wd[2]
+			cx += gapBetween
+		}
+		if (tags != "") {
+			gw := Round(16 * sc), tw := x + w - total - Round(12 * sc) - x - gw
+			if (tw > 30 * sc) {
+				Hud.Place("tagGlyph", c["tagGlyph"].Text, x, y, gw, rowH)
+				Hud.Place("tagText", tags, x + gw + Round(2 * sc), y, tw, rowH)
+			}
+		}
+		return y + rowH
 	}
 
 	static Place(name, text, x, y, w := "", h := "") {
@@ -269,22 +413,39 @@ class Hud {
 		ctl.Visible := true
 	}
 
-	static Badge(name, text, x, y, h) {
+	static Pill(name, text, x, y, h, w := "") {
 		ctl := Hud.c[name]
-		w := Hud.TextWidth(ctl, text) + Round(14 * Theme.Scale)
-		Hud.Place(name, text, x, y, w, h)
-	}
-
-	static MultiLine(name, text, x, y, w, lineH, maxLines) {
-		ctl := Hud.c[name]
-		ctl.Move(x, y, w, lineH)
-		ctl.Value := text
-		lines := SendMessage(0xBA, 0, 0, ctl.Hwnd)   ; EM_GETLINECOUNT
-		lines := Max(1, Min(lines, maxLines))
-		h := lines * lineH + Round(4 * Theme.Scale)
+		if (w = "")
+			w := Hud.TextWidth(ctl, text) + Round(18 * Theme.Scale)
+		ctl.Text := text
 		ctl.Move(x, y, w, h)
 		ctl.w := w, ctl.h := h
 		ctl.Visible := true
+		ctl.Redraw()
+	}
+
+	; Edits paint from the top of their box, so the panel gets an explicit formatting rectangle (EM_SETRECT)
+	; that leaves the same inset above and below the text.
+	static MultiLine(name, text, x, y, w, lineH, maxLines) {
+		ctl := Hud.c[name]
+		panel := (name = "preview" || name = "mono")
+		insetX := panel ? Round(10 * Theme.Scale) : 0, insetY := panel ? Round(7 * Theme.Scale) : Round(2 * Theme.Scale)
+		ctl.Move(x, y, w, lineH)
+		Hud.SetTextRect(ctl, insetX, insetY, w - insetX, insetY + lineH * maxLines)
+		ctl.Value := text
+		lines := SendMessage(0xBA, 0, 0, ctl.Hwnd)   ; EM_GETLINECOUNT
+		lines := Max(1, Min(lines, maxLines))
+		h := lines * lineH + 2 * insetY
+		ctl.Move(x, y, w, h)
+		Hud.SetTextRect(ctl, insetX, insetY, w - insetX, insetY + lines * lineH)
+		ctl.w := w, ctl.h := h
+		ctl.Visible := true
+	}
+
+	static SetTextRect(ctl, l, t, r, b) {
+		rc := Buffer(16, 0)
+		NumPut("Int", l, "Int", t, "Int", r, "Int", b, rc)
+		SendMessage(0xB3, 0, rc.Ptr, ctl.Hwnd)   ; EM_SETRECT
 	}
 
 	static Image(path, x, y, maxW, maxH, &h) {
@@ -299,7 +460,7 @@ class Hud {
 			try ctl.Value := "*w" dw " *h" dh " " path
 			Hud.lastImage := path "|" dw "|" dh
 		}
-		ctl.Move(x, y, dw, dh)
+		ctl.Move(x + (maxW - dw) // 2, y, dw, dh)
 		ctl.Visible := true
 		h := dh
 	}
@@ -322,7 +483,7 @@ class Hud {
 	static Show(W, H, ax, ay, wl, wt, wr, wb) {
 		x := Min(ax, wr - W - 8), y := Min(ay, wb - H - 8)
 		x := Max(wl, x), y := Max(wt, y)
-		Hud.g.Show("NoActivate x" x " y" y " w" W " h" H)
+		Theme.ShowPopup(Hud.g, x, y, W, H)
 		Hud.visible := true
 	}
 
@@ -363,27 +524,15 @@ class Hud {
 	; Blocks until one of the space-separated keys is pressed; returns the key name.
 	static Confirm(text, keys) {
 		s := Hud.NewState()
-		s.mode := "confirm", s.mono := text, s.keys := Hud.KeyHint(keys)
+		s.mode := "confirm", s.mono := text, s.keys := keys
 		return Hud.WaitKey(s, keys)
 	}
 
 	; items: Array of {key, caption}; keys: space-separated hotkeys to accept
 	static Menu(items, keys, title := "") {
 		s := Hud.NewState()
-		s.mode := "menu"
-		body := title != "" ? title "`n`n" : ""
-		for it in items
-			body .= fillWithSpaces(it.caption, 28) " -  " it.key "`n"
-		s.mono := RTrim(body, "`n"), s.keys := ""
+		s.mode := "menu", s.items := items, s.title := title, s.keys := ""
 		return Hud.WaitKey(s, keys)
-	}
-
-	static KeyHint(keys) {
-		out := ""
-		loop parse keys, A_Space
-			if (A_LoopField != "")
-				out .= (out = "" ? "" : "   ") A_LoopField
-		return out
 	}
 
 	; Blocks until a key is pressed. If another card replaces this one meanwhile (e.g. a new paste starts), the

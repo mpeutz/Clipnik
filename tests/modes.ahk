@@ -82,7 +82,7 @@ ed.Focus()
 Sleep 300
 SendEvent("^!{F9}")
 Sleep 3500
-check(InStr(ed.Value, stamp " custom"), "bound hotkey ran API.pasteText: [" ed.Value "]")
+check(InStr(ed.Value, stamp " custom"), "bound hotkey ran API.pasteText: [" ed.Value "] active=" WinGetTitle("A") " clip=[" A_Clipboard "]")
 check(cj["CUSTOMS._cjtest.bind"] = "$^!F9", "section stored in CUSTOMS with parsed bind: " cj["CUSTOMS._cjtest.bind"])
 FileMove(ini ".testbak", ini, 1)
 reloadCustom()
@@ -104,7 +104,7 @@ A_Clipboard := stamp " while disabled"
 Sleep 600
 SendEvent("{Ctrl down}v{Ctrl up}")
 Sleep 800
-check(InStr(ed.Value, stamp " while disabled"), "Ctrl+V is a plain paste while disabled: [" ed.Value "]")
+check(InStr(ed.Value, stamp " while disabled"), "Ctrl+V is a plain paste while disabled: [" ed.Value "] active=" WinGetTitle("A") " clip=[" A_Clipboard "]")
 check(cj["ctrlRef"] = "", "paste mode not entered while disabled (ctrlRef=" cj["ctrlRef"] ")")
 cj.runLabel("disable_clipjump")
 Sleep 500

@@ -579,3 +579,11 @@ TRY_iIncognito = Incognito
 TRY_iDisable = Disable
 TRY_channels = Channels
 TRY_channelIs = channel
+; v13 paste-mode card
+HUD_keys_normal = V|next;C|back;X|mode;Space|pin;F1|help
+HUD_keys_search = Enter|paste;Up / Down|match;Home|cancel
+HUD_keys_mode = X|next mode;V|next;C|back
+HUD_pinned = pinned
+HUD_helpTitle = Paste mode keys
+HUD_helpClose = V closes
+HUD_menuClose = Esc closes

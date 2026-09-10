@@ -35,11 +35,11 @@ class TrayCard {
 	static MainSpec() {
 		global TXT, PROGNAME, VERSION, CN, NOINCOGNITO, CLIPJUMP_STATUS
 		icons := [
-			{glyph: "f07e", label: TXT.TRY_iHistory, fn: history},
-			{glyph: "f064", label: TXT.TRY_iChannels, fn: channelOrganizer},
-			{glyph: "f02f", label: TXT.TRY_iSettings, fn: settings},
-			{glyph: "f04e", label: TXT.TRY_iIncognito, fn: incognito, on: !NOINCOGNITO},
-			{glyph: "f084", label: TXT.TRY_iDisable, fn: disable_clipjump, on: !CLIPJUMP_STATUS}]
+			{glyph: "history", label: TXT.TRY_iHistory, fn: history},
+			{glyph: "layout-grid", label: TXT.TRY_iChannels, fn: channelOrganizer},
+			{glyph: "settings", label: TXT.TRY_iSettings, fn: settings},
+			{glyph: "eye-off", label: TXT.TRY_iIncognito, fn: incognito, on: !NOINCOGNITO},
+			{glyph: "ban", label: TXT.TRY_iDisable, fn: disable_clipjump, on: !CLIPJUMP_STATUS}]
 		items := [
 			{label: TXT.TRY_channels, sub: "channels"},
 			{label: TXT.TRY_tools, sub: "tools"},
@@ -99,7 +99,8 @@ class TrayCard {
 		if (py < t)
 			py := Min(y, b - card.h)
 		card.x := px, card.y := py
-		card.g.Show("x" px " y" py " w" card.w " h" card.h)
+		TrayCard.shownAt := A_TickCount
+		Theme.ShowPopup(card.g, px, py, card.w, card.h, true)
 		SetTimer(TrayMenu_Poll, 40)
 	}
 
@@ -108,10 +109,11 @@ class TrayCard {
 			return
 		TrayCard.isOpen := false
 		SetTimer(TrayMenu_Poll, 0)
-		for c in TrayCard.cards
-			try c.g.Destroy()
-		TrayCard.cards := []
+		cards := TrayCard.cards
+		TrayCard.cards := []              ; handlers that run while the windows go away see an empty list
 		TrayCard.hover := "", TrayCard.sel := ""
+		for c in cards
+			try c.g.Destroy()
 	}
 
 	static Run(fn) {
@@ -135,7 +137,7 @@ class TrayCard {
 		pad := Round(TrayCard.Pad * s)
 		y := pad
 		surface := Theme.Hex("surface"), text := Theme.Hex("text"), muted := Theme.Hex("muted"), accent := Theme.Hex("accent")
-		hasGlyphs := Theme.FontExists("github-octicons")
+		hasGlyphs := Theme.HasIcons()
 		g.SetFont("s10 norm c" text, Theme.FontName)
 		if spec.HasProp("icons") {
 			n := spec.icons.Length, tile := Round(TrayCard.IconTile * s)
@@ -143,8 +145,8 @@ class TrayCard {
 			for i, ic in spec.icons {
 				x := Round(pad + (i - 1) * (tile + gap))
 				color := ic.HasProp("on") && ic.on ? accent : text
-				g.SetFont("s12 c" color, hasGlyphs ? "github-octicons" : Theme.FontName)
-				glyph := g.Add("Text", "x" x " y" y " w" tile " h" Round(30 * s) " +0x200 +0x100 +Center Background" surface, hasGlyphs ? chrHex(ic.glyph) : "")
+				g.SetFont("s12 c" color, hasGlyphs ? Theme.IconFont : Theme.FontName)
+				glyph := g.Add("Text", "x" x " y" y " w" tile " h" Round(30 * s) " +0x200 +0x100 +Center Background" surface, hasGlyphs ? Theme.Icon(ic.glyph) : "")
 				g.SetFont("s8 c" (ic.HasProp("on") && ic.on ? accent : muted), Theme.FontName)
 				label := g.Add("Text", "x" x " y" (y + Round(30 * s)) " w" tile " h" Round(16 * s) " +0x200 +0x100 +Center Background" surface, ic.label)
 				g.SetFont("s10 norm c" text, Theme.FontName)
@@ -176,12 +178,21 @@ class TrayCard {
 				continue
 			}
 			rh := Round(TrayCard.RowH * s)
-			right := it.HasProp("key") && it.key != "" ? it.key : (it.HasProp("sub") ? (hasGlyphs ? chrHex("f078") : ">") : "")
-			rw := right != "" ? Round(90 * s) : 0
-			lead := it.HasProp("check") ? (it.check ? (hasGlyphs ? chrHex("f03a") : "✓") : "") : ""
+			right := it.HasProp("key") && it.key != "" ? it.key : (it.HasProp("sub") ? (hasGlyphs ? Theme.Icon("chevron-right") : ">") : "")
+			rw := 0
+			if (right != "") {   ; measure the shortcut or chevron so long shortcuts never clip
+				isGlyph := it.HasProp("sub") && hasGlyphs
+				g.SetFont("s8 c" muted, isGlyph ? Theme.IconFont : Theme.FontName)
+				meter := g.Add("Text", "x0 y0 +Hidden", right)
+				meter.GetPos(, , &tw)
+				Theme.Discard(meter)
+				rw := tw + Round(12 * s)
+				g.SetFont("s10 norm c" text, Theme.FontName)
+			}
+			lead := it.HasProp("check") ? (it.check ? (hasGlyphs ? Theme.Icon("check") : "✓") : "") : ""
 			ctls := []
 			if it.HasProp("check") {
-				g.SetFont("s9 c" accent, hasGlyphs ? "github-octicons" : Theme.FontName)
+				g.SetFont("s9 c" accent, hasGlyphs ? Theme.IconFont : Theme.FontName)
 				ctls.Push(g.Add("Text", "x" pad " y" y " w" Round(26 * s) " h" rh " +0x200 +0x100 +Center Background" surface, lead))
 				g.SetFont("s10 norm c" text, Theme.FontName)
 				lx := pad + Round(26 * s)
@@ -189,8 +200,7 @@ class TrayCard {
 				lx := pad
 			ctls.Push(g.Add("Text", "x" lx " y" y " w" (card.w - pad - lx - rw) " h" rh " +0x200 +0x100 Background" surface, (it.HasProp("check") ? "" : "  ") StrReplace(it.label, "&")))
 			if rw {
-				isGlyph := it.HasProp("sub") && hasGlyphs
-				g.SetFont((isGlyph ? "s8" : "s8") " c" muted, isGlyph ? "github-octicons" : Theme.FontName)
+				g.SetFont("s8 c" muted, isGlyph ? Theme.IconFont : Theme.FontName)
 				ctls.Push(g.Add("Text", "x" (card.w - pad - rw) " y" y " w" (rw - Round(8 * s)) " h" rh " +0x200 +0x100 +Right Background" surface, right))
 				g.Add("Text", "x" (card.w - pad - Round(8 * s)) " y" y " w" Round(8 * s) " h" rh " Background" surface, "")
 				g.SetFont("s10 norm c" text, Theme.FontName)
@@ -240,7 +250,7 @@ class TrayCard {
 	}
 
 	static Paint(card, idx, on) {
-		if (idx < 1 || idx > card.rows.Length)
+		if (idx < 1 || idx > card.rows.Length || !TrayCard.Alive(card))
 			return
 		bg := Theme.Hex(on ? "surfaceAlt" : "surface")
 		for c in card.rows[idx].ctls {
@@ -264,19 +274,20 @@ class TrayCard {
 			py := b - card.h
 		card.x := px, card.y := py
 		TrayCard.cards.Push(card)
-		card.g.Show("NoActivate x" px " y" py " w" card.w " h" card.h)
+		Theme.ShowPopup(card.g, px, py, card.w, card.h)
 	}
 
 	static CloseSub() {
 		if (TrayCard.cards.Length < 2)
 			return
 		sub := TrayCard.cards.Pop()
-		TrayCard.Paint(TrayCard.cards[1], sub.parentRow, false)
 		if (TrayCard.hover && TrayCard.hover.card == sub)
 			TrayCard.hover := ""
 		if (TrayCard.sel && TrayCard.sel.card == sub)
 			TrayCard.sel := ""
 		try sub.g.Destroy()
+		if TrayCard.cards.Length
+			TrayCard.Paint(TrayCard.cards[1], sub.parentRow, false)
 	}
 
 	static Activate(card, idx) {
@@ -291,14 +302,25 @@ class TrayCard {
 			TrayCard.Run(row.fn)
 	}
 
+	; false once the card's window has been destroyed
+	static Alive(card) {
+		try return card.g.Hwnd ? true : false
+		catch
+			return false
+	}
+
 	static IsOurs(hwnd) {
-		for c in TrayCard.cards
-			if (c.g.Hwnd = hwnd)
-				return c
+		for c in TrayCard.cards {
+			try {
+				if (c.g.Hwnd = hwnd)
+					return c
+			}
+		}
 		return ""
 	}
 
 	static lastMx := -1, lastMy := -1
+	static shownAt := 0
 
 	static Poll() {
 		CoordMode("Mouse", "Screen")
@@ -327,6 +349,10 @@ class TrayCard {
 	}
 
 	static Key(k) {
+		if !TrayCard.cards.Length
+			return
+		if (TrayCard.sel && !TrayCard.Alive(TrayCard.sel.card))
+			TrayCard.sel := ""
 		card := TrayCard.sel ? TrayCard.sel.card : TrayCard.cards[TrayCard.cards.Length]
 		idx := TrayCard.sel ? TrayCard.sel.row : 0
 		rows := card.rows
@@ -427,6 +453,14 @@ TrayMenu_OnActivate(wParam, lParam, msg, hwnd) {
 }
 
 TrayMenu_CloseLater() {
+	if !TrayCard.isOpen
+		return
+	; Windows may bounce the activation right after Show (no foreground permission); the card still works from the
+	; keyboard and the poll, so only a later focus loss closes it
+	if (A_TickCount - TrayCard.shownAt < 500) {
+		try WinActivate(TrayCard.cards[1].g.Hwnd)
+		return
+	}
 	CoordMode("Mouse", "Screen")
 	MouseGetPos(, , &win)
 	if TrayCard.IsOurs(win)     ; clicking inside a card deactivates the other card; the click handler takes over

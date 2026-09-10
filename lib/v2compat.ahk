@@ -281,3 +281,10 @@ ClipFile_Convert8to4(buf) {
 	out.Size := dst
 	return out
 }
+
+; True while a Gui object still has its window (Destroy or an owner closing can take it away).
+GuiAlive(g) {
+	try return g.Hwnd ? true : false
+	catch
+		return false
+}

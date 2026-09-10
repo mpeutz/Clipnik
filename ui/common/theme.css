@@ -25,7 +25,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; flex: 0 0 auto; }
 .search { flex-grow: 1; height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--muted); }
 .search:focus-within { border-color: var(--accent); }
-.search svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; flex: 0 0 auto; }
+.search svg { width: 15px; height: 15px; flex: 0 0 auto; }
 .search input { flex-grow: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); }
 .search input::placeholder { color: var(--muted); }
 .chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); background: transparent; cursor: pointer; }
@@ -42,7 +42,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .iconbtn { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 0; }
 .iconbtn:hover { background: var(--hover); color: var(--text); }
 .iconbtn:disabled { opacity: .4; pointer-events: none; }
-.iconbtn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.iconbtn svg { width: 15px; height: 15px; }
 .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); white-space: nowrap; }
 .badge.accent { background: var(--accent); color: var(--accentText); }
 .split { display: flex; flex-grow: 1; min-height: 0; border-top: 1px solid var(--border); position: relative; }
@@ -68,6 +68,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .status { height: 24px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg); flex: 0 0 auto; gap: 12px; }
 .status .right { margin-left: auto; }
 .sheet { position: absolute; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 5; }
+.sheet[hidden], .toast[hidden], [hidden] { display: none !important; }
 .card { width: 360px; max-width: calc(100% - 40px); color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 32px rgba(0,0,0,.4); display: flex; flex-direction: column; }
 .card .h { padding: 12px 16px 6px 16px; font-weight: 600; }
 .card .p { padding: 0 16px 8px 16px; }

@@ -189,7 +189,7 @@ SendEvent("a")
 Sleep 400
 SendEvent("{Enter}")
 Sleep 1200
-check(InStr(ed.Value, stamp " gamma"), "Enter pasted clip 1 while Ctrl held: [" ed.Value "]")
+check(InStr(ed.Value, stamp " gamma"), "Enter pasted clip 1 while Ctrl held: [" ed.Value "] active=" WinGetTitle("A") " hud=" WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI") " multi=" cj["MULTIPASTE"] " ref=" cj["ctrlRef"])
 ; the continuation of multipaste cannot be simulated: Clipjump's own Send restores modifiers to their
 ; physical state, which releases a Ctrl that is only held by SendEvent. Verify that part manually.
 SendEvent("{Ctrl up}")

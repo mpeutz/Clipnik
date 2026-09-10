@@ -34,7 +34,7 @@ class HistoryWin {
 		if h.Show(HistoryWin.Geometry()) {
 			h.Focus()
 			if h.ready
-				h.Post("refreshed")
+				h.Post("opened")
 		}
 	}
 

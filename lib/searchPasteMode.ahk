@@ -12,8 +12,8 @@ searchPasteMode_hook() {
 	global
 	hkZ(pstIdentifier pastemodekey.f, SPM_dispose)
 	SPM.ih := InputHook("")
-	SPM.ih.KeyOpt("{Enter}{Esc}{Home}{Up}{Down}", "NS")
-	SPM.ih.KeyOpt("{Backspace}", "N")
+	SPM.ih.KeyOpt("{Enter}{Esc}{Home}{Up}{Down}", "NSI")   ; I: never collected as text, so OnChar stays quiet
+	SPM.ih.KeyOpt("{Backspace}", "NS")
 	SPM.ih.OnChar := spm_onChar
 	SPM.ih.OnKeyDown := spm_onKeyDown
 	SPM.ih.Start()
@@ -21,10 +21,15 @@ searchPasteMode_hook() {
 }
 
 spm_onChar(ih, ch) {
-	searchpm_edit()
+	global SPM
+	if SPM.ACTIVE
+		searchpm_edit()
 }
 
 spm_onKeyDown(ih, vk, sc) {
+	global SPM
+	if !SPM.ACTIVE
+		return
 	switch vk {
 		case 13: spm_paste()            ; Enter
 		case 27, 36: spm_cancel()       ; Esc, Home

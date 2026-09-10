@@ -9,6 +9,8 @@ class IgnoredWindowsWin {
 
 	static Open(owner := "") {
 		global PROGNAME, TXT
+		if (IgnoredWindowsWin.g && !GuiAlive(IgnoredWindowsWin.g))
+			IgnoredWindowsWin.Close()
 		if IgnoredWindowsWin.g {
 			IgnoredWindowsWin.g.Show()
 			return

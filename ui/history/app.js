@@ -145,6 +145,13 @@
   bridge.on("preview", (rec) => { rec.id = +rec.id; if (state.sel.size === 1 && state.sel.has(rec.id)) showPreview(rec); });
   bridge.on("toast", (t) => cj.toast(t));
   bridge.on("refreshed", requestList);
+  // a fresh open starts at the newest clip with no search or selection carried over
+  bridge.on("opened", () => {
+    state.q = "", qEl.value = "", state.sel = new Set(), state.anchor = null, state.focusId = null;
+    showPreview(null);
+    requestList();
+    qEl.focus();
+  });
 
   qEl.addEventListener("input", debounce(() => { state.q = qEl.value; requestList(); }, 120));
   el("partial").addEventListener("click", () => { state.partial = true; el("partial").classList.add("on"); el("exact").classList.remove("on"); bridge.send("setPartial", 1); requestList(); });

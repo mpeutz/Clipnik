@@ -45,7 +45,9 @@ Sleep 300
 WinActivate(tg.Hwnd)
 edt.Focus()
 Sleep 300
-Send("^v")
+SendEvent("{Ctrl down}v")
+Sleep 500
+SendEvent("{Ctrl up}")
 Sleep 800
 hudShown := WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI") && (WinGetStyle("Clipjump_HUD ahk_class AutoHotkeyGUI") & 0x10000000)
 check("no paste-mode card in ignored window", !hudShown)

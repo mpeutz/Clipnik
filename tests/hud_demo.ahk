@@ -45,6 +45,7 @@ loop files "cache\thumbs\*.jpg"
 	thumb := A_LoopFileFullPath
 for themeMode in ["dark", "light"] {
 	Theme.Init(themeMode)
+	DllCall("GDI32.DLL\AddFontResourceEx", "Str", A_WorkingDir "\icons\lucide.ttf", "UInt", 0x10, "Int", 0)
 	Hud.Init()
 	Hud.Restyle()
 	MouseMove(300, 200)
@@ -64,22 +65,20 @@ for themeMode in ["dark", "light"] {
 	}
 	Hud.Message("Cancelled"), snap(themeMode "-message")
 	; menu (non-blocking snapshot: render the state Menu() would build)
-	m := Hud.NewState(), m.mode := "menu"
-	items := [{key: "H", caption: "Clipboard History"}, {key: "O", caption: "Channel Organizer"}, {key: "E", caption: "Settings"}, {key: "Esc", caption: "Exit"}]
-	menuText := "Clipjump ACTION MODE`n`n" fillWithSpaces("Switch Channel", 28) " -  0..9`n"
-	for it in items
-		menuText .= fillWithSpaces(it.caption, 28) " -  " it.key "`n"
-	m.mono := RTrim(menuText, "`n"), Hud.Render(m), snap(themeMode "-menu")
-	cf := Hud.NewState(), cf.mode := "confirm", cf.mono := TXT.TIP_delallprompt, cf.keys := "Y   N"
+	m := Hud.NewState(), m.mode := "menu", m.title := "Clipjump Action mode"
+	m.items := [{key: "0..9", caption: "Switch channel"}, {key: "H", caption: "Clipboard History"}, {key: "O", caption: "Channel Organizer"}, {key: "E", caption: "Settings"}, {key: "Esc", caption: "Exit"}]
+	Hud.Render(m), snap(themeMode "-menu")
+	cf := Hud.NewState(), cf.mode := "confirm", cf.mono := TXT.TIP_delallprompt, cf.keys := "Y N"
 	Hud.Render(cf), snap(themeMode "-confirm")
 	Hud.Hide()
-	Toast.Show("Transferred to Clipjump {Default}", 0, "info", "a")
-	Toast.Show("Clip skipped (excluded by the app)", 0, "warn", "b")
-	Toast.Show("Both Clipboards were synced. Success !", 0, "info", "c")
-	Sleep 400
+	Toast.Position := "bottomright"
+	Toast.Show("Copied to Default", 9999, "info", "a")
+	Toast.Show("Private clip skipped (KeePass)", 9999, "warn", "b")
+	Toast.Show("Moving history to the database", 0, "info", "c")
+	Sleep 500
 	pToken := Gdip_Startup()
 	MonitorGetWorkArea(MonitorGetPrimary(), &l, &t, &r, &b)
-	pBitmap := Gdip_BitmapFromScreen((r - 360) "|" (b - 260) "|360|260")
+	pBitmap := Gdip_BitmapFromScreen((r - 400) "|" (b - 200) "|400|200")
 	Gdip_SaveBitmapToFile(pBitmap, A_ScriptDir "\out\toast-" themeMode ".png")
 	Gdip_DisposeImage(pBitmap), Gdip_Shutdown(pToken)
 	Toast.Hide("a"), Toast.Hide("b"), Toast.Hide("c")

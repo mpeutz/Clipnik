@@ -40,13 +40,13 @@
     <button class="btn" id="newChannel" data-i18n="ORG_newChannel">New channel</button>
     <div class="sel"><span class="dim" data-i18n="ORG_chooseCh">Active channel</span><select class="edit" id="active"></select></div>
     <div class="search">
-      <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"></circle><path d="M10.5 10.5 14 14"></path></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
       <input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="Search clips">
     </div>
   </div>
   <div class="split">
     <div class="channels">
-      <div class="head"><span data-i18n="ORG_channels">Channels</span><button class="iconbtn" id="addChannel" title="New channel"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"></path></svg></button></div>
+      <div class="head"><span data-i18n="ORG_channels">Channels</span><button class="iconbtn" id="addChannel" title="New channel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button></div>
       <div class="list" id="channels" tabindex="0"></div>
       <div class="foot" id="chfoot" data-i18n="ORG_footHint">Double-click to use · F2 renames · Drag clips here to move</div>
     </div>
@@ -57,7 +57,7 @@
       </div>
     </div>
     <div class="preview" style="width: 320px;">
-      <div class="ph" id="ph"><span class="dim" data-i18n="ORG_selectHint">Select a clip</span><span style="margin-left: auto; display: inline-flex; gap: 2px;"><button class="iconbtn" id="up" title="Move up"><svg viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4"></path></svg></button><button class="iconbtn" id="down" title="Move down"><svg viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4"></path></svg></button></span></div>
+      <div class="ph" id="ph"><span class="dim" data-i18n="ORG_selectHint">Select a clip</span><span style="margin-left: auto; display: inline-flex; gap: 2px;"><button class="iconbtn" id="up" title="Move up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button><button class="iconbtn" id="down" title="Move down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></button></span></div>
       <div class="body mono" id="body"></div>
       <div class="props" id="props" hidden><span class="dim" data-i18n="ORG_tags">Tags</span><input class="edit" id="tags" type="text" spellcheck="false"><label class="check"><input type="checkbox" id="fixed"><span data-i18n="ORG_fixed">Fixed</span></label></div>
       <div class="actions">

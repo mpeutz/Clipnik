@@ -79,7 +79,7 @@ global MSG_TRANSFER_COMPLETE := ""
 
 ;History Tool
 global hidden_date_no := 4, history_w := "", history_partial := 1 ;start off with partial=1 <> much better
-global GHICON_PATH := A_ScriptDir "\icons\octicons-local.ttf"
+global GHICON_PATH := A_ScriptDir "\icons\lucide.ttf"
 global DBPATH := "cache\data.db"
 
 /*
@@ -225,6 +225,10 @@ validate_Settings()
 loadPlugins()
 
 ; ---- modern UI: theme, HUD card, toasts ----
+if FileExist(GHICON_PATH)   ; the icon font must be registered before any card is built (Theme caches the font check)
+	DllCall("GDI32.DLL\AddFontResourceEx", "Str", GHICON_PATH, "UInt", 0x10, "Int", 0) ; FR_PRIVATE
+else
+	MsgBox(valueof(TXT.ABT_errorFontIcon), PROGNAME, 16)
 Theme.Init(ini_theme, ini_accent)
 Toast.Position := ini_toastPosition
 Hud.Init()
@@ -288,11 +292,6 @@ ERROR HANDLINGS AND
 COMPATIBILITY
 ***************
 */
-
-if FileExist(GHICON_PATH)
-	DllCall("GDI32.DLL\AddFontResourceEx", "Str", GHICON_PATH, "UInt", 0x10, "Int", 0) ; FR_PRIVATE
-else
-	MsgBox(valueof(TXT.ABT_errorFontIcon), PROGNAME, 16)
 
 if (isnewdb == 1) {
 	migrateHistory()

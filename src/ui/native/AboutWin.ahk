@@ -8,6 +8,8 @@ class AboutWin {
 
 	static Open() {
 		global PROGNAME, VERSION, TXT, AUTHOR_PAGE, CN, mainIconPath, CJGUI
+		if (AboutWin.g && !GuiAlive(AboutWin.g))
+			AboutWin.Close()
 		if AboutWin.g {
 			AboutWin.g.Show()
 			return

@@ -44,7 +44,9 @@ txt := readLog()
 check("preview requested", InStr(txt, '"cmd":"preview"'))
 snap("selected")
 A_Clipboard := ""
-Send("^c")
+SendEvent("{Ctrl down}c")
+Sleep 300
+SendEvent("{Ctrl up}")
 Sleep 800
 check("Ctrl+C copied the selected clip", InStr(A_Clipboard, marker))
 Send("^f")

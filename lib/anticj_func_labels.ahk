@@ -124,8 +124,12 @@ Valueof(VarinStr) {
 		if InStr(emVar, ".") {
 			parts := StrSplit(emVar, ".")
 			emVar := VarGet(Trim(parts[1]))
-			loop parts.Length - 1
-				emVar := IsObject(emVar) ? emVar[Trim(parts[A_Index + 1])] : ""
+			loop parts.Length - 1 {
+				k := Trim(parts[A_Index + 1])
+				try emVar := !IsObject(emVar) ? "" : (emVar is Class || emVar is Object && !HasMethod(emVar, "__Item") && !(emVar is Map)) ? emVar.%k% : emVar[k]
+				catch
+					emVar := ""      ; unknown member: render as empty instead of raising inside the API handler
+			}
 		}
 		else
 			emVar := VarGet(emVar)

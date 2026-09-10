@@ -143,7 +143,7 @@
     openCard(`
       <div class="h">${esc((copy ? T.ORG_copyTitle : T.ORG_moveTitle).replace("%1", label))}</div>
       <div class="list">${others.map((c) => `<div class="ch${c.n === chosen ? " sel" : ""}" data-n="${c.n}"><span class="n">${c.n}</span><span class="name">${esc(c.name)}</span><span class="cnt">${c.count}</span></div>`).join("")}
-        <div class="ch newch" data-newch="1"><svg viewBox="0 0 16 16" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6;"><path d="M8 3v10M3 8h10"></path></svg><span>${esc(T.ORG_newChannel)}…</span></div></div>
+        <div class="ch newch" data-newch="1"><svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span>${esc(T.ORG_newChannel)}…</span></div></div>
       <div class="footer"><button class="btn primary" data-ok>${esc(copy ? T.ORG_copyBtn : T.ORG_moveBtn)}</button><button class="btn" data-cancel>${esc(T.SET_cancel)}</button></div>`, (card) => {
       const go = () => { if (chosen == null) return; bridge.send("transfer", { channel: state.channel, ns, to: chosen, copy: copy ? 1 : 0 }); closeCard(); };
       card.querySelector(".list").addEventListener("click", (e) => {
