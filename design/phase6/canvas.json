@@ -1,0 +1,87 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Clip intelligence"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "PasteCard.dc.html",
+      "title": "Paste card: kind pill and Z menu",
+      "x": 0,
+      "y": 0,
+      "w": 1120,
+      "h": 900,
+      "page": "page-1"
+    },
+    {
+      "file": "Toasts.dc.html",
+      "title": "Copy toasts with an action",
+      "x": 1220,
+      "y": 0,
+      "w": 1120,
+      "h": 700,
+      "page": "page-1"
+    },
+    {
+      "file": "History.dc.html",
+      "title": "History: type column, filter, Actions menu",
+      "x": 0,
+      "y": 1020,
+      "w": 1040,
+      "h": 660,
+      "page": "page-1"
+    },
+    {
+      "file": "HistoryFiltered.dc.html",
+      "title": "History filtered to URL",
+      "x": 1220,
+      "y": 1020,
+      "w": 1040,
+      "h": 660,
+      "page": "page-1"
+    },
+    {
+      "file": "Rules.dc.html",
+      "title": "Settings: Rules page",
+      "x": 0,
+      "y": 1800,
+      "w": 760,
+      "h": 620,
+      "page": "page-1"
+    },
+    {
+      "file": "RuleDialog.dc.html",
+      "title": "Settings: rule editor",
+      "x": 1220,
+      "y": 1800,
+      "w": 760,
+      "h": 620,
+      "page": "page-1"
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "Overview",
+      "x": 2440,
+      "y": 0,
+      "w": 560,
+      "h": 420,
+      "page": "page-1"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -170,
+      "w": 700,
+      "page": "page-1",
+      "text": "Clip intelligence, from the spec of 2026-09-10: every text clip gets a kind (URL, email, path, color, JSON, number, phone, code, text). Row 1: the paste card and the copy toast. Row 2: History with the type column, the type filter and the Actions menu. Row 3: the Settings Rules page and its editor. Tweak the accent and dark/light on any board."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.33px; line-height: 1.35; }
+    a { color: var(--accent); } a:hover { color: var(--accent); text-decoration: underline; }
+    .win { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+    .title { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 0 0 12px; font-size: 12px; }
+    .title .caption { flex-grow: 1; }
+    .title .wc { width: 46px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text); }
+    .nav { width: 168px; flex: 0 0 auto; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+    .nav .item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 4px; color: var(--text); position: relative; }
+    .nav .item.sel { background: var(--hover); }
+    .nav .item.sel::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--accent); }
+    .nav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .content { flex: 1 1 0; min-width: 0; background: var(--surface); border-left: 1px solid var(--border); border-top: 1px solid var(--border); border-top-left-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px 0; }
+    .section { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px 0; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 32px; } .row .lbl { flex: 1 1 0; min-width: 0; } .row > :not(.lbl) { flex: 0 0 auto; }
+    .row .lbl { flex-grow: 1; }
+    .row .hint { color: var(--muted); font-size: 12px; }
+    .check { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+    .box { width: 16px; height: 16px; border: 1px solid var(--muted); border-radius: 3px; background: var(--surfaceAlt); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .box.on { background: var(--accent); border-color: var(--accent); }
+    .box svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .edit { height: 24px; padding: 0 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: flex; align-items: center; box-sizing: border-box; }
+    .edit.num { width: 80px; justify-content: space-between; }
+    .edit.num .spin { display: flex; flex-direction: column; gap: 1px; margin-right: -4px; color: var(--muted); }
+    .edit.num .spin svg { width: 10px; height: 8px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+    .edit.ddl { width: 180px; justify-content: space-between; }
+    .edit.ddl svg { width: 12px; height: 12px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+    .edit.hk { width: 180px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; }
+    .edit.hk.empty { color: var(--muted); font-family: inherit; font-size: 13.33px; }
+    .btn { height: 26px; min-width: 76px; padding: 0 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+    .btn.dis { opacity: .45; }
+    .footer { height: 52px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 24px; background: var(--bg); }
+    .list { border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); display: flex; flex-direction: column; overflow: hidden; }
+    .list .hdr { display: grid; height: 26px; align-items: center; padding: 0 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+    .list .li { display: grid; height: 28px; align-items: center; padding: 0 10px; }
+    .list .li.sel { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+    .status { height: 24px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg); }
+    .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); }
+    .badge.accent { background: var(--accent); color: var(--accentText); }
+  
+    .stage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 44px; padding: 28px 32px 32px 32px; background: var(--bg); color: var(--text); box-sizing: border-box; align-content: start; align-items: start; }
+    .lbl { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; letter-spacing: .02em; }
+    .desk { background: #1a1d24; background-image: radial-gradient(circle at 30% 20%, #2a3140 0, transparent 55%); padding: 24px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; min-height: 100px; }
+    .kbd { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: color-mix(in srgb, var(--text) 10%, transparent); color: var(--text); font-size: 11px; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 9px; border-radius: 10px; font-size: 10.5px; font-weight: 600; background: var(--surfaceAlt); color: var(--text); white-space: nowrap; }
+    .pill.accent { background: var(--accent); color: var(--accentText); }
+    .pill.kind { background: color-mix(in srgb, var(--accent) 18%, var(--surfaceAlt)); color: var(--text); letter-spacing: .04em; }
+    .sw { width: 10px; height: 10px; border-radius: 3px; border: 1px solid rgba(255,255,255,.25); }
+    .mono { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; }
+    .dim { color: var(--muted); }
+    .note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .note b { color: var(--text); font-weight: 600; }
+    .budget { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+    .search { flex-grow: 1; height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--muted); }
+    .search svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+    .chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); }
+    .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+    .split { display: flex; flex-grow: 1; min-height: 0; border-top: 1px solid var(--border); position: relative; }
+    .pane { display: flex; flex-direction: column; min-width: 0; }
+    .table { flex-grow: 1; overflow: hidden; }
+    .table .hdr { display: grid; gap: 12px; height: 28px; align-items: center; padding: 0 12px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .table .tr { display: grid; gap: 12px; height: 30px; align-items: center; padding: 0 12px; border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent); white-space: nowrap; }
+    .table .tr > span { overflow: hidden; text-overflow: ellipsis; }
+    .table .tr.sel { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+    .preview { width: 380px; flex: 0 0 auto; border-left: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; position: relative; }
+    .preview .ph { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .preview .body { flex-grow: 1; padding: 12px 14px; overflow: hidden; white-space: pre-wrap; word-break: break-word; }
+    .preview .actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--bg); }
+    .abtn { height: 26px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); }
+    .abtn.primary { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+    .abtn kbd { font-family: inherit; font-size: 10.5px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
+    .abtn.primary kbd { color: var(--accentText); background: transparent; border-color: rgba(255,255,255,.4); }
+    .menu { position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 10px 28px rgba(0,0,0,.45); padding: 4px; min-width: 200px; z-index: 2; }
+    .menu .mi { display: flex; align-items: center; gap: 10px; height: 28px; padding: 0 10px; border-radius: 4px; }
+    .menu .mi.hot { background: var(--hover); }
+    .menu .mi .k { margin-left: auto; color: var(--muted); font-size: 11px; }
+    .menu .sep { height: 1px; background: var(--border); margin: 4px 6px; }
+    .menu .mh { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 6px 10px 2px 10px; }
+    .status { height: 24px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg); }
+    .lv { border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); display: flex; flex-direction: column; overflow: hidden; flex-grow: 1; }
+    .lv .hdr { display: grid; height: 26px; align-items: center; padding: 0 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+    .lv .li { display: grid; height: 30px; align-items: center; padding: 0 10px; }
+    .lv .li.sel { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+    .lv .li.off { color: var(--muted); }
+    .dlg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 460px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 16px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; overflow: hidden; }
+    .dlg .b { padding: 8px 20px 12px 20px; display: flex; flex-direction: column; gap: 4px; }
+    .shade { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+  </style>
+</helmet>
+<div class="stage" style="width: 1120px; height: 700px; {{vars}}">
+
+  <div style="grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px;"><span style="font-size: 18px; font-weight: 600;">Copy toasts with a kind and one action</span><span class="note">Plain text looks as today. A recognized kind adds a muted label, and its primary action a clickable chip; those toasts stay 2.5 s.</span></div>
+  <div><div class="lbl">Plain text (unchanged)</div><div class="desk"><div style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 11px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.4); color: var(--text); font-size: 12.5px;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--accent);"><path d="M20 6 9 17l-5-5"/></svg>Transferred to Clipjump <span class="pill accent">Default</span></div></div></div>
+  <div><div class="lbl">URL: Open in browser</div><div class="desk"><div style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 11px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.4); color: var(--text); font-size: 12.5px;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--accent);"><path d="M20 6 9 17l-5-5"/></svg>Transferred to Clipjump <span class="pill accent">Default</span><span class="dim" style="font-size: 11.5px; letter-spacing: .04em;">URL</span><span class="pill" style="border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--text); cursor: pointer;">Open</span></div></div></div>
+  <div><div class="lbl">Path: Reveal in Explorer</div><div class="desk"><div style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 11px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.4); color: var(--text); font-size: 12.5px;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--accent);"><path d="M20 6 9 17l-5-5"/></svg>Transferred to Clipjump <span class="pill accent">Default</span><span class="dim" style="font-size: 11.5px; letter-spacing: .04em;">PATH</span><span class="pill" style="border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--text); cursor: pointer;">Reveal</span></div></div></div>
+  <div><div class="lbl">Color: swatch in the label, copy as rgb</div><div class="desk"><div style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 11px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.4); color: var(--text); font-size: 12.5px;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--accent);"><path d="M20 6 9 17l-5-5"/></svg>Transferred to Clipjump <span class="pill accent">Default</span><span class="sw" style="background: #1DBC55;"></span><span class="dim" style="font-size: 11.5px; letter-spacing: .04em;">COLOR</span><span class="pill" style="border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--text); cursor: pointer;">Copy rgb</span></div></div></div>
+  <div><div class="lbl">JSON: pretty-print into a new clip</div><div class="desk"><div style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 11px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.4); color: var(--text); font-size: 12.5px;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: var(--accent);"><path d="M20 6 9 17l-5-5"/></svg>Transferred to Clipjump <span class="pill accent">Default</span><span class="dim" style="font-size: 11.5px; letter-spacing: .04em;">JSON</span><span class="pill" style="border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--text); cursor: pointer;">Pretty-print</span></div></div></div>
+  <div><div class="lbl">A rule ignored the clip (kind url from chrome.exe → ignore)</div><div class="desk"><div style="display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px 0 11px; border-radius: 8px; background: color-mix(in srgb, var(--surface) 96%, transparent); border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.4); color: var(--text); font-size: 12.5px;"><svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; color: #E0A526;"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>Not recorded: rule <b style="font-weight: 600;">Skip browser links</b></div></div></div>
+  <div class="budget"><div class="note"><b>Interaction</b><br>The toast stays a no-activate window: clicking the chip runs the action and hides the toast; the target app keeps focus. No keyboard access, by design. The chip is a Button drawn by the theme's pill painter.</div><div class="note"><b>Width</b><br>Toasts grow to fit up to 360 px; with a long channel name the message text truncates first, never the chip.</div></div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#C42B1C","options":["#C42B1C","#0078D4","#107C10","#8764B8"],"section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const d = this.props.dark ?? true;
+    const p = d ? {"bg":"#202020","surface":"#2B2B2B","surfaceAlt":"#363636","border":"#3F3F3F","text":"#F0F0F0","muted":"#9A9A9A","hover":"#333333"} : {"bg":"#F3F3F3","surface":"#FFFFFF","surfaceAlt":"#EDEDED","border":"#D9D9D9","text":"#1B1B1B","muted":"#6B6B6B","hover":"#E9E9E9"};
+    const accent = this.props.accent ?? '#C42B1C';
+    const vars = Object.entries(p).map(([k, v]) => '--' + k + ':' + v).join(';') + ';--accent:' + accent + ';--accentText:#FFFFFF';
+    return { vars };
+  }
+}
+</script>
+</body>
+</html>
