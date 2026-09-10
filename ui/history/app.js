@@ -7,6 +7,7 @@
     HST_export: "Export", HST_delete: "Delete", HST_empty: "Nothing copied yet", HST_noMatch: "No clips match", HST_items: "items",
     HST_match: "of %2 items match", HST_onDisk: "on disk", HST_sortedBy: "sorted by", HST_selectHint: "Select a clip to preview it",
     HST_viewimage: "[IMAGE]", HST_today: "Today", HST_yesterday: "Yesterday", HST_type: "Type", HST_allTypes: "All types",
+    HST_actions: "Actions",
   };
   const state = { q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {} };
   const rowsEl = el("rows"), tableEl = el("table"), qEl = el("q");
@@ -112,12 +113,15 @@
       return;
     }
     const isImg = +rec.type === 1;
-    const kindBadge = isImg ? '<span class="badge">IMAGE</span>' : (cj.kindBadge(rec.kind, state.labels) || '<span class="badge">TEXT</span>');
-    ph.innerHTML = `${kindBadge}<span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>`;
     if (isImg) {
+      ph.innerHTML = `<span class="badge">IMAGE</span><span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>`;
       body.className = "body image";
       body.innerHTML = `<img src="${esc(rec.url)}" alt="">`;
     } else {
+      const acts = (rec.actions || []);
+      ph.innerHTML = `${cj.kindBadge(rec.kind, state.labels) || '<span class="badge">TEXT</span>'}<span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>` +
+        (acts.length ? `<button class="btn" id="actions" style="margin-left: auto; height: 24px;">${esc(T.HST_actions)} ▾</button>` : "");
+      if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[rec.kind] || rec.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { id: rec.id, action: id })));
       body.className = "body mono";
       body.innerHTML = hlWords(rec.data, searchWords());
     }
@@ -180,6 +184,18 @@
     select(+tr.dataset.id, { add: e.ctrlKey, range: e.shiftKey });
   });
   rowsEl.addEventListener("dblclick", (e) => { if (e.target.closest(".tr")) act("instaPaste"); });
+  rowsEl.addEventListener("contextmenu", (e) => {
+    const tr = e.target.closest(".tr");
+    if (!tr) return;
+    e.preventDefault();
+    const id = +tr.dataset.id;
+    if (!state.sel.has(id)) select(id);
+    const rec = state.preview && state.preview.id === id ? state.preview : null;
+    const acts = rec ? (rec.actions || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
+    const items = [...(acts.length ? [{ head: state.labels[rec.kind] || rec.kind }, ...acts, { sep: true }] : []),
+      { id: "copy", label: T.HST_copy, key: "Ctrl+C" }, { id: "instaPaste", label: T.HST_insta, key: "Space" }, { id: "edit", label: T.HST_edit, key: "Ctrl+H" }, { id: "delete", label: T.HST_delete, key: "Del" }];
+    cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { id, action: pick.slice(4) }) : act(pick));
+  });
   document.querySelector(".actions").addEventListener("click", (e) => {
     const b = e.target.closest("[data-act]");
     if (b) act(b.dataset.act);

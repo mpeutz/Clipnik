@@ -47,4 +47,25 @@ window.cj = {
     const label = (labels && labels[kind]) || kind.toUpperCase();
     return `<span class="badge kind">${this.esc(label)}</span>`;
   },
+  // popup menu near an anchor element or at {x, y}; items: [{id, label, key, sep, head}]; onPick(id)
+  menu(where, items, onPick) {
+    this.closeMenu();
+    const m = document.createElement("div");
+    m.className = "menu";
+    m.innerHTML = items.map((it) => it.sep ? `<div class="sep"></div>` : it.head ? `<div class="mh">${this.esc(it.head)}</div>` :
+      `<div class="mi" data-id="${this.esc(it.id)}"><span>${this.esc(it.label)}</span>${it.key ? `<span class="k">${this.esc(it.key)}</span>` : ""}</div>`).join("");
+    document.body.appendChild(m);
+    const r = where instanceof Element ? where.getBoundingClientRect() : { left: where.x, right: where.x, bottom: where.y };
+    let x = r.right - m.offsetWidth, y = r.bottom + 4;
+    if (x < 4) x = r.left;
+    if (y + m.offsetHeight > window.innerHeight - 4) y = Math.max(4, r.bottom - m.offsetHeight - 4 - (where instanceof Element ? r.height : 0));
+    m.style.left = x + "px"; m.style.top = y + "px";
+    m.addEventListener("click", (e) => { const mi = e.target.closest(".mi"); if (mi) { this.closeMenu(); onPick(mi.dataset.id); } });
+    const away = (e) => { if (!m.contains(e.target)) this.closeMenu(); };
+    const key = (e) => { if (e.key === "Escape") { this.closeMenu(); e.stopPropagation(); } };
+    setTimeout(() => { document.addEventListener("mousedown", away, true); document.addEventListener("keydown", key, true); }, 0);
+    m._off = () => { document.removeEventListener("mousedown", away, true); document.removeEventListener("keydown", key, true); };
+    this._menu = m;
+  },
+  closeMenu() { if (this._menu) { this._menu._off(); this._menu.remove(); this._menu = null; } },
 };

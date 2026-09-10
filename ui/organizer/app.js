@@ -10,7 +10,7 @@
     ORG_delChMove: "Move them to another channel", ORG_delChDelete: "Delete the clips too", ORG_delChEmpty: "Keep the channel, delete the clips",
     ORG_renameTitle: "Rename channel %1", ORG_renameBtn: "Rename", ORG_newChTitle: "New channel", ORG_createBtn: "Create",
     ORG_footHint: "Double-click to use · F2 renames · Drag clips here to move", ORG_channelStatus: "Channel", ORG_clipOf: "clip %1 of %2",
-    HST_viewimage: "[IMAGE]", SET_cancel: "Cancel", _rename: "Rename", _new: "New",
+    HST_viewimage: "[IMAGE]", HST_actions: "Actions", SET_cancel: "Cancel", _rename: "Rename", _new: "New",
   };
   const state = { channels: [], active: 0, channel: 0, chSel: 0, rows: [], sel: new Set(), anchor: null, focusN: null, clip: null, q: "", pane: "clips", labels: {} };
   const rowsEl = el("rows"), tableEl = el("table"), chEl = el("channels"), qEl = el("q"), sheet = el("sheet");
@@ -106,8 +106,11 @@
       return;
     }
     const isImg = +c.type === 1;
+    const acts = isImg ? [] : (c.actions || []);
     ph.className = "";
-    ph.innerHTML = `${cj.kindBadge(c.kind, state.labels)}<span class="badge">${isImg ? "IMAGE" : "TEXT"}</span>${+c.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""} <span class="dim" style="font-size: 12px;">${esc(T.ORG_clipOf.replace("%1", c.n).replace("%2", state.rows.length))}</span>`;
+    ph.innerHTML = `${cj.kindBadge(c.kind, state.labels)}<span class="badge">${isImg ? "IMAGE" : "TEXT"}</span>${+c.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""} <span class="dim" style="font-size: 12px;">${esc(T.ORG_clipOf.replace("%1", c.n).replace("%2", state.rows.length))}</span>` +
+      (acts.length ? `<button class="btn" id="actions" style="height: 24px; margin-left: 8px;">${esc(T.HST_actions)} ▾</button>` : "");
+    if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[c.kind] || c.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { channel: state.channel, n: c.n, action: id })));
     if (isImg) { body.className = "body image"; body.innerHTML = `<img src="${esc(c.url)}" alt="">`; }
     else { body.className = "body mono"; body.textContent = c.data; }
     props.hidden = false;
@@ -263,6 +266,18 @@
   chEl.addEventListener("dblclick", (e) => { const ch = e.target.closest(".ch"); if (ch) bridge.send("useChannel", +ch.dataset.n); });
   rowsEl.addEventListener("mousedown", (e) => { const tr = e.target.closest(".tr"); if (tr && e.button === 0) selectClip(+tr.dataset.n, { add: e.ctrlKey, range: e.shiftKey }); });
   rowsEl.addEventListener("dblclick", (e) => { if (e.target.closest(".tr")) act("paste"); });
+  rowsEl.addEventListener("contextmenu", (e) => {
+    const tr = e.target.closest(".tr");
+    if (!tr) return;
+    e.preventDefault();
+    const n = +tr.dataset.n;
+    if (!state.sel.has(n)) selectClip(n);
+    const c = state.clip && state.clip.n === n ? state.clip : null;
+    const acts = c ? (c.actions || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
+    const items = [...(acts.length ? [{ head: state.labels[c.kind] || c.kind }, ...acts, { sep: true }] : []),
+      { id: "paste", label: T.ORG_insta, key: "Space" }, { id: "edit", label: T.ORG_editBtn, key: "F2" }, { id: "delete", label: T.ORG_delete, key: "Del" }];
+    cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { channel: state.channel, n, action: pick.slice(4) }) : act(pick));
+  });
   document.querySelector(".actions").addEventListener("click", (e) => { const b = e.target.closest("[data-act]"); if (b) act(b.dataset.act); });
   el("up").addEventListener("click", () => moveClip(-1));
   el("down").addEventListener("click", () => moveClip(1));

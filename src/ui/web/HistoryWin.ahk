@@ -3,7 +3,7 @@
 ;   HistoryWin.Open()   HistoryWin.Close()
 ;
 ; Page -> host: list {q, partial, sort, asc, kind}, get {id}, copy {id}, instaPaste {ids}, hold {id}, edit {id},
-;               export {id}, delete {ids}, clear, setPartial {partial}, close
+;               export {id}, delete {ids}, clear, setPartial {partial}, action {id, action}, close
 ; Host -> page: i18n, list {rows, matched, total, bytes, partial}, kinds {kinds, labels}, preview {record},
 ;               toast {text}, refreshed
 
@@ -84,8 +84,16 @@ class HistoryWin {
 		if (rec["type"] == 1) {
 			rec["url"] := "https://cache.clipjump/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
 			rec["data"] := ""
-		}
+		} else
+			rec["actions"] := ClipType.Actions(rec["kind"])
 		HistoryWin.host.Post("preview", rec)
+	}
+
+	static Action(d) {
+		rec := historyGet(d["id"])
+		if !rec || (rec["type"] = 1)
+			return
+		ClipType.Run(d["action"], rec["data"])
 	}
 
 	static Copy(id) {
@@ -186,7 +194,7 @@ class HistoryWin {
 
 	static I18n() {
 		global TXT
-		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes"]
+		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes", "HST_actions"]
 		m := Map()
 		for k in keys
 			m[k] := TXT.%k%
@@ -208,6 +216,7 @@ HistoryWin_OnMessage(cmd, data, host) {
 		case "edit": HistoryWin.Edit(data)
 		case "export": HistoryWin.Export(data)
 		case "delete": HistoryWin.Delete(data)
+		case "action": HistoryWin.Action(data)
 		case "clear": HistoryWin.Clear()
 		case "setPartial": history_partial := data ? 1 : 0
 		case "close": HistoryWin.Close()

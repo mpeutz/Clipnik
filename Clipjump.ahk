@@ -1560,12 +1560,16 @@ historyBackfillTick() {
 		SetTimer(historyBackfillTick, -250)
 }
 
-; copy toast: message, channel pill, and for a recognized kind its label (and swatch for colors)
+; copy toast: message, channel pill, and for a recognized kind its label (and swatch for colors, and an action chip)
 showCopyToast(text) {
 	global LASTKIND, LASTCLIP
 	extra := ""
-	if (LASTKIND != "" && LASTKIND != "text")
-		extra := {label: ClipType.Label(LASTKIND), swatch: LASTKIND = "color" ? ClipType.ColorRgb(LASTCLIP) : "", action: ""}
+	if (LASTKIND != "" && LASTKIND != "text") {
+		act := ClipType.Primary(LASTKIND, LASTCLIP)
+		clip := LASTCLIP
+		extra := {label: ClipType.Label(LASTKIND), swatch: LASTKIND = "color" ? ClipType.ColorRgb(LASTCLIP) : ""
+			, action: act != "" ? {label: act.short, fn: ClipType_RunLater.Bind(act.id, clip)} : ""}
+	}
 	Toast.Show(text, extra != "" ? 2500 : 900, "info", "copy", extra)
 }
 

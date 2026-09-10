@@ -95,5 +95,17 @@ check(A_TickCount - t0 < 30, "60 KB code classified in " (A_TickCount - t0) " ms
 check(ClipType.Label("url") = "URL", "Label falls back to the upper-cased kind without TXT")
 check(ClipType.IsKind("json") && !ClipType.IsKind("JSONX"), "IsKind")
 
+check(ClipType.StripTracking("https://x.com/a?utm_source=n&id=5&fbclid=z#top") = "https://x.com/a?id=5#top", "StripTracking keeps other params and the fragment")
+check(ClipType.StripTracking("https://x.com/a?utm_source=n") = "https://x.com/a", "StripTracking drops an empty query")
+check(ClipType.FolderOf("C:\dir\sub\file.txt") = "C:\dir\sub", "FolderOf a file")
+check(ClipType.FolderOf("C:\dir\sub") = "C:\dir", "FolderOf a folder path is its parent")
+check(ClipType.ColorHex("rgb(29, 188, 85)") = "#1DBC55", "ColorHex from rgb()")
+check(ClipType.ColorRgbText("#1DBC55") = "rgb(29, 188, 85)", "ColorRgbText from hex")
+check(ClipType.FormatNumber("1299.5") = "1,299.5", "FormatNumber adds separators")
+check(ClipType.FormatNumber("-4500") = "-4,500", "FormatNumber negative")
+check(ClipType.MarkdownLink("https://github.com/aviaryan/Clipjump") = "[github.com](https://github.com/aviaryan/Clipjump)", "MarkdownLink uses the host")
+check(ClipType.Actions("url").Length = 2 && ClipType.Primary("url").id = "open", "url actions")
+check(ClipType.Actions("text").Length = 0 && ClipType.Primary("text") = "", "text has no actions")
+
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

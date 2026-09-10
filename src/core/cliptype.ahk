@@ -179,6 +179,108 @@ class ClipType {
 		}
 		return ending >= 2 || keyword >= 1 || (indented >= 1 && InStr(t, "{") && InStr(t, "}"))
 	}
+
+	; ---------- actions ----------
+	; per kind: ordered {id, label (TXT key), short (TXT key for the toast chip)}; the first entry is the primary one
+	static ActionTable := Map(
+		"url", [{id: "open", label: "ACT_open", short: "ACT_openShort"}, {id: "stripTracking", label: "ACT_stripTracking", short: ""}],
+		"email", [{id: "compose", label: "ACT_compose", short: "ACT_compose"}],
+		"path", [{id: "reveal", label: "ACT_reveal", short: "ACT_revealShort"}, {id: "openPath", label: "ACT_openPath", short: ""}, {id: "copyFolder", label: "ACT_copyFolder", short: ""}],
+		"color", [{id: "copyHex", label: "ACT_copyHex", short: "ACT_copyHexShort"}, {id: "copyRgb", label: "ACT_copyRgb", short: "ACT_copyRgbShort"}],
+		"json", [{id: "pretty", label: "ACT_pretty", short: "ACT_prettyShort"}, {id: "minify", label: "ACT_minify", short: ""}],
+		"number", [{id: "formatNumber", label: "ACT_formatNumber", short: "ACT_formatNumberShort"}])
+
+	static Actions(kind) {
+		global TXT
+		out := []
+		if !ClipType.ActionTable.Has(kind)
+			return out
+		for a in ClipType.ActionTable[kind]
+			out.Push({id: a.id, label: ClipType_T(a.label), short: a.short != "" ? ClipType_T(a.short) : ClipType_T(a.label)})
+		return out
+	}
+
+	; primary action for a kind and clip text; "" when the kind has none
+	static Primary(kind, text := "") {
+		acts := ClipType.Actions(kind)
+		if !acts.Length
+			return ""
+		if (kind = "color" && InStr(Trim(text), "#") = 1)
+			return acts[2]   ; already hex: offer rgb
+		return acts[1]
+	}
+
+	; runs an action on the clip text; "copy" style actions place the result on the clipboard as a normal copy
+	static Run(id, text) {
+		switch id {
+			case "open": BrowserRun(Trim(text))
+			case "stripTracking": ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
+			case "compose": Run("mailto:" Trim(text))
+			case "reveal": Run('explorer.exe /select,"' Trim(text) '"')
+			case "openPath": Run(Trim(text))
+			case "copyFolder": ClipType.ToClipboard(ClipType.FolderOf(Trim(text)))
+			case "copyHex": ClipType.ToClipboard(ClipType.ColorHex(text))
+			case "copyRgb": ClipType.ToClipboard(ClipType.ColorRgbText(text))
+			case "pretty": ClipType.ToClipboard(Transforms.PrettyJson(text))
+			case "minify": ClipType.ToClipboard(Transforms.MinifyJson(text))
+			case "formatNumber": ClipType.ToClipboard(ClipType.FormatNumber(text))
+		}
+	}
+
+	static ToClipboard(text) {
+		if (text = "")
+			return
+		try A_Clipboard := text
+	}
+
+	static StripTracking(url) {
+		if !RegExMatch(url, "^([^?#]*)\?([^#]*)(#.*)?$", &m)
+			return url
+		keep := []
+		loop parse m[2], "&" {
+			if (A_LoopField = "")
+				continue
+			key := StrSplit(A_LoopField, "=")[1]
+			if RegExMatch(key, "i)^(?:utm_\w+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref|ref_src|yclid|_hsenc|_hsmi)$")
+				continue
+			keep.Push(A_LoopField)
+		}
+		q := ""
+		for i, p in keep
+			q .= (i > 1 ? "&" : "") p
+		return m[1] (q != "" ? "?" q : "") (m.Count >= 3 ? m[3] : "")
+	}
+
+	static FolderOf(path) {
+		p := RTrim(path, "\")
+		i := InStr(p, "\", , -1)
+		return i ? SubStr(p, 1, i - 1) : p
+	}
+
+	static ColorHex(text) {
+		rgb := ClipType.ColorRgb(text)
+		return rgb < 0 ? "" : Format("#{:06X}", rgb)
+	}
+
+	static ColorRgbText(text) {
+		rgb := ClipType.ColorRgb(text)
+		return rgb < 0 ? "" : Format("rgb({}, {}, {})", (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF)
+	}
+
+	static FormatNumber(text) {
+		t := RegExReplace(Trim(text), "[,\s]")
+		if !RegExMatch(t, "^([-+]?)([$€£¥]?)(\d+)(\.\d+)?(%?)$", &m)
+			return Trim(text)
+		int := m[3], out := ""
+		while (StrLen(int) > 3)
+			out := "," SubStr(int, -3) out, int := SubStr(int, 1, -3)
+		return m[1] m[2] int out m[4] m[5]
+	}
+
+	static MarkdownLink(url) {
+		host := RegExMatch(url, "i)^(?:https?|ftp)://([^/?#]+)", &m) ? m[1] : url
+		return "[" host "](" url ")"
+	}
 }
 
 ; Map kind -> label, for the pages
@@ -187,4 +289,25 @@ ClipType_Labels() {
 	for k in ClipType.Kinds
 		labels[k] := ClipType.Label(k)
 	return labels
+}
+
+ClipType_T(key) {
+	global TXT
+	try if (TXT[key] != "")
+		return TXT[key]
+	return key
+}
+
+; runs an action outside the click handler's thread so a clipboard write is a normal copy
+ClipType_RunLater(id, text, *) {
+	SetTimer(ClipType_RunNow.Bind(id, text), -10)
+}
+ClipType_RunNow(id, text) {
+	ClipType.Run(id, text)
+}
+
+; removed in the transforms task
+class Transforms {
+	static PrettyJson(t) => t
+	static MinifyJson(t) => t
 }

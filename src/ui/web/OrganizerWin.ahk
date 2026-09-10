@@ -6,7 +6,8 @@
 ; Page -> host: channels, clips {channel}, getClip {channel, n}, useChannel n, setProps {channel, n, tags, fixed},
 ;               move {channel, n, delta}, transfer {channel, ns, to, copy}, deleteClips {channel, ns},
 ;               newClip channel, newChannel name, renameChannel {n, name}, deleteChannel {n, mode, to},
-;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n}, close
+;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n},
+;               action {channel, n, action}, close
 ; Host -> page: i18n, channels {channels, active}, clips {channel, rows}, clip {...}, toast, refresh
 
 class OrganizerWin {
@@ -102,7 +103,18 @@ class OrganizerWin {
 		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real))
 		if isImg
 			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
+		else
+			m["actions"] := ClipType.Actions(m["kind"])
 		OrganizerWin.host.Post("clip", m)
+	}
+
+	static Action(d) {
+		global CDS
+		ch := Integer(d["channel"]), n := Integer(d["n"])
+		real := API.getChStrength(ch) - n + 1
+		if (real < 1)
+			return
+		ClipType.Run(d["action"], CDS[ch][real])
 	}
 
 	static SetProps(d) {
@@ -258,7 +270,7 @@ class OrganizerWin {
 
 	static I18n() {
 		global TXT
-		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_number", "KIND_phone", "KIND_code", "KIND_text"]
+		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_number", "KIND_phone", "KIND_code", "KIND_text"]
 		m := Map()
 		for k in keys
 			m[k] := StrReplace(TXT.%k%, "&")
@@ -291,6 +303,7 @@ OrganizerWin_OnMessage(cmd, data, host) {
 		case "paste": OrganizerWin.Paste(data)
 		case "pasteMode": OrganizerWin.PasteMode(data)
 		case "edit": OrganizerWin.Edit(data)
+		case "action": OrganizerWin.Action(data)
 		case "close": OrganizerWin.Close()
 	}
 }
