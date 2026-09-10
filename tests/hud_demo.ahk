@@ -7,11 +7,14 @@
 #Include ..\src\ui\native\Theme.ahk
 #Include ..\src\ui\native\Toast.ahk
 #Include ..\src\ui\native\Hud.ahk
+#Include ..\src\core\cliptype.ahk
 #Include ..\lib\translations.ahk
 SetWorkingDir A_ScriptDir "\.."
 FileEncoding "UTF-8"
 global STORE := CJMap(), CJGUI := Map(), ACTIONS := CJMap()
 global ini_pstMode_X := "", ini_pstMode_Y := "", ini_LANG := "english"
+global CDS := Map()
+AddClipPref(*) => 0
 global CN := CJMap("Name", "Default", "NG", 0), realclipno := 3, CURSAVE := 40, curPformat := "", fixStatus := "", halfClip := ""
 global temp_clipboard := "", THUMBS_dir := "cache/thumbs", TEMPSAVE := 1, realActive := 1, SPM := CJMap(), ctrlRef := ""
 global TXT := Translations_load("languages/english.txt")
@@ -54,6 +57,14 @@ for themeMode in ["dark", "light"] {
 	Hud.Render(s), snap(themeMode "-normal")
 	s.fixed := 1, s.pformat := "Trim Formatting", s.text := "short clip"
 	Hud.Render(s), snap(themeMode "-badges")
+	k := Hud.NewState()
+	k.channel := "Default", k.index := 3, k.total := 40, k.format := "TEXT", k.kind := "url", k.pformat := "Trim Formatting"
+	k.text := "https://github.com/aviaryan/Clipjump/issues/143?utm_source=newsletter"
+	Hud.Render(k), Sleep(250), snap(themeMode "-kind-url")
+	k := Hud.NewState()
+	k.channel := "Default", k.index := 3, k.total := 40, k.format := "TEXT", k.kind := "color", k.swatch := 0x1DBC55
+	k.text := "#1DBC55"
+	Hud.Render(k), Sleep(250), snap(themeMode "-kind-color")
 	s.mode := "delete", Hud.Render(s), snap(themeMode "-modering")
 	s.mode := "normal", s.searchActive := 1, s.searchTerm := "figma", s.matchIndex := 2, s.matchCount := 7, s.text := long
 	Hud.Render(s), snap(themeMode "-search")

@@ -144,17 +144,17 @@ class Theme {
 
 	; A pill: a Button drawn as a rounded capsule with a fixed fill and text color (no hover or focus states).
 	; fill / text are palette names ("accent", "surfaceAlt", ...). Not a tab stop, so it never takes focus.
-	static AddPill(g, opts, text, fill := "surfaceAlt", color := "text") {
+	static AddPill(g, opts, text, fill := "surfaceAlt", color := "text", swatch := "") {
 		ctl := g.Add("Button", opts " -TabStop", text)
 		try DllCall("uxtheme\SetWindowTheme", "Ptr", ctl.Hwnd, "Str", Theme.IsDark ? "DarkMode_Explorer" : "Explorer", "Ptr", 0)
-		Theme.RegisterDraw(ctl, "pill", {fill: fill, text: color})
+		Theme.RegisterDraw(ctl, "pill", {fill: fill, text: color, swatch: swatch})
 		return ctl
 	}
 
-	static SetPill(ctl, fill, color) {
+	static SetPill(ctl, fill, color, swatch := "") {
 		if Theme.drawn.Has(ctl.Hwnd) {
 			d := Theme.drawn[ctl.Hwnd]
-			d.fill := fill, d.text := color
+			d.fill := fill, d.text := color, d.swatch := swatch
 			ctl.Redraw()
 		}
 	}
@@ -164,7 +164,14 @@ class Theme {
 		h := NumGet(rc, 12, "Int") - NumGet(rc, 4, "Int")
 		fill := p.Has(d.fill) ? p[d.fill] : p["surfaceAlt"], color := p.Has(d.text) ? p[d.text] : p["text"]
 		Theme.PaintRoundRect(hdc, rc, fill, fill, Theme.RgbFromGui(d.ctl.Gui), h // 2)
-		Theme.PaintText(hdc, d.ctl, rc, color, 0x1 | 0x4 | 0x20 | 0x100000, 0)
+		trc := rc
+		if (d.HasProp("swatch") && d.swatch != "") {
+			s := Round(10 * Theme.Scale), l := NumGet(rc, 0, "Int") + Round(8 * Theme.Scale), t := NumGet(rc, 4, "Int") + (h - s) // 2
+			box := Buffer(16, 0), NumPut("Int", l, "Int", t, "Int", l + s, "Int", t + s, box)
+			Theme.PaintRoundRect(hdc, box, d.swatch, Theme.Mix(d.swatch, 0xFFFFFF, 0.3), fill, Round(3 * Theme.Scale))
+			trc := Buffer(16, 0), NumPut("Int", l + s, "Int", NumGet(rc, 4, "Int"), "Int", NumGet(rc, 8, "Int"), "Int", NumGet(rc, 12, "Int"), trc)
+		}
+		Theme.PaintText(hdc, d.ctl, trc, color, 0x1 | 0x4 | 0x20 | 0x100000, 0)
 	}
 
 	; A borderless popup with a DWM drop shadow, rounded corners and uniform translucency (toasts, the paste card,

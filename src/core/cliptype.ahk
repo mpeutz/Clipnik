@@ -46,6 +46,36 @@ class ClipType {
 		AddClipPref(ch, clip, "Kind", kind)
 	}
 
+	; RGB integer for a color clip (#hex, rgb(), hsl()); -1 when it cannot be read
+	static ColorRgb(text) {
+		t := Trim(text)
+		if RegExMatch(t, "i)^#([0-9a-f]{3})$", &m)
+			return Integer("0x" SubStr(m[1], 1, 1) SubStr(m[1], 1, 1) SubStr(m[1], 2, 1) SubStr(m[1], 2, 1) SubStr(m[1], 3, 1) SubStr(m[1], 3, 1))
+		if RegExMatch(t, "i)^#([0-9a-f]{6})(?:[0-9a-f]{2})?$", &m)
+			return Integer("0x" m[1])
+		if RegExMatch(t, "i)^rgba?\(\s*(\d+)\s*[, ]\s*(\d+)\s*[, ]\s*(\d+)", &m)
+			return (Min(255, m[1]) << 16) | (Min(255, m[2]) << 8) | Min(255, m[3])
+		if RegExMatch(t, "i)^hsla?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)%\s*[, ]\s*([\d.]+)%", &m) {
+			hh := Mod(m[1], 360) / 60, s := m[2] / 100, l := m[3] / 100
+			c := (1 - Abs(2 * l - 1)) * s, x := c * (1 - Abs(Mod(hh, 2) - 1)), mm := l - c / 2
+			r := 0, g := 0, b := 0
+			if (hh < 1)
+				r := c, g := x
+			else if (hh < 2)
+				r := x, g := c
+			else if (hh < 3)
+				g := c, b := x
+			else if (hh < 4)
+				g := x, b := c
+			else if (hh < 5)
+				r := x, b := c
+			else
+				r := c, b := x
+			return (Round((r + mm) * 255) << 16) | (Round((g + mm) * 255) << 8) | Round((b + mm) * 255)
+		}
+		return -1
+	}
+
 	static Detect(text) {
 		if (StrLen(text) * 2 > ClipType.MaxBytes)
 			return "text"

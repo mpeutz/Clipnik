@@ -152,7 +152,7 @@ class Hud {
 		s := CJMap()
 		s.mode := "normal", s.channel := "", s.index := "", s.total := "", s.format := "", s.pformat := ""
 		s.tags := "", s.fixed := 0, s.text := "", s.imagePath := "", s.searchTerm := "", s.matchIndex := "", s.matchCount := ""
-		s.message := "", s.keys := "", s.items := "", s.mono := "", s.searchActive := 0, s.title := ""
+		s.message := "", s.keys := "", s.items := "", s.mono := "", s.searchActive := 0, s.title := "", s.kind := "", s.swatch := ""
 		return s
 	}
 
@@ -170,6 +170,11 @@ class Hud {
 			f := GetClipboardFormat()
 			s.format := InStr(f, TXT.TIP_file_folder) ? "FILE" : "TEXT"
 			s.text := halfClip
+			if (s.format = "TEXT") {
+				s.kind := ClipType.Of(CN.NG, realActive)
+				if (s.kind = "color")
+					s.swatch := ClipType.ColorRgb(temp_clipboard)
+			}
 		}
 		mode := "normal"
 		if (ctrlRef = "cancel" || ctrlRef = "delete" || ctrlRef = "cut" || ctrlRef = "copy" || ctrlRef = "deleteAll")
@@ -245,8 +250,12 @@ class Hud {
 				Hud.Place("countN", "" state.index, x, y, , rowH), x += c["countN"].w
 				Hud.Place("countT", " / " state.total, x, y, , rowH), x += c["countT"].w + gap
 			}
-			if (state.format != "")
-				Hud.Pill("format", state.format, x, y, rowH), x += c["format"].w + gap
+			if (state.format != "") {
+				label := (state.kind != "" && state.kind != "text") ? ClipType.Label(state.kind) : state.format
+				sw := (state.kind = "color" && state.swatch != "" && state.swatch != -1) ? state.swatch : ""
+				Theme.SetPill(c["format"], "surfaceAlt", "text", sw)
+				Hud.Pill("format", label, x, y, rowH, sw != "" ? Hud.TextWidth(c["format"], label) + Round(34 * sc) : ""), x += c["format"].w + gap
+			}
 			if (state.pformat != "")
 				Hud.Pill("pformat", state.pformat, x, y, rowH), x += c["pformat"].w + gap
 			if (state.fixed && !info) {
