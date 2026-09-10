@@ -4,7 +4,7 @@
 ;
 ; Page -> host: list {q, partial, sort, asc, kind}, get {id}, copy {id}, instaPaste {ids}, hold {id}, edit {id},
 ;               export {id}, delete {ids}, clear, setPartial {partial}, action {id, action}, close
-; Host -> page: i18n, list {rows, matched, total, bytes, partial}, kinds {kinds, labels}, preview {record},
+; Host -> page: i18n, list {rows, matched, total, bytes, partial}, kinds {kinds, labels, actions}, preview {record},
 ;               toast {text}, refreshed
 
 class HistoryWin {
@@ -72,7 +72,7 @@ class HistoryWin {
 	}
 
 	static SendKinds() {
-		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels()))
+		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels(), "actions", ClipType_ActionTable()))
 	}
 
 	static SendPreview(id) {

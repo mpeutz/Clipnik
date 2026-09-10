@@ -8,7 +8,8 @@
 ;               newClip channel, newChannel name, renameChannel {n, name}, deleteChannel {n, mode, to},
 ;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n},
 ;               action {channel, n, action}, close
-; Host -> page: i18n, channels {channels, active}, clips {channel, rows}, clip {...}, toast, refresh
+; Host -> page: i18n, actions {kind -> [{id, label, short}]}, channels {channels, active}, clips {channel, rows},
+;               clip {...}, toast, refresh
 
 class OrganizerWin {
 	static host := ""
@@ -283,6 +284,7 @@ OrganizerWin_OnMessage(cmd, data, host) {
 	switch cmd {
 		case "ready":
 			OrganizerWin.I18n()
+			OrganizerWin.host.Post("actions", ClipType_ActionTable())
 			OrganizerWin.SendChannels()
 			OrganizerWin.SendClips(CN.NG)
 		case "channels": OrganizerWin.SendChannels()

@@ -215,9 +215,9 @@ class ClipType {
 		switch id {
 			case "open": BrowserRun(Trim(text))
 			case "stripTracking": ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
-			case "compose": Run("mailto:" Trim(text))
-			case "reveal": Run('explorer.exe /select,"' Trim(text) '"')
-			case "openPath": Run(Trim(text))
+			case "compose": try Run("mailto:" Trim(text))
+			case "reveal": try Run('explorer.exe /select,"' Trim(text) '"')
+			case "openPath": try Run('"' Trim(text) '"')
 			case "copyFolder": ClipType.ToClipboard(ClipType.FolderOf(Trim(text)))
 			case "copyHex": ClipType.ToClipboard(ClipType.ColorHex(text))
 			case "copyRgb": ClipType.ToClipboard(ClipType.ColorRgbText(text))
@@ -289,6 +289,15 @@ ClipType_Labels() {
 	for k in ClipType.Kinds
 		labels[k] := ClipType.Label(k)
 	return labels
+}
+
+; Map kind -> Array of {id, label, short}, for every kind that has actions; lets a page build a row's context
+; menu synchronously from the row's own "kind" instead of waiting on an async preview/clip fetch
+ClipType_ActionTable() {
+	out := Map()
+	for kind, _ in ClipType.ActionTable
+		out[kind] := ClipType.Actions(kind)
+	return out
 }
 
 ClipType_T(key) {

@@ -12,7 +12,7 @@
     ORG_footHint: "Double-click to use · F2 renames · Drag clips here to move", ORG_channelStatus: "Channel", ORG_clipOf: "clip %1 of %2",
     HST_viewimage: "[IMAGE]", HST_actions: "Actions", SET_cancel: "Cancel", _rename: "Rename", _new: "New",
   };
-  const state = { channels: [], active: 0, channel: 0, chSel: 0, rows: [], sel: new Set(), anchor: null, focusN: null, clip: null, q: "", pane: "clips", labels: {} };
+  const state = { channels: [], active: 0, channel: 0, chSel: 0, rows: [], sel: new Set(), anchor: null, focusN: null, clip: null, q: "", pane: "clips", labels: {}, actionsByKind: {} };
   const rowsEl = el("rows"), tableEl = el("table"), chEl = el("channels"), qEl = el("q"), sheet = el("sheet");
   const chName = (n) => { const c = state.channels.find((x) => x.n === n); return c ? c.name : String(n); };
   const chLabel = (n) => `${n} - ${chName(n)}`;
@@ -236,6 +236,7 @@
     state.labels = Object.fromEntries(Object.keys(T).filter((k) => k.startsWith("KIND_")).map((k) => [k.slice(5), T[k].toUpperCase()]));
     applyI18n();
   });
+  bridge.on("actions", (d) => { state.actionsByKind = d || {}; });
   bridge.on("channels", (d) => {
     state.channels = (d.channels || []).map((c) => ({ ...c, n: +c.n, count: +c.count }));
     state.active = +d.active;
@@ -272,9 +273,9 @@
     e.preventDefault();
     const n = +tr.dataset.n;
     if (!state.sel.has(n)) selectClip(n);
-    const c = state.clip && state.clip.n === n ? state.clip : null;
-    const acts = c ? (c.actions || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
-    const items = [...(acts.length ? [{ head: state.labels[c.kind] || c.kind }, ...acts, { sep: true }] : []),
+    const row = state.rows.find((r) => r.n === n);
+    const acts = row ? (state.actionsByKind[row.kind] || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
+    const items = [...(acts.length ? [{ head: state.labels[row.kind] || row.kind }, ...acts, { sep: true }] : []),
       { id: "paste", label: T.ORG_insta, key: "Space" }, { id: "edit", label: T.ORG_editBtn, key: "F2" }, { id: "delete", label: T.ORG_delete, key: "Del" }];
     cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { channel: state.channel, n, action: pick.slice(4) }) : act(pick));
   });

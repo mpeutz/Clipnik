@@ -9,7 +9,7 @@
     HST_viewimage: "[IMAGE]", HST_today: "Today", HST_yesterday: "Yesterday", HST_type: "Type", HST_allTypes: "All types",
     HST_actions: "Actions",
   };
-  const state = { q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {} };
+  const state = { q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {}, actionsByKind: {} };
   const rowsEl = el("rows"), tableEl = el("table"), qEl = el("q");
 
   function applyI18n() {
@@ -151,7 +151,7 @@
   bridge.on("toast", (t) => cj.toast(t));
   bridge.on("refreshed", requestList);
   bridge.on("kinds", (d) => {
-    state.kinds = d.kinds || [], state.labels = d.labels || {};
+    state.kinds = d.kinds || [], state.labels = d.labels || {}, state.actionsByKind = d.actions || {};
     const sel = el("kind");
     const cur = state.kind;
     sel.innerHTML = `<option value="">${esc(T.HST_allTypes)}</option>` + state.kinds.map((k) => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(state.labels[k] || k)}</option>`).join("");
@@ -190,9 +190,9 @@
     e.preventDefault();
     const id = +tr.dataset.id;
     if (!state.sel.has(id)) select(id);
-    const rec = state.preview && state.preview.id === id ? state.preview : null;
-    const acts = rec ? (rec.actions || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
-    const items = [...(acts.length ? [{ head: state.labels[rec.kind] || rec.kind }, ...acts, { sep: true }] : []),
+    const row = state.rows.find((r) => r.id === id);
+    const acts = row ? (state.actionsByKind[row.kind] || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
+    const items = [...(acts.length ? [{ head: state.labels[row.kind] || row.kind }, ...acts, { sep: true }] : []),
       { id: "copy", label: T.HST_copy, key: "Ctrl+C" }, { id: "instaPaste", label: T.HST_insta, key: "Space" }, { id: "edit", label: T.HST_edit, key: "Ctrl+H" }, { id: "delete", label: T.HST_delete, key: "Del" }];
     cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { id, action: pick.slice(4) }) : act(pick));
   });
