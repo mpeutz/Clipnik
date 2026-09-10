@@ -1476,7 +1476,7 @@ class Transforms {
 
 Transform_Upper(t) => StrUpper(t)
 Transform_Lower(t) => StrLower(t)
-Transform_Title(t) => RegExReplace(t, "(?<=^|\s)(\p{Ll})", "$u1")
+Transform_Title(t) => RegExReplace(t, "(?<=^|\s)([a-z])", "$U1")
 Transform_OneLine(t) => Trim(RegExReplace(t, "\s+", " "))
 Transform_Slugify(t) {
 	s := StrLower(Trim(t))
