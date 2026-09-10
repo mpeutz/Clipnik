@@ -36,6 +36,8 @@ readLog() {
 	return FileExist(logFile) ? FileRead(logFile) : ""
 }
 check("list sent to the page", InStr(readLog(), '"cmd":"list"'))
+check("kinds sent to the page", InStr(readLog(), '"cmd":"kinds"'))
+check("rows carry a kind", InStr(readLog(), '"kind":"text"') || InStr(readLog(), '"kind":"'))
 Send("{Down}")
 Sleep 300
 Send("{Down}")

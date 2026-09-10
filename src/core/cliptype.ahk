@@ -180,3 +180,11 @@ class ClipType {
 		return ending >= 2 || keyword >= 1 || (indented >= 1 && InStr(t, "{") && InStr(t, "}"))
 	}
 }
+
+; Map kind -> label, for the pages
+ClipType_Labels() {
+	labels := Map()
+	for k in ClipType.Kinds
+		labels[k] := ClipType.Label(k)
+	return labels
+}

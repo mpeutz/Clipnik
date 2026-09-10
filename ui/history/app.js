@@ -6,9 +6,9 @@
     HST_clip: "Clip", HST_date: "Date", HST_size: "Size", HST_copy: "Copy", HST_insta: "Insta-Paste", HST_hold: "Hold", HST_edit: "Edit",
     HST_export: "Export", HST_delete: "Delete", HST_empty: "Nothing copied yet", HST_noMatch: "No clips match", HST_items: "items",
     HST_match: "of %2 items match", HST_onDisk: "on disk", HST_sortedBy: "sorted by", HST_selectHint: "Select a clip to preview it",
-    HST_viewimage: "[IMAGE]", HST_today: "Today", HST_yesterday: "Yesterday",
+    HST_viewimage: "[IMAGE]", HST_today: "Today", HST_yesterday: "Yesterday", HST_type: "Type", HST_allTypes: "All types",
   };
-  const state = { q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null };
+  const state = { q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {} };
   const rowsEl = el("rows"), tableEl = el("table"), qEl = el("q");
 
   function applyI18n() {
@@ -36,7 +36,7 @@
   const searchWords = () => { const q = state.q.trim(); return state.partial ? q.split(/\s+/).filter(Boolean) : (q ? [q] : []); };
 
   function requestList() {
-    bridge.send("list", { q: state.q, partial: state.partial ? 1 : 0, sort: state.sort, asc: state.asc ? 1 : 0 });
+    bridge.send("list", { q: state.q, partial: state.partial ? 1 : 0, sort: state.sort, asc: state.asc ? 1 : 0, kind: state.kind });
   }
 
   function render() {
@@ -51,7 +51,7 @@
       const text = isImg ? T.HST_viewimage : oneLine(r.clip, 220);
       const html = hlWords(text, words);
       return `<div class="tr${state.sel.has(r.id) ? " sel" : ""}" data-id="${r.id}" tabindex="-1" draggable="false">` +
-        `<span class="mono${isImg ? " dim" : ""}">${html}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
+        `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${isImg ? "" : cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
     }).join("");
     document.querySelectorAll("#hdr span").forEach((s) => {
       s.classList.toggle("sorted", s.dataset.sort === state.sort);
@@ -112,7 +112,8 @@
       return;
     }
     const isImg = +rec.type === 1;
-    ph.innerHTML = `<span class="badge">${isImg ? "IMAGE" : "TEXT"}</span><span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>`;
+    const kindBadge = isImg ? '<span class="badge">IMAGE</span>' : (cj.kindBadge(rec.kind, state.labels) || '<span class="badge">TEXT</span>');
+    ph.innerHTML = `${kindBadge}<span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>`;
     if (isImg) {
       body.className = "body image";
       body.innerHTML = `<img src="${esc(rec.url)}" alt="">`;
@@ -145,9 +146,18 @@
   bridge.on("preview", (rec) => { rec.id = +rec.id; if (state.sel.size === 1 && state.sel.has(rec.id)) showPreview(rec); });
   bridge.on("toast", (t) => cj.toast(t));
   bridge.on("refreshed", requestList);
+  bridge.on("kinds", (d) => {
+    state.kinds = d.kinds || [], state.labels = d.labels || {};
+    const sel = el("kind");
+    const cur = state.kind;
+    sel.innerHTML = `<option value="">${esc(T.HST_allTypes)}</option>` + state.kinds.map((k) => `<option value="${k}"${k === cur ? " selected" : ""}>${esc(state.labels[k] || k)}</option>`).join("");
+    if (cur && !state.kinds.includes(cur)) { state.kind = ""; requestList(); }
+  });
+  el("kind").addEventListener("change", () => { state.kind = el("kind").value; requestList(); });
   // a fresh open starts at the newest clip with no search or selection carried over
   bridge.on("opened", () => {
     state.q = "", qEl.value = "", state.sel = new Set(), state.anchor = null, state.focusId = null;
+    state.kind = "", el("kind").value = "";
     showPreview(null);
     requestList();
     qEl.focus();

@@ -2,9 +2,10 @@
 ;
 ;   HistoryWin.Open()   HistoryWin.Close()
 ;
-; Page -> host: list {q, partial, sort, asc}, get {id}, copy {id}, instaPaste {ids}, hold {id}, edit {id},
+; Page -> host: list {q, partial, sort, asc, kind}, get {id}, copy {id}, instaPaste {ids}, hold {id}, edit {id},
 ;               export {id}, delete {ids}, clear, setPartial {partial}, close
-; Host -> page: i18n, list {rows, matched, total, bytes, partial}, preview {record}, toast {text}, refreshed
+; Host -> page: i18n, list {rows, matched, total, bytes, partial}, kinds {kinds, labels}, preview {record},
+;               toast {text}, refreshed
 
 class HistoryWin {
 	static host := ""
@@ -60,15 +61,26 @@ class HistoryWin {
 		partial := d is Map && d.Has("partial") ? (d["partial"] ? true : false) : (history_partial ? true : false)
 		sortBy := d is Map && d.Has("sort") ? d["sort"] : "time"
 		asc := d is Map && d.Has("asc") ? (d["asc"] ? true : false) : false
-		r := historyQuery(q, partial, sortBy, asc, 0, 2000)
+		kind := d is Map && d.Has("kind") ? d["kind"] : ""
+		r := historyQuery(q, partial, sortBy, asc, 0, 2000, kind)
+		for row in r["rows"]
+			if (row["type"] = 0 && row["kind"] = "")
+				row["kind"] := historyEnsureKind(row["id"])
 		r["partial"] := partial ? 1 : 0
 		HistoryWin.host.Post("list", r)
+		HistoryWin.SendKinds()
+	}
+
+	static SendKinds() {
+		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels()))
 	}
 
 	static SendPreview(id) {
 		rec := historyGet(id)
 		if !rec
 			return
+		if (rec["type"] = 0 && rec["kind"] = "")
+			rec["kind"] := historyEnsureKind(id)
 		if (rec["type"] == 1) {
 			rec["url"] := "https://cache.clipjump/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
 			rec["data"] := ""

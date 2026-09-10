@@ -9,26 +9,29 @@
   const day = (n, hm) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) + " " + hm + ":00"; };
 
   // ---- history ----
+  const kindLabels = { url: "URL", email: "Email" };
   let hist = [
-    { id: 1, data: "Brings the Latest Resources widget in line with the Figma mockup: the shared resource card is restyled, the section header is restructured with the carousel prev/next buttons moved into the header, and the grid now collapses to a single column below 720px.\n\nAlso fixes a regression where the fallback image was never shown.", type: 0, time: day(0, "14:22"), size: 312 },
-    { id: 2, data: "https://github.com/aviaryan/Clipjump/issues/143", type: 0, time: day(0, "13:58"), size: 48 },
-    { id: 3, data: "[IMAGE]", type: 1, time: day(0, "13:40"), size: 214000, fileid: "cache\\history\\demo.jpg", url: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#3a5f8a"/><circle cx="250" cy="45" r="22" fill="#f4d35e"/><path d="M0 180 60 110 120 150 190 80 260 130 320 100v80z" fill="#2f7d5b"/></svg>') },
-    { id: 4, data: "SELECT id, clip, date FROM history WHERE clip LIKE '%figma%' ORDER BY date DESC", type: 0, time: day(0, "11:05"), size: 82 },
-    { id: 5, data: "Mike Peutz <mike@example.com>", type: 0, time: day(0, "09:31"), size: 29 },
-    { id: 6, data: "C:\\Users\\MikePeutz\\PortableApps\\Clipjump_new_x64\\design\\phase4", type: 0, time: day(1, "18:12"), size: 61 },
-    { id: 7, data: "npm run build && node design/phase4/build.mjs", type: 0, time: day(1, "16:02"), size: 46 },
-    { id: 8, data: "The quick brown fox jumps over the lazy dog", type: 0, time: day(3, "10:44"), size: 43 },
-    { id: 9, data: "4111 1111 1111 1111", type: 0, time: day(4, "20:15"), size: 19 },
+    { id: 1, data: "Brings the Latest Resources widget in line with the Figma mockup: the shared resource card is restyled, the section header is restructured with the carousel prev/next buttons moved into the header, and the grid now collapses to a single column below 720px.\n\nAlso fixes a regression where the fallback image was never shown.", type: 0, time: day(0, "14:22"), size: 312, kind: "text" },
+    { id: 2, data: "https://github.com/aviaryan/Clipjump/issues/143", type: 0, time: day(0, "13:58"), size: 48, kind: "url" },
+    { id: 3, data: "[IMAGE]", type: 1, time: day(0, "13:40"), size: 214000, fileid: "cache\\history\\demo.jpg", url: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#3a5f8a"/><circle cx="250" cy="45" r="22" fill="#f4d35e"/><path d="M0 180 60 110 120 150 190 80 260 130 320 100v80z" fill="#2f7d5b"/></svg>'), kind: "" },
+    { id: 4, data: "SELECT id, clip, date FROM history WHERE clip LIKE '%figma%' ORDER BY date DESC", type: 0, time: day(0, "11:05"), size: 82, kind: "text" },
+    { id: 5, data: "Mike Peutz <mike@example.com>", type: 0, time: day(0, "09:31"), size: 29, kind: "email" },
+    { id: 6, data: "C:\\Users\\MikePeutz\\PortableApps\\Clipjump_new_x64\\design\\phase4", type: 0, time: day(1, "18:12"), size: 61, kind: "text" },
+    { id: 7, data: "npm run build && node design/phase4/build.mjs", type: 0, time: day(1, "16:02"), size: 46, kind: "text" },
+    { id: 8, data: "The quick brown fox jumps over the lazy dog", type: 0, time: day(3, "10:44"), size: 43, kind: "text" },
+    { id: 9, data: "4111 1111 1111 1111", type: 0, time: day(4, "20:15"), size: 19, kind: "text" },
   ];
-  for (let i = 10; i < 60; i++) hist.push({ id: i, data: "Filler clip number " + i + " lorem ipsum dolor sit amet", type: 0, time: day(5 + (i % 20), "08:00"), size: 40 + i });
+  for (let i = 10; i < 60; i++) hist.push({ id: i, data: "Filler clip number " + i + " lorem ipsum dolor sit amet", type: 0, time: day(5 + (i % 20), "08:00"), size: 40 + i, kind: "text" });
 
   function histList(d) {
     const q = (d.q || "").trim().toLowerCase();
     const words = d.partial ? q.split(/\s+/).filter(Boolean) : (q ? [q] : []);
     let rows = hist.filter((r) => words.every((w) => r.data.toLowerCase().includes(w)));
+    if (d.kind) rows = rows.filter((r) => r.kind === d.kind);
     const col = d.sort === "clip" ? "data" : d.sort === "size" ? "size" : "time";
     rows.sort((a, b) => (a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0) * (d.asc ? 1 : -1));
-    reply("list", { rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
+    reply("list", { rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size, kind: r.kind })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
+    reply("kinds", { kinds: ["url", "email"], labels: kindLabels });
   }
 
   // ---- organizer ----

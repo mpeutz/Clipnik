@@ -12,7 +12,7 @@
     ORG_footHint: "Double-click to use · F2 renames · Drag clips here to move", ORG_channelStatus: "Channel", ORG_clipOf: "clip %1 of %2",
     HST_viewimage: "[IMAGE]", SET_cancel: "Cancel", _rename: "Rename", _new: "New",
   };
-  const state = { channels: [], active: 0, channel: 0, chSel: 0, rows: [], sel: new Set(), anchor: null, focusN: null, clip: null, q: "", pane: "clips" };
+  const state = { channels: [], active: 0, channel: 0, chSel: 0, rows: [], sel: new Set(), anchor: null, focusN: null, clip: null, q: "", pane: "clips", labels: {} };
   const rowsEl = el("rows"), tableEl = el("table"), chEl = el("channels"), qEl = el("q"), sheet = el("sheet");
   const chName = (n) => { const c = state.channels.find((x) => x.n === n); return c ? c.name : String(n); };
   const chLabel = (n) => `${n} - ${chName(n)}`;
@@ -55,7 +55,7 @@
     rowsEl.innerHTML = rows.map((r) => {
       const isImg = +r.type === 1;
       const tags = (r.tags || "").split(/\s+/).filter(Boolean).map((t) => `<span class="badge">${esc(t)}</span>`).join(" ");
-      return `<div class="tr${state.sel.has(r.n) ? " sel" : ""}" data-n="${r.n}" draggable="true"><span class="dim">${r.n}</span><span class="mono${isImg ? " dim" : ""}">${esc(isImg ? T.HST_viewimage : oneLine(r.clip, 220))}</span><span>${tags}${+r.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""}</span></div>`;
+      return `<div class="tr${state.sel.has(r.n) ? " sel" : ""}" data-n="${r.n}" draggable="true"><span class="dim">${r.n}</span><span class="mono${isImg ? " dim" : ""}">${esc(isImg ? T.HST_viewimage : oneLine(r.clip, 220))}</span><span>${isImg ? "" : cj.kindBadge(r.kind, state.labels)} ${tags}${+r.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""}</span></div>`;
     }).join("");
     el("count").textContent = `${rows.length} ${T.ORG_countStatus}`;
     updateButtons();
@@ -107,7 +107,7 @@
     }
     const isImg = +c.type === 1;
     ph.className = "";
-    ph.innerHTML = `<span class="badge">${isImg ? "IMAGE" : "TEXT"}</span>${+c.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""} <span class="dim" style="font-size: 12px;">${esc(T.ORG_clipOf.replace("%1", c.n).replace("%2", state.rows.length))}</span>`;
+    ph.innerHTML = `${cj.kindBadge(c.kind, state.labels)}<span class="badge">${isImg ? "IMAGE" : "TEXT"}</span>${+c.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""} <span class="dim" style="font-size: 12px;">${esc(T.ORG_clipOf.replace("%1", c.n).replace("%2", state.rows.length))}</span>`;
     if (isImg) { body.className = "body image"; body.innerHTML = `<img src="${esc(c.url)}" alt="">`; }
     else { body.className = "body mono"; body.textContent = c.data; }
     props.hidden = false;
@@ -238,6 +238,7 @@
   });
   bridge.on("clips", (d) => {
     if (+d.channel !== state.channel) return;
+    state.labels = d.labels || {};
     state.rows = (d.rows || []).map((r) => ({ ...r, n: +r.n, type: +r.type, fixed: +r.fixed }));
     const ns = new Set(state.rows.map((r) => r.n));
     state.sel = new Set([...state.sel].filter((n) => ns.has(n)));

@@ -41,4 +41,10 @@ window.cj = {
     return p.join("+");
   },
   isTyping(e) { const t = e.target; return t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable); },
+  // small badge for a clip kind; nothing for plain text or unknown
+  kindBadge(kind, labels) {
+    if (!kind || kind === "text") return "";
+    const label = (labels && labels[kind]) || kind.toUpperCase();
+    return `<span class="badge kind">${this.esc(label)}</span>`;
+  },
 };

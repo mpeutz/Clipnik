@@ -7,7 +7,7 @@
 ;               move {channel, n, delta}, transfer {channel, ns, to, copy}, deleteClips {channel, ns},
 ;               newClip channel, newChannel name, renameChannel {n, name}, deleteChannel {n, mode, to},
 ;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n}, close
-; Host -> page: i18n, channels {channels, active}, clips {channel, rows}, clip {...}, toast, refresh
+; Host -> page: i18n, channels {channels, active}, clips {channel, rows, labels}, clip {..., labels}, toast, refresh
 
 class OrganizerWin {
 	static host := ""
@@ -85,9 +85,9 @@ class OrganizerWin {
 			n := A_Index, real := strength - n + 1
 			text := CDS[ch][real]
 			isImg := (text = "") && FileExist("cache\thumbs" (ch ? ch : "") "\" real ".jpg")
-			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0))
+			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real)))
 		}
-		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows))
+		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows, "labels", ClipType_Labels()))
 	}
 
 	static SendClip(d) {
@@ -99,9 +99,10 @@ class OrganizerWin {
 		text := CDS[ch][real]
 		thumb := "cache\thumbs" (ch ? ch : "") "\" real ".jpg"
 		isImg := (text = "") && FileExist(thumb)
-		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0)
+		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real))
 		if isImg
 			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
+		m["labels"] := ClipType_Labels()
 		OrganizerWin.host.Post("clip", m)
 	}
 

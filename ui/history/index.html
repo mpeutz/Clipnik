@@ -7,7 +7,7 @@
   <script src="../common/util.js"></script>
   <script src="../common/bridge.js"></script>
   <style>
-    #hdr, #rows .tr { grid-template-columns: minmax(0, 1fr) 150px 70px; }
+    #hdr, #rows .tr { grid-template-columns: minmax(0, 1fr) 84px 150px 70px; }
   </style>
 </head>
 <body>
@@ -19,6 +19,7 @@
       <button class="chip on" id="partial" data-i18n="HST_partial">Partial</button>
       <button class="chip" id="exact" data-i18n="HST_exact">Exact</button>
     </div>
+    <select class="edit" id="kind" title="Type"><option value="" data-i18n="HST_allTypes">All types</option></select>
     <button class="btn" id="refresh" data-i18n="HST_refresh">Refresh</button>
     <button class="btn" id="clear" data-i18n="HST_clear">Clear history…</button>
   </div>
@@ -27,6 +28,7 @@
       <div class="table" id="table" tabindex="0">
         <div class="hdr" id="hdr">
           <span data-sort="clip" data-i18n="HST_clip">Clip</span>
+          <span data-i18n="HST_type">Type</span>
           <span data-sort="time" class="sorted" data-i18n="HST_date">Date</span>
           <span data-sort="size" data-i18n="HST_size">Size</span>
         </div>
