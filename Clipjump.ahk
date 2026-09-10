@@ -89,7 +89,6 @@ BASIC STRUCTURE
 */
 
 ; v1 registered its OnClipboardChange label at load time; the clip loader below relies on the callback being live
-OnClipboardChange(cjClipboardChanged)
 
 ;Creating Storage Directories
 DirCreate("cache")
@@ -124,6 +123,7 @@ global CALLER_STATUS := 1, CLIPJUMP_STATUS := 1
 global CALLER := CALLER_STATUS := 1, IN_BACK := 0, MULTIPASTE := 0, PASTEMODE_ACT := 0
 global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED := 0, ctrlRef := ""		;specific purpose global vars
 global wasManualClipboard := false
+global LASTIMAGETICK := 0
 global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu(), Help_Tray := Menu()
 
 ;Global Ini declarations
@@ -133,7 +133,7 @@ global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Thres
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
 		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_respectExclusion := 1, ini_searchUsesWindow := 0
-		, ini_showPastingTip := 0, ini_instapasteWritesClipboard := 0, ini_winForPasteMode := 0, ini_priority := "N", IGNORE_GROUP := "ignoreGroup", ini_prewarmWebViews := 1
+		, ini_showPastingTip := 0, ini_instapasteWritesClipboard := 0, ini_winForPasteMode := 0, ini_priority := "N", IGNORE_GROUP := "ignoreGroup", ini_prewarmWebViews := 1, ini_trayMenu := "card"
 global ini_limitMaxClips := "", ini_KeepSession := ""
 global new_limitMaxClips := "", new_MaxClips := "", new_Threshold := "", new_Quality := "", new_startSearch := "", new_revFormat2def := "", new_copyBeep := ""
 	, new_IsMessage := "", new_KeepSession := "", new_PreserveClipPos := "", new_winClipjump := "", new_default_pformat := "", new_DaysToStore := "", new_IsImageStored := ""
@@ -231,6 +231,7 @@ Hud.Init()
 ClipExclusion.Init()
 if ini_prewarmWebViews
 	SetTimer(WebHost_Prewarm, -3000)
+TrayCard.Init()
 
 loop
 {
@@ -277,6 +278,7 @@ LOAD END-USER CUSTOMIZATIONS
 *********************
 */
 
+OnClipboardChange(cjClipboardChanged) 	; after every global above is initialized, before the clips load
 loadClipboardDataS()
 loadCustomizations()
 
@@ -590,6 +592,14 @@ clipChange(CErrorlevel, clipboard_copy) {
 				CURSAVE -= 1, TEMPSAVE := CURSAVE
 				return
 			}
+			; snipping tools write the same image twice in a row; keep one (a deliberate second Ctrl+C still records)
+			if imageIsRepeat()
+			{
+				try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
+				CURSAVE -= 1, TEMPSAVE := CURSAVE
+				return
+			}
+			LASTIMAGETICK := A_TickCount
 
 			BeepAt(ini_CopyBeep, beepFrequency)
 			if (copyMessage != "")
@@ -715,7 +725,7 @@ nativeCopy(*) {
 		SetTimer(ctrlForCopy, 50)
 	}
 	if ini_is_duplicate_copied
-		LASTCLIP := ""
+		LASTCLIP := "", LASTIMAGETICK := 0
 	CLIP_ACTION := "COPY"
 	wasManualClipboard := true
 	SetTimer(manualClipboardTimer, -1000)
@@ -733,7 +743,7 @@ nativeCut(*) {
 		SetTimer(ctrlForCopy, 50)
 	}
 	if ini_is_duplicate_copied
-		LASTCLIP := ""
+		LASTCLIP := "", LASTIMAGETICK := 0
 	CLIP_ACTION := "CUT"
 	wasManualClipboard := true
 	SetTimer(manualClipboardTimer, -1000)
@@ -1286,6 +1296,25 @@ renameCorrect(realActive) {
 	}
 }
 
+; True when the image just saved as clip CURSAVE is byte-identical to clip CURSAVE-1 and arrived within 1.5 s of it.
+imageIsRepeat() {
+	global
+	local prev, a, b, fa, fb
+	if (A_TickCount - LASTIMAGETICK > 1500)
+		return false
+	prev := CURSAVE - 1
+	if (prev < 1 || CDS[CN.NG][prev] != "")
+		return false
+	fa := CLIPS_dir "/" prev ".avc", fb := CLIPS_dir "/" CURSAVE ".avc"
+	if !FileExist(fa) || (FileGetSize(fa) != FileGetSize(fb))
+		return false
+	try {
+		a := FileRead(fa, "RAW"), b := FileRead(fb, "RAW")
+		return DllCall("ntdll\RtlCompareMemory", "Ptr", a, "Ptr", b, "UPtr", a.Size, "UPtr") = a.Size
+	}
+	return false
+}
+
 thumbGenerator() {
 	global
 	Critical "On"
@@ -1753,6 +1782,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\SettingsWin.ahk
 #Include %A_ScriptDir%\src\ui\native\AboutWin.ahk
 #Include %A_ScriptDir%\src\ui\native\IgnoredWindowsWin.ahk
+#Include %A_ScriptDir%\src\ui\native\TrayMenuWin.ahk
 #Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk

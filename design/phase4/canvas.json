@@ -47,6 +47,14 @@
       "y": 1620,
       "w": 440,
       "h": 220
+    },
+    {
+      "file": "TrayMenu.dc.html",
+      "title": "Tray menu, Explorer-style card",
+      "x": 0,
+      "y": 2040,
+      "w": 1000,
+      "h": 460
     }
   ],
   "annotations": [
@@ -70,6 +78,13 @@
       "y": 1620,
       "w": 280,
       "text": "If the WebView2 runtime is missing, a native dialog links to the installer; the tray app keeps running."
+    },
+    {
+      "id": "tray-note",
+      "x": 1100,
+      "y": 2040,
+      "w": 300,
+      "text": "Tray menu: a custom popup card like the Windows 11 Explorer context menu. Icon row with the everyday actions (toggles light up when on), a header with the active channel that opens About, then the text items; submenus open beside the card. Esc, click-outside and focus loss close it; arrows and Enter work. An ini switch brings the standard menu back."
     }
   ],
   "launch": {

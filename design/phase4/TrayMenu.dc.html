@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.33px; line-height: 1.35; }
+    a { color: var(--accent); } a:hover { color: var(--accent); text-decoration: underline; }
+    .win { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+    .title { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 0 0 12px; font-size: 12px; }
+    .title .caption { flex-grow: 1; }
+    .title .wc { width: 46px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text); }
+    .nav { width: 168px; flex: 0 0 auto; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+    .nav .item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 4px; color: var(--text); position: relative; }
+    .nav .item.sel { background: var(--hover); }
+    .nav .item.sel::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--accent); }
+    .nav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .content { flex: 1 1 0; min-width: 0; background: var(--surface); border-left: 1px solid var(--border); border-top: 1px solid var(--border); border-top-left-radius: 8px; padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .h1 { font-size: 20px; font-weight: 600; margin: 0 0 8px 0; }
+    .section { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 10px 0 2px 0; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 32px; } .row .lbl { flex: 1 1 0; min-width: 0; } .row > :not(.lbl) { flex: 0 0 auto; }
+    .row .lbl { flex-grow: 1; }
+    .row .hint { color: var(--muted); font-size: 12px; }
+    .check { display: flex; align-items: center; gap: 10px; min-height: 28px; }
+    .box { width: 16px; height: 16px; border: 1px solid var(--muted); border-radius: 3px; background: var(--surfaceAlt); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .box.on { background: var(--accent); border-color: var(--accent); }
+    .box svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .edit { height: 24px; padding: 0 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: flex; align-items: center; box-sizing: border-box; }
+    .edit.num { width: 80px; justify-content: space-between; }
+    .edit.num .spin { display: flex; flex-direction: column; gap: 1px; margin-right: -4px; color: var(--muted); }
+    .edit.num .spin svg { width: 10px; height: 8px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+    .edit.ddl { width: 180px; justify-content: space-between; }
+    .edit.ddl svg { width: 12px; height: 12px; stroke: var(--muted); fill: none; stroke-width: 1.5; }
+    .edit.hk { width: 180px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; }
+    .edit.hk.empty { color: var(--muted); font-family: inherit; font-size: 13.33px; }
+    .btn { height: 26px; min-width: 76px; padding: 0 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+    .btn.dis { opacity: .45; }
+    .footer { height: 52px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 0 24px; background: var(--bg); }
+    .list { border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); display: flex; flex-direction: column; overflow: hidden; }
+    .list .hdr { display: grid; height: 26px; align-items: center; padding: 0 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+    .list .li { display: grid; height: 28px; align-items: center; padding: 0 10px; }
+    .list .li.sel { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
+    .status { height: 24px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--border); background: var(--bg); }
+    .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); }
+    .badge.accent { background: var(--accent); color: var(--accentText); }
+  
+    .tray { width: 280px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.35); padding: 6px; box-sizing: border-box; }
+    .icons { display: flex; justify-content: space-between; padding: 2px 2px 6px 2px; }
+    .ib { width: 50px; height: 50px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: var(--text); position: relative; }
+    .ib .lbl { font-size: 10.5px; line-height: 1; color: var(--muted); white-space: nowrap; }
+    .ib.on .lbl { color: var(--accent); }
+    .ib.hover { background: var(--hover); }
+    .ib.on { color: var(--accent); }
+    .hdr { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px 8px 10px; border-top: 1px solid var(--border); }
+    .hdr b { font-weight: 600; }
+    .mi { display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px; border-radius: 4px; }
+    .mi.hover { background: var(--hover); }
+    .mi .k { margin-left: auto; color: var(--muted); font-size: 11.5px; }
+    .mi .chk { width: 12px; display: inline-flex; }
+    .sep { height: 1px; background: var(--border); margin: 6px 4px; }
+    .sub { position: absolute; width: 220px; }
+  </style>
+</helmet>
+<div style="display: flex; gap: 60px; align-items: flex-start; padding: 40px 32px 32px 32px; background: var(--bg); color: var(--text); width: 1000px; height: 460px; box-sizing: border-box; {{vars}}">
+  <div>
+    <div class="dim" style="margin-bottom: 10px; font-size: 12px;">Right-click on the tray icon, hovering History, Incognito on</div>
+    
+  <div class="tray" style="width: 280px; position: relative;">
+    
+    <div class="icons">
+      <div class="ib hover" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v3h3M8 5v3.5l2.5 1.5"></path></svg><span class="lbl">History</span></div>
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><rect x="2" y="2" width="5" height="5" rx="1"></rect><rect x="9" y="2" width="5" height="5" rx="1"></rect><rect x="2" y="9" width="5" height="5" rx="1"></rect><rect x="9" y="9" width="5" height="5" rx="1"></rect></svg><span class="lbl">Channels</span></div>
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><circle cx="8" cy="8" r="2.5"></circle><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"></path></svg><span class="lbl">Settings</span></div>
+      <div class="ib on" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M2 9h12M4 9l1.5-5h5L12 9"></path><circle cx="5.5" cy="11.5" r="1.8"></circle><circle cx="10.5" cy="11.5" r="1.8"></circle></svg><span class="lbl">Incognito</span></div>
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><circle cx="8" cy="8" r="6"></circle><path d="M3.8 3.8l8.4 8.4"></path></svg><span class="lbl">Disable</span></div>
+    </div>
+    <div class="hdr"><b>Clipjump 13</b><span class="dim">channel Default</span></div>
+    <div class="mi" style="height: 32px;"><span>Channels</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="mi" style="height: 32px;"><span>Tools</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="mi" style="height: 32px;"><span>Options</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="mi" style="height: 32px;"><span>Help</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="sep"></div>
+    <div class="mi" style="height: 32px;"><span>Reload ClipjumpCustom.ini</span></div>
+    <div class="mi" style="height: 32px;"><span>Restart</span></div>
+    <div class="mi" style="height: 32px;"><span>Exit</span></div>
+  </div>
+  </div>
+  <div style="position: relative;">
+    <div class="dim" style="margin-bottom: 10px; font-size: 12px;">Channels submenu open</div>
+    
+  <div class="tray" style="width: 280px; position: relative;">
+    
+    <div class="icons">
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M2.5 2.5v3h3M8 5v3.5l2.5 1.5"></path></svg><span class="lbl">History</span></div>
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><rect x="2" y="2" width="5" height="5" rx="1"></rect><rect x="9" y="2" width="5" height="5" rx="1"></rect><rect x="2" y="9" width="5" height="5" rx="1"></rect><rect x="9" y="9" width="5" height="5" rx="1"></rect></svg><span class="lbl">Channels</span></div>
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><circle cx="8" cy="8" r="2.5"></circle><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"></path></svg><span class="lbl">Settings</span></div>
+      <div class="ib on" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><path d="M2 9h12M4 9l1.5-5h5L12 9"></path><circle cx="5.5" cy="11.5" r="1.8"></circle><circle cx="10.5" cy="11.5" r="1.8"></circle></svg><span class="lbl">Incognito</span></div>
+      <div class="ib" style="width: 50px; height: 50px;"><svg viewBox="0 0 16 16" style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;"><circle cx="8" cy="8" r="6"></circle><path d="M3.8 3.8l8.4 8.4"></path></svg><span class="lbl">Disable</span></div>
+    </div>
+    <div class="hdr"><b>Clipjump 13</b><span class="dim">channel Default</span></div>
+    <div class="mi hover" style="height: 32px;"><span>Channels</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="mi" style="height: 32px;"><span>Tools</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="mi" style="height: 32px;"><span>Options</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="mi" style="height: 32px;"><span>Help</span><span class="k"><svg viewBox="0 0 12 12" style="width: 10px; height: 10px; stroke: var(--muted); fill: none; stroke-width: 1.5;"><path d="M4.5 3 7.5 6 4.5 9"></path></svg></span></div>
+    <div class="sep"></div>
+    <div class="mi" style="height: 32px;"><span>Reload ClipjumpCustom.ini</span></div>
+    <div class="mi" style="height: 32px;"><span>Restart</span></div>
+    <div class="mi" style="height: 32px;"><span>Exit</span></div>
+  </div>
+    <div class="tray sub" style="width: 220px; left: 286px; top: 110px;">
+      <div class="mi" style="height: 32px;"><span class="chk"><svg viewBox="0 0 12 12" style="width: 12px; height: 12px; stroke: var(--accent); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M2.5 6.5 5 9l4.5-6"></path></svg></span><span>0  Default</span></div>
+      <div class="mi" style="height: 32px;"><span class="chk"></span><span>1  Work</span></div>
+      <div class="mi hover" style="height: 32px;"><span class="chk"></span><span>2  Snippets</span></div>
+      <div class="mi" style="height: 32px;"><span class="chk"></span><span>3  Addresses</span></div>
+      <div class="sep"></div>
+      <div class="mi" style="height: 32px;"><span>Channel Organizer…</span><span class="k">Ctrl+Alt+O</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#C42B1C","options":["#C42B1C","#0078D4","#107C10","#8764B8"],"section":"Theme"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const d = this.props.dark ?? true;
+    const p = d ? {"bg":"#202020","surface":"#2B2B2B","surfaceAlt":"#363636","border":"#3F3F3F","text":"#F0F0F0","muted":"#9A9A9A","hover":"#333333"} : {"bg":"#F3F3F3","surface":"#FFFFFF","surfaceAlt":"#EDEDED","border":"#D9D9D9","text":"#1B1B1B","muted":"#6B6B6B","hover":"#E9E9E9"};
+    const accent = this.props.accent ?? '#C42B1C';
+    const vars = Object.entries(p).map(([k, v]) => '--' + k + ':' + v).join(';') + ';--accent:' + accent + ';--accentText:#FFFFFF';
+    return { vars };
+  }
+}
+</script>
+</body>
+</html>

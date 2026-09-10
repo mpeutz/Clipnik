@@ -571,3 +571,11 @@ ORG_createBtn = Create
 ORG_footHint = Double-click to use, F2 renames, drag clips here to move
 ORG_channelStatus = Channel
 ORG_clipOf = clip %1 of %2
+; v13 tray menu card
+TRY_iHistory = History
+TRY_iChannels = Channels
+TRY_iSettings = Settings
+TRY_iIncognito = Incognito
+TRY_iDisable = Disable
+TRY_channels = Channels
+TRY_channelIs = channel

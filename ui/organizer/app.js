@@ -230,7 +230,7 @@
   // ---------- host events ----------
   bridge.on("i18n", (m) => { Object.assign(T, m || {}); applyI18n(); });
   bridge.on("channels", (d) => {
-    state.channels = d.channels || [];
+    state.channels = (d.channels || []).map((c) => ({ ...c, n: +c.n, count: +c.count }));
     state.active = +d.active;
     if (!state.channels.some((c) => c.n === state.channel)) { state.channel = state.active; state.chSel = state.active; bridge.send("clips", state.channel); }
     if (!state.channels.some((c) => c.n === state.chSel)) state.chSel = state.channel;
@@ -238,14 +238,14 @@
   });
   bridge.on("clips", (d) => {
     if (+d.channel !== state.channel) return;
-    state.rows = d.rows || [];
+    state.rows = (d.rows || []).map((r) => ({ ...r, n: +r.n, type: +r.type, fixed: +r.fixed }));
     const ns = new Set(state.rows.map((r) => r.n));
     state.sel = new Set([...state.sel].filter((n) => ns.has(n)));
     renderClips();
     if (state.sel.size === 1) bridge.send("getClip", { channel: state.channel, n: [...state.sel][0] });
     else showClip(null);
   });
-  bridge.on("clip", (c) => { if (+c.channel === state.channel && state.sel.size === 1 && state.sel.has(+c.n)) showClip(c); });
+  bridge.on("clip", (c) => { c.n = +c.n; c.channel = +c.channel; if (c.channel === state.channel && state.sel.size === 1 && state.sel.has(c.n)) showClip(c); });
   bridge.on("toast", (t) => cj.toast(t));
   bridge.on("refresh", () => { bridge.send("channels"); bridge.send("clips", state.channel); });
 

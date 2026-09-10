@@ -4,6 +4,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { helmet, props, logic, ddl, edit, btn, titlebar, wrap, check } from "../shared.mjs";
+import { trayArtboard } from "./tray.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -244,6 +245,9 @@ writeFileSync(join(here, "Fallback.dc.html"), wrap(440, 220, `
   </div>
   <div class="footer" style="height: 52px;">${btn("Install…", "primary")}${btn("Later")}</div>`));
 
+// ---------- tray menu ----------
+writeFileSync(join(here, "TrayMenu.dc.html"), trayArtboard());
+
 // ---------- canvas layout ----------
 const canvas = {
   artboards: [
@@ -253,13 +257,15 @@ const canvas = {
     { file: "OrganizerMove.dc.html", title: "Channel Organizer · light, Move to…", x: 1200, y: 820, w: 1100, h: 640 },
     { file: "OrganizerDialogs.dc.html", title: "Organizer in-page cards", x: 0, y: 1620, w: 900, h: 300 },
     { file: "Fallback.dc.html", title: "WebView2 missing (native dialog)", x: 1000, y: 1620, w: 440, h: 220 },
+    { file: "TrayMenu.dc.html", title: "Tray menu, Explorer-style card", x: 0, y: 2040, w: 1000, h: 460 },
   ],
   annotations: [
     { id: "brief", x: 0, y: -260, w: 560, text: "Phase 4: the two data-heavy windows move to WebView2 pages hosted in native frames. Same palette and type as the native windows; the Dark switch and Accent swatch on each artboard preview the theme handoff.\nHistory: search with Partial/Exact, sortable columns, a preview pane that replaces the separate Preview window, keyboard shortcuts on the action buttons." },
     { id: "organizer-note", x: 2400, y: 820, w: 300, text: "Organizer: channels on the left, clips in the middle, preview and clip properties on the right. Move to… and Copy to… open an in-page picker instead of the old Select Channel window; drag and drop between channels does the same. Channel delete and rename are in-page cards." },
     { id: "fallback-note", x: 1520, y: 1620, w: 280, text: "If the WebView2 runtime is missing, a native dialog links to the installer; the tray app keeps running." },
+    { id: "tray-note", x: 1100, y: 2040, w: 300, text: "Tray menu: a custom popup card like the Windows 11 Explorer context menu. Icon row with the everyday actions (toggles light up when on), a header with the active channel that opens About, then the text items; submenus open beside the card. Esc, click-outside and focus loss close it; arrows and Enter work. An ini switch brings the standard menu back." },
   ],
   launch: { view: "canvas" },
 };
 writeFileSync(join(here, "canvas.json"), JSON.stringify(canvas, null, 2) + "\n");
-console.log("wrote 6 artboards + canvas.json");
+console.log("wrote 7 artboards + canvas.json");

@@ -133,7 +133,7 @@
   // ---------- events ----------
   bridge.on("i18n", (m) => { Object.assign(T, m || {}); applyI18n(); });
   bridge.on("list", (d) => {
-    state.rows = d.rows || [];
+    state.rows = (d.rows || []).map((r) => ({ ...r, id: +r.id, type: +r.type, size: +r.size }));
     if (d.partial != null) { state.partial = !!+d.partial; el("partial").classList.toggle("on", state.partial); el("exact").classList.toggle("on", !state.partial); }
     const ids = new Set(state.rows.map((r) => r.id));
     state.sel = new Set([...state.sel].filter((id) => ids.has(id)));
@@ -142,7 +142,7 @@
     if (state.sel.size === 1) bridge.send("get", [...state.sel][0]);
     else showPreview(null);
   });
-  bridge.on("preview", (rec) => { if (state.sel.size === 1 && state.sel.has(+rec.id)) showPreview(rec); });
+  bridge.on("preview", (rec) => { rec.id = +rec.id; if (state.sel.size === 1 && state.sel.has(rec.id)) showPreview(rec); });
   bridge.on("toast", (t) => cj.toast(t));
   bridge.on("refreshed", requestList);
 
