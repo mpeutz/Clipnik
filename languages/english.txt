@@ -627,3 +627,5 @@ HUD_pinned = pinned
 HUD_helpTitle = Paste mode keys
 HUD_helpClose = V closes
 HUD_menuClose = Esc closes
+HUD_formatTitle = Paste format
+HUD_formatOriginal = Original

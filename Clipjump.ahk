@@ -775,35 +775,78 @@ manualClipboardTimer(*) {
 	wasManualClipboard := false
 }
 
+; Z in paste mode: a menu of paste formats on the card. Formats that fit the clip's kind come first, the rest are
+; dimmed; the active format is checked. A letter or Enter picks, Z or Esc closes. Ctrl stays held throughout.
 Formatting(*) {
 	global
-	local key, value := ""
-	matched_pformat := 0, curPformat := Trim(curPformat)
-	if (curPformat = "")
-		matched_pformat := 1
-	for key, value in PLUGINS["pformat"]
-	{
-		if matched_pformat {
-			curPformat := value.name, curPfunction := value["*"], matched_pformat := 0
-			break
+	local kind, m, picked, letter
+	if !is_pstMode_active
+		return
+	kind := (temp_clipboard != "") ? ClipType.Of(CN.NG, realActive) : ""
+	m := Formatting_Items(kind)
+	picked := Hud.Menu(m.items, m.keys, TXT.HUD_formatTitle)
+	if !is_pstMode_active      ; Ctrl was released while the menu was open: the paste already happened
+		return
+	hkZ_pasteMode(1)           ; the menu turned the letters it used off; paste-mode keys come back
+	letter := StrUpper(RegExReplace(picked, "^[~*$!^+#<>]*"))
+	if (letter = "" || letter = "Z" || letter = "ESC")
+		PasteModeTooltip(temp_clipboard)
+	else if m.byKey.Has(letter) {
+		set_pformat(m.byKey[letter])
+		if (temp_clipboard != "") {
+			halfClip := StrLen(temp_clipboard) > 200 ? SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW : temp_clipboard
+			if curPisPreviewable
+				halfClip := callPformat(curPfunction, halfClip)
 		}
-		if (value["name"] == curPformat)
-			matched_pformat := 1
+		PasteModeTooltip(temp_clipboard)
+	} else
+		PasteModeTooltip(temp_clipboard)
+}
+
+; items for the format menu; returns {items, keys, byKey}: byKey maps a letter to the format name ("" = original)
+Formatting_Items(kind) {
+	global PLUGINS, curPformat, pstIdentifier, TXT
+	used := Map("V", 1, "C", 1, "Z", 1), byKey := Map(), fit := [], rest := []
+	take(name, pref) {
+		l := Formatting_Letter(name, pref, used)
+		used[l] := 1, byKey[l] := name
+		return l
 	}
-	;rebuild show text
-	if (temp_clipboard != "")
-	{
-		if StrLen(temp_clipboard) > 200
-			halfClip := SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW
-		else
-			halfClip := temp_clipboard
+	oL := take("", "O")
+	fit.Push({key: oL, caption: TXT.HUD_formatOriginal, check: curPformat = ""})
+	for k, v in PLUGINS.pformat {
+		pref := ""
+		try pref := v["key"]
+		l := take(v["name"], pref)
+		it := {key: l, caption: v["name"], check: curPformat = v["name"], dim: !Transforms.AppliesTo(v, kind)}
+		(it.dim ? rest : fit).Push(it)
 	}
-	if matched_pformat
-		curPformat := "", curPisPreviewable := 0 ; case of switching to default
-	else
-		halfClip := (curPisPreviewable := IsObject(value) ? value["Previewable"] : 0) ? callPformat(curPfunction, halfClip) : halfClip
-	if (ctrlRef = "pastemode")
-		PasteModeTooltip(temp_clipboard) 	; rebuild prvw
+	items := []
+	for it in fit
+		items.Push(it)
+	for it in rest
+		items.Push(it)
+	keys := pstIdentifier "Esc"
+	for l in byKey
+		keys .= " " pstIdentifier l
+	keys .= " " pstIdentifier "Enter"
+	byKey["ENTER"] := curPformat
+	return {items: items, keys: keys, byKey: byKey}
+}
+
+; first free letter: the preferred one, then letters of the name, then the alphabet
+Formatting_Letter(name, pref, used) {
+	if (pref != "" && !used.Has(StrUpper(pref)))
+		return StrUpper(pref)
+	loop parse StrUpper(name)
+		if RegExMatch(A_LoopField, "[A-Z]") && !used.Has(A_LoopField)
+			return A_LoopField
+	loop 26 {
+		l := Chr(64 + A_Index)
+		if !used.Has(l)
+			return l
+	}
+	return "?"
 }
 
 fixate(*) {

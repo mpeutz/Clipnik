@@ -114,20 +114,24 @@ Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 900
 
-step("Z cycles paste formats")
+step("Z opens the format menu; a letter picks Upper case; Z again closes")
+ed.Value := ""
 SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("z")
-Sleep 500
-fmt1 := cj["curPformat"]
-check(fmt1 != "", "Z selects a paste format: " fmt1)
+Sleep 700
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "card still visible with the format menu")
+SendEvent("u")
+Sleep 700
+check(cj["curPformat"] = "Upper case", "U picked Upper case: [" cj["curPformat"] "]")
 SendEvent("z")
 Sleep 500
-check(cj["curPformat"] != fmt1, "Z again changes format (" fmt1 " -> " cj["curPformat"] ")")
-SendEvent("x")
-Sleep 300
+SendEvent("z")
+Sleep 500
+check(cj["curPformat"] = "Upper case", "Z then Z leaves the format alone")
 SendEvent("{Ctrl up}")
 Sleep 900
+check(ed.Value = StrUpper(ed.Value) && InStr(ed.Value, StrUpper(stamp)), "pasted upper case: [" ed.Value "]")
 cj.runFunction("set_pformat()")
 check(cj["curPformat"] = "", "set_pformat() resets the format")
 

@@ -353,7 +353,11 @@ class Hud {
 			cx := x + col * (colW + Round(18 * sc)), cy := y + rowI * rowH
 			kw := Max(Round(22 * sc), Hud.TextWidth(r.chip, it.key) + Round(12 * sc))
 			r.chip.Text := it.key, r.chip.Move(cx, cy + Round(3 * sc), kw, rowH - Round(6 * sc)), r.chip.w := kw, r.chip.Visible := true
-			r.text.Text := it.caption, r.text.Move(cx + kw + Round(8 * sc), cy, colW - kw - Round(8 * sc), rowH), r.text.Visible := true
+			dim := it.HasProp("dim") && it.dim, chk := it.HasProp("check") && it.check
+			r.text.Opt("c" Theme.Hex(dim ? "muted" : "text"))
+			r.text.Text := (chk ? Chr(0x2713) " " : "") it.caption
+			Theme.SetPill(r.chip, chk ? "accent" : "surfaceAlt", chk ? "accentText" : (dim ? "muted" : "text"))
+			r.text.Move(cx + kw + Round(8 * sc), cy, colW - kw - Round(8 * sc), rowH), r.text.Visible := true
 		}
 		rowsN := (n + cols - 1) // cols
 		return y + rowsN * rowH + Round(4 * sc)
