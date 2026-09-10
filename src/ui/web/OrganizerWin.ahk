@@ -7,7 +7,7 @@
 ;               move {channel, n, delta}, transfer {channel, ns, to, copy}, deleteClips {channel, ns},
 ;               newClip channel, newChannel name, renameChannel {n, name}, deleteChannel {n, mode, to},
 ;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n}, close
-; Host -> page: i18n, channels {channels, active}, clips {channel, rows, labels}, clip {..., labels}, toast, refresh
+; Host -> page: i18n, channels {channels, active}, clips {channel, rows}, clip {...}, toast, refresh
 
 class OrganizerWin {
 	static host := ""
@@ -87,7 +87,7 @@ class OrganizerWin {
 			isImg := (text = "") && FileExist("cache\thumbs" (ch ? ch : "") "\" real ".jpg")
 			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real)))
 		}
-		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows, "labels", ClipType_Labels()))
+		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows))
 	}
 
 	static SendClip(d) {
@@ -102,7 +102,6 @@ class OrganizerWin {
 		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real))
 		if isImg
 			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
-		m["labels"] := ClipType_Labels()
 		OrganizerWin.host.Post("clip", m)
 	}
 
@@ -259,7 +258,7 @@ class OrganizerWin {
 
 	static I18n() {
 		global TXT
-		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "SET_cancel", "_rename", "_new"]
+		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_number", "KIND_phone", "KIND_code", "KIND_text"]
 		m := Map()
 		for k in keys
 			m[k] := StrReplace(TXT.%k%, "&")

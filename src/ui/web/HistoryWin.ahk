@@ -186,7 +186,7 @@ class HistoryWin {
 
 	static I18n() {
 		global TXT
-		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday"]
+		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes"]
 		m := Map()
 		for k in keys
 			m[k] := TXT.%k%

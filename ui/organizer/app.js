@@ -228,7 +228,11 @@
   }
 
   // ---------- host events ----------
-  bridge.on("i18n", (m) => { Object.assign(T, m || {}); applyI18n(); });
+  bridge.on("i18n", (m) => {
+    Object.assign(T, m || {});
+    state.labels = Object.fromEntries(Object.keys(T).filter((k) => k.startsWith("KIND_")).map((k) => [k.slice(5), T[k].toUpperCase()]));
+    applyI18n();
+  });
   bridge.on("channels", (d) => {
     state.channels = (d.channels || []).map((c) => ({ ...c, n: +c.n, count: +c.count }));
     state.active = +d.active;
@@ -238,7 +242,6 @@
   });
   bridge.on("clips", (d) => {
     if (+d.channel !== state.channel) return;
-    state.labels = d.labels || {};
     state.rows = (d.rows || []).map((r) => ({ ...r, n: +r.n, type: +r.type, fixed: +r.fixed }));
     const ns = new Set(state.rows.map((r) => r.n));
     state.sel = new Set([...state.sel].filter((n) => ns.has(n)));
