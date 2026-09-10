@@ -512,6 +512,7 @@ SET_pressKeys = Press a key combination...
 SET_T_record = Click, then press the shortcut. Backspace clears it, Esc keeps the old one.
 ABT_version = Version
 ABT_portable = portable
+ABT_forkOf = Forked from the original Clipjump by
 IGN_intro = Clipjump does not record copies made in these windows, and paste mode passes Ctrl+V through to them.
 _close = Close
 PLG_search = Search plugins

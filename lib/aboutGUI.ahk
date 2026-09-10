@@ -75,7 +75,7 @@ trayMenu(destroy := 0) {
 	}
 
 	;Tray Icon
-	try TraySetIcon(mainIconPath)
+	try setTrayIcon(mainIconPath)
 	A_TrayMenu.Delete()   ; NoStandard
 	A_TrayMenu.Add(TXT.ABT__name " " PROGNAME, main)
 	A_IconTip := PROGNAME " {" CN.Name "}"

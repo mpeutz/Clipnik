@@ -61,7 +61,8 @@ if !ini_LANG
 	ini_LANG := "english"
 global TXT := Translations_load("languages/" ini_LANG ".txt") 		;Load translations
 
-global AUTHOR_PAGE := "http://aviaryan.in"
+global AUTHOR := "Mike Peutz"
+global ORIGINAL_AUTHOR := "Avi Aryan", AUTHOR_PAGE := "https://github.com/aviaryan/Clipjump"   ; the project this fork continues
 
 global MSG_TRANSFER_COMPLETE := ""
  , MSG_CLIPJUMP_EMPTY := ""
@@ -230,6 +231,8 @@ if FileExist(GHICON_PATH)   ; the icon font must be registered before any card i
 else
 	MsgBox(valueof(TXT.ABT_errorFontIcon), PROGNAME, 16)
 Theme.Init(ini_theme, ini_accent)
+Theme.OnChange(changeIcon)
+changeIcon()   ; the tray icon was set before the theme existed; repaint its ring in the accent
 Toast.Position := ini_toastPosition
 Hud.Init()
 ClipExclusion.Init()
@@ -1548,15 +1551,29 @@ copyCutShortcuts(status := 1) {
 changeIcon() {
 	global
 	try {
-		if A_IsCompiled || H_Compiled 		; H_Compiled is a user var created if compiled with ahk_h
-			TraySetIcon(A_AhkPath)
-		else
-			TraySetIcon(mainIconPath)
+		icon := (A_IsCompiled || H_Compiled) ? A_AhkPath : mainIconPath 	; H_Compiled is a user var created if compiled with ahk_h
 		if !NOINCOGNITO
-			TraySetIcon("icons\no_history.ico")
+			icon := "icons\no_history.ico"
 		if !CALLER_STATUS || !CALLER
-			TraySetIcon("icons\no_monitoring.ico")
+			icon := "icons\no_monitoring.ico"
+		setTrayIcon(icon)
 	}
+}
+
+; tray icon with the ring in the accent color when the file can be recolored, the plain file otherwise
+setTrayIcon(path) {
+	h := Theme.AccentIcon(path, 32)
+	Theme.AppIcon := h
+	if h
+		TraySetIcon("HICON:*" h)
+	else
+		TraySetIcon(path)
+	; title bars of windows that already exist
+	DetectHiddenWindows true
+	for hwnd in WinGetList("ahk_class AutoHotkeyGUI ahk_pid " ProcessExist())
+		if h
+			try SendMessage(0x80, 1, h, hwnd), SendMessage(0x80, 0, h, hwnd)
+	DetectHiddenWindows false
 }
 
 oneTime(*) {

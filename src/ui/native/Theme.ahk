@@ -191,6 +191,53 @@ class Theme {
 		try Theme.drawn.Delete(hwnd)
 	}
 
+	; The app icon with its red ring repainted in the accent: returns an HICON (cached per file, size and accent)
+	; for TraySetIcon("HICON:*" h) and Picture controls. Falls back to 0 when anything goes wrong.
+	static iconCache := Map()
+	static AccentIcon(path, size := 32) {
+		if !Theme.Palette.Has("accent")   ; before Theme.Init the plain file is used
+			return 0
+		key := path "|" size "|" Format("{:06X}", Theme.Palette["accent"])
+		if Theme.iconCache.Has(key)
+			return Theme.iconCache[key]
+		h := 0
+		try {
+			src := DllCall("LoadImage", "Ptr", 0, "Str", path, "UInt", 1, "Int", size, "Int", size, "UInt", 0x10, "Ptr")  ; IMAGE_ICON, LR_LOADFROMFILE
+			if !src
+				return 0
+			tok := Gdip_Startup()
+			bm := Gdip_CreateBitmapFromHICON(src)
+			DllCall("DestroyIcon", "Ptr", src)
+			Theme.Recolor(bm, Theme.Palette["accent"])
+			h := Gdip_CreateHICONFromBitmap(bm)
+			Gdip_DisposeImage(bm)
+			Gdip_Shutdown(tok)
+		}
+		return Theme.iconCache[key] := h
+	}
+
+	; replaces every strongly red pixel (the ring) with rgb, keeping its alpha and relative brightness
+	static Recolor(bm, rgb) {
+		w := Gdip_GetImageWidth(bm), hgt := Gdip_GetImageHeight(bm)
+		if Gdip_LockBits(bm, 0, 0, w, hgt, &stride, &scan0, &data)
+			return
+		loop hgt {
+			y := A_Index - 1
+			loop w {
+				x := A_Index - 1
+				p := scan0 + y * stride + x * 4
+				b := NumGet(p, 0, "UChar"), g := NumGet(p, 1, "UChar"), r := NumGet(p, 2, "UChar"), a := NumGet(p, 3, "UChar")
+				if (a && r > g + 50 && r > b + 50) {   ; red and its anti-aliased pinks
+					f := r / 255, wh := Min(g, b) / 255   ; darkness and the white mixed into edge pixels
+					NumPut("UChar", Round((rgb & 0xFF) * f * (1 - wh) + 255 * wh), p, 0)
+					NumPut("UChar", Round(((rgb >> 8) & 0xFF) * f * (1 - wh) + 255 * wh), p, 1)
+					NumPut("UChar", Round(((rgb >> 16) & 0xFF) * f * (1 - wh) + 255 * wh), p, 2)
+				}
+			}
+		}
+		Gdip_UnlockBits(bm, &data)
+	}
+
 	; frees a control's window (AHK has no per-control destroy) so rebuilding a Gui's controls leaves no orphans
 	static Discard(ctl) {
 		try Theme.UnregisterDraw(ctl.Hwnd)
@@ -295,12 +342,19 @@ class Theme {
 		Theme.ApplyToHwnd(g.Hwnd, corner, border)
 	}
 
+	static AppIcon := 0   ; HICON shown in title bars (the recolored app icon), set by setTrayIcon
+
 	static ApplyToHwnd(hwnd, corner := 2, border := false) {
 		dark := Theme.IsDark ? 1 : 0
+		if Theme.AppIcon
+			try SendMessage(0x80, 1, Theme.AppIcon, hwnd), SendMessage(0x80, 0, Theme.AppIcon, hwnd)   ; WM_SETICON big + small
 		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 20, "Int*", dark, "UInt", 4)   ; DWMWA_USE_IMMERSIVE_DARK_MODE
 		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 33, "Int*", corner, "UInt", 4)  ; DWMWA_WINDOW_CORNER_PREFERENCE
-		if border
-			try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 34, "Int*", Theme.Bgr("border"), "UInt", 4) ; DWMWA_BORDER_COLOR
+		; title bar and frame follow a custom accent; with the Windows accent they are left to the system setting
+		cap := Theme.CustomAccent ? Theme.Bgr("accent") : 0xFFFFFFFF, capText := Theme.CustomAccent ? Theme.Bgr("accentText") : 0xFFFFFFFF   ; DWMWA_COLOR_DEFAULT
+		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 34, "UInt*", border ? Theme.Bgr("border") : cap, "UInt", 4) ; DWMWA_BORDER_COLOR
+		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 35, "UInt*", cap, "UInt", 4)      ; DWMWA_CAPTION_COLOR
+		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 36, "UInt*", capText, "UInt", 4)  ; DWMWA_TEXT_COLOR
 	}
 
 	; Applies dark-mode visual styles to a control; call after g.Add.
