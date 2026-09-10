@@ -1800,6 +1800,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\IgnoredWindowsWin.ahk
 #Include %A_ScriptDir%\src\ui\native\TrayMenuWin.ahk
 #Include %A_ScriptDir%\src\core\clipboard.ahk
+#Include %A_ScriptDir%\src\core\cliptype.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
