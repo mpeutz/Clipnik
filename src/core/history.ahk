@@ -18,14 +18,77 @@ createHisTable(){
 		MsgBox("db create history table")
 }
 
-addHistoryText(data, timestamp){
-; adds some text data to history; the timestamp is in A_Now format
+; adds the kind column to databases created before clip kinds existed (cheap: SQLite appends the column)
+historyMigrate() {
+	global DB
+	has := false
+	if DB.GetTable("pragma table_info(history)", &tb) {
+		loop tb.RowCount {
+			tb.Next(&r)
+			if (r[2] = "kind")
+				has := true
+		}
+	}
+	if !has
+		DB.Exec("alter table history add column kind text")
+}
+
+; the stored kind of one row, classifying and writing it back when missing; "" for images
+historyEnsureKind(id) {
+	global DB
+	row := getFromTable("history", "type, kind, data", "id=" id)
+	if !row || (row[1] = 1)
+		return ""
+	if (row[2] != "")
+		return row[2]
+	kind := ClipType.Detect(row[3])
+	execSql('update history set kind="' kind '" where id=' id)
+	return kind
+}
+
+; classifies up to batch old text rows; returns how many were updated (0 when done)
+historyBackfillKinds(batch := 200) {
+	global DB
+	if !DB.GetTable("select id, data from history where type=0 and (kind is null or kind='') limit " batch, &tb)
+		return 0
+	n := 0
+	DB.Exec("begin")
+	loop tb.RowCount {
+		tb.Next(&r)
+		execSql('update history set kind="' ClipType.Detect(r[2]) '" where id=' r[1])
+		n++
+	}
+	DB.Exec("commit")
+	return n
+}
+
+; distinct kinds present, detection order
+historyKinds() {
+	global DB
+	out := []
+	if !DB.GetTable("select distinct kind from history where kind is not null and kind!=''", &tb)
+		return out
+	present := Map()
+	loop tb.RowCount {
+		tb.Next(&r)
+		present[r[1]] := true
+	}
+	for k in ClipType.Kinds
+		if present.Has(k)
+			out.Push(k)
+	return out
+}
+
+addHistoryText(data, timestamp, kind := ""){
+; adds some text data to history; the timestamp is in A_Now format; kind is detected when not given
 	timestamp := convertTimeSql( timestamp )
-	q := 'insert into history (data, type, time, size) values ("'
+	if (kind = "")
+		kind := ClipType.Detect(data)
+	q := 'insert into history (data, type, time, size, kind) values ("'
 		. escapeQuotesSql(data)
 		. '", 0, "'
 		. timestamp '", '
-		. fileSizeFromStr(data) ")"
+		. fileSizeFromStr(data) ', "' kind '")'
 	if (!DB.Exec(q))
 		MsgBox(q)
 }
@@ -86,7 +149,7 @@ fillHISTORYOBJ(){
 
 ; Rows matching a search, sorted and paged. Returns {rows: Array of Map(id, clip, type, time, size, fileid), matched, total, bytes}.
 ; clip is a one-line snippet (the page asks for the full text through historyGet).
-historyQuery(crit := "", partial := true, sort := "time", asc := false, offset := 0, limit := 500) {
+historyQuery(crit := "", partial := true, sort := "time", asc := false, offset := 0, limit := 500, kind := "") {
 	crit := Trim(crit)
 	where := ""
 	if (crit != "") {
@@ -99,6 +162,8 @@ historyQuery(crit := "", partial := true, sort := "time", asc := false, offset :
 		} else
 			where := ' where data like "%' escapeQuotesSql(crit) '%"'
 	}
+	if ClipType.IsKind(kind)
+		where .= (where = "" ? " where " : " and ") 'kind="' kind '"'
 	col := (sort = "clip") ? "data" : (sort = "size") ? "size" : "time"
 	dir := asc ? "asc" : "desc"
 	out := Map("rows", [], "matched", 0, "total", 0, "bytes", 0)
@@ -110,13 +175,13 @@ historyQuery(crit := "", partial := true, sort := "time", asc := false, offset :
 	if m.RowCount {
 		m.Next(&r), out["matched"] := r[1]
 	}
-	q := "select id, substr(data, 1, 300), type, time, size, fileid from history" where " order by " col " " dir ", id desc limit " limit " offset " offset
+	q := "select id, substr(data, 1, 300), type, time, size, fileid, kind from history" where " order by " col " " dir ", id desc limit " limit " offset " offset
 	result := ""
 	if !DB.GetTable(q, &result)
 		return out
 	loop result.RowCount {
 		result.Next(&row)
-		out["rows"].Push(Map("id", row[1], "clip", row[2], "type", row[3], "time", row[4], "size", row[5], "fileid", row[6]))
+		out["rows"].Push(Map("id", row[1], "clip", row[2], "type", row[3], "time", row[4], "size", row[5], "fileid", row[6], "kind", row[7]))
 		HISTORYOBJ[row[1]] := row[3]
 	}
 	return out
@@ -133,10 +198,10 @@ historyJoin(parts, sep) {
 historyGet(id) {
 	if !IsInteger(id)
 		return ""
-	data := getFromTable("history", "id, data, type, time, size, fileid", "id=" id)
+	data := getFromTable("history", "id, data, type, time, size, fileid, kind", "id=" id)
 	if !data
 		return ""
-	return Map("id", data[1], "data", data[2], "type", data[3], "time", data[4], "size", data[5], "fileid", data[6])
+	return Map("id", data[1], "data", data[2], "type", data[3], "time", data[4], "size", data[5], "fileid", data[6], "kind", data[7])
 }
 
 historySetText(id, text) {

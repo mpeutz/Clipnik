@@ -27,6 +27,25 @@ class ClipType {
 		return StrUpper(kind)
 	}
 
+	; stored kind of a channel clip (prefs.ini Kind=), detecting and storing it on first use; "" for images
+	static Of(ch, clip) {
+		global CDS
+		k := clipPref(ch, clip, "Kind")
+		if ClipType.IsKind(k)
+			return k
+		text := ""
+		try text := CDS[ch][clip]
+		if (text = "")
+			return ""
+		k := ClipType.Detect(text)
+		ClipType.Store(ch, clip, k)
+		return k
+	}
+
+	static Store(ch, clip, kind) {
+		AddClipPref(ch, clip, "Kind", kind)
+	}
+
 	static Detect(text) {
 		if (StrLen(text) * 2 > ClipType.MaxBytes)
 			return "text"

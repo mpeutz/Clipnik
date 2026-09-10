@@ -114,7 +114,7 @@ global WORKINGHT := tempbottom - temptop, restoreCaller := 0, startUpComplete :=
 ;Global Inits
 global CN := CJMap(), CUSTOMS := CJMap(), CDS := CJMap(), CPS := CJMap(), SEARCHOBJ := CJMap(), HISTORYOBJ := CJMap(), TOTALCLIPS := "", ACTIONMODE := CJMap(), PLUGINS := CJMap()
 global cut_is_delete_windows := "XLMAIN QWidget" 			;excel, kingsoft office
-global CURSAVE := 0, TEMPSAVE := 0, LASTCLIP := "", LASTFORMAT := "", Islastformat_Changed := 1, IScurCBACTIVE := 0, curPformat := "", curPfunction := "", curPisPreviewable := 0
+global CURSAVE := 0, TEMPSAVE := 0, LASTCLIP := "", LASTFORMAT := "", Islastformat_Changed := 1, IScurCBACTIVE := 0, curPformat := "", curPfunction := "", curPisPreviewable := 0, LASTKIND := ""
 global NOINCOGNITO := 1, SPM := CJMap(), protected_DoBeep := 1
 global pastemodekey := CJMap(), spmkey := CJMap()
 global windows_copy_k := "", windows_cut_k := "", ini_OpenAllChbyDef := 0, pstIdentifier := "^", pstKeyName := (pstIdentifier == "^") ? "Ctrl" : "LWin"
@@ -299,6 +299,9 @@ COMPATIBILITY
 if (isnewdb == 1) {
 	migrateHistory()
 }
+
+historyMigrate()
+SetTimer(historyBackfillTick, -4000)   ; classify old rows in small batches after startup
 
 /*
 **********
@@ -562,8 +565,11 @@ clipChange(CErrorlevel, clipboard_copy) {
 				return
 			}
 
+			LASTKIND := ClipType.Detect(LASTCLIP)
+			ClipType.Store(CN.NG, CURSAVE, LASTKIND)
+
 			if NOINCOGNITO && (CN.Name != "pit") {
-				addHistoryText(LASTCLIP, A_Now)
+				addHistoryText(LASTCLIP, A_Now, LASTKIND)
 			}
 
 			BeepAt(ini_CopyBeep, beepFrequency)
@@ -1337,7 +1343,7 @@ Prefs2Ini() {
 
 ClipPref_makeKeys(Ch, Cl) {
 	global CPS
-	static l := ["fixed", "Tags"]
+	static l := ["fixed", "Tags", "Kind"]
 	if !IsObject(CPS[Ch])
 		CPS[Ch] := CJMap()
 	if !IsObject(CPS[Ch][Cl])
@@ -1546,6 +1552,11 @@ copyCutShortcuts(status := 1) {
 	} else {
 		hkZ("$^c", nativeCopy, status), hkZ("$^x", nativeCut, status)
 	}
+}
+
+historyBackfillTick() {
+	if historyBackfillKinds(200)
+		SetTimer(historyBackfillTick, -250)
 }
 
 changeIcon() {

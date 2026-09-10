@@ -1,6 +1,7 @@
 ﻿; Unit tests for ClipType.Detect (src/core/cliptype.ahk).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\cliptype.ahk
 #Requires AutoHotkey v2.0
+#Warn All, Off   ; cliptype.ahk's ClipType.Of/Store reference clipPref/AddClipPref/CDS, which only Clipjump.ahk defines
 #Include ..\lib\v2compat.ahk
 #Include ..\src\core\cliptype.ahk
 

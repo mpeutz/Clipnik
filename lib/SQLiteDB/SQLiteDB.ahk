@@ -107,14 +107,14 @@ class SQLiteDB {
         return true
     }
 
-    ; Prepares a SELECT and returns a forward-only RecordSet.
+    ; Prepares a SELECT (or PRAGMA, which also returns rows, e.g. table_info) and returns a forward-only RecordSet.
     Query(SQL, &RS) {
         RS := ""
         this._Reset()
         if !this._Handle
             return this._Fail("Invalid database handle!")
-        if !RegExMatch(SQL, "i)^\s*SELECT\s")
-            return this._Fail("Query requires a SELECT statement!")
+        if !RegExMatch(SQL, "i)^\s*(SELECT|PRAGMA)\s")
+            return this._Fail("Query requires a SELECT or PRAGMA statement!")
         stmt := 0
         rc := DllCall("sqlite3.dll\sqlite3_prepare_v2", "Ptr", this._Handle, "Ptr", this._Utf8(SQL), "Int", -1, "Ptr*", &stmt, "Ptr", 0, "Cdecl Int")
         if rc {
