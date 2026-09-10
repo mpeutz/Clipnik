@@ -1,4 +1,4 @@
-; Unit tests for ClipType.Detect (src/core/cliptype.ahk).
+﻿; Unit tests for ClipType.Detect (src/core/cliptype.ahk).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\cliptype.ahk
 #Requires AutoHotkey v2.0
 #Include ..\lib\v2compat.ahk
@@ -58,6 +58,7 @@ expect("number", "1299")
 expect("number", "-1,299.00")
 expect("number", "$4,500")
 expect("number", "3.14159")
+expect("number", "€1,200", "euro prefix")
 expect("text", "1.", "trailing dot")
 expect("text", "1 2 3", "spaced digits")
 ; phone

@@ -1,4 +1,4 @@
-; cliptype.ahk - what a text clip is. ClipType.Detect classifies text once at copy time; the kind is stored with
+﻿; cliptype.ahk - what a text clip is. ClipType.Detect classifies text once at copy time; the kind is stored with
 ; the clip (history column "kind", channel clip pref "Kind") and read back everywhere a clip is shown.
 ;
 ;   ClipType.Detect(text)   -> "url" | "email" | "path" | "color" | "json" | "number" | "phone" | "code" | "text"
@@ -71,20 +71,20 @@ class ClipType {
 		first := SubStr(t, 1, 1), last := SubStr(t, -1)
 		if !((first = "{" && last = "}") || (first = "[" && last = "]"))
 			return false
-		depth := 0, inStr := false, esc := false, punct := false
+		depth := 0, inString := false, esc := false, punct := false
 		loop parse t {
 			c := A_LoopField
-			if inStr {
+			if inString {
 				if esc
 					esc := false
 				else if (c = "\")
 					esc := true
 				else if (c = '"')
-					inStr := false
+					inString := false
 				continue
 			}
 			switch c {
-				case '"': inStr := true
+				case '"': inString := true
 				case "{", "[": depth++
 				case "}", "]":
 					depth--
@@ -93,10 +93,10 @@ class ClipType {
 				case ":", ",": punct := true
 			}
 		}
-		return depth = 0 && !inStr && punct
+		return depth = 0 && !inString && punct
 	}
 
-	static IsNumber(t) => RegExMatch(t, "^[-+]?[$???]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
+	static IsNumber(t) => RegExMatch(t, "^[-+]?[$€£¥]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
 
 	static IsPhone(t) {
 		if !RegExMatch(t, "^\+?[\d\s().-]+$")
