@@ -574,7 +574,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 
 			BeepAt(ini_CopyBeep, beepFrequency)
 			if (copyMessage != "")
-				Toast.Show(copyMessage, 900, "info", "copy")
+				showCopyToast(copyMessage)
 
 			if (CLIP_ACTION = "CUT")
 			{
@@ -592,6 +592,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 	}
 	else if (CErrorlevel = 2)
 	{
+			LASTKIND := ""
 			CURSAVE += 1, TEMPSAVE := CURSAVE, LASTCLIP := ""
 
 			clipSaver()
@@ -1557,6 +1558,15 @@ copyCutShortcuts(status := 1) {
 historyBackfillTick() {
 	if historyBackfillKinds(200)
 		SetTimer(historyBackfillTick, -250)
+}
+
+; copy toast: message, channel pill, and for a recognized kind its label (and swatch for colors)
+showCopyToast(text) {
+	global LASTKIND, LASTCLIP
+	extra := ""
+	if (LASTKIND != "" && LASTKIND != "text")
+		extra := {label: ClipType.Label(LASTKIND), swatch: LASTKIND = "color" ? ClipType.ColorRgb(LASTCLIP) : "", action: ""}
+	Toast.Show(text, extra != "" ? 2500 : 900, "info", "copy", extra)
 }
 
 changeIcon() {

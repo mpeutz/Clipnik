@@ -94,6 +94,16 @@ for themeMode in ["dark", "light"] {
 	Gdip_DisposeImage(pBitmap), Gdip_Shutdown(pToken)
 	Toast.Hide("a"), Toast.Hide("b"), Toast.Hide("c")
 	Sleep 200
+	Toast.Show("Transferred to Clipjump {Default}", 0, "info", "k1", {label: "URL", swatch: "", action: ""})
+	Toast.Show("Transferred to Clipjump {Default}", 0, "info", "k2", {label: "COLOR", swatch: 0x1DBC55, action: ""})
+	Sleep 500
+	pToken := Gdip_Startup()
+	MonitorGetWorkArea(MonitorGetPrimary(), &l, &t, &r, &b)
+	pBitmap := Gdip_BitmapFromScreen((r - 400) "|" (b - 200) "|400|200")
+	Gdip_SaveBitmapToFile(pBitmap, A_ScriptDir "\out\toast-kind-" themeMode ".png")
+	Gdip_DisposeImage(pBitmap), Gdip_Shutdown(pToken)
+	Toast.Hide("k1"), Toast.Hide("k2")
+	Sleep 200
 }
 FileAppend("done`n", "*")
 ExitApp

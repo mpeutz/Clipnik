@@ -78,6 +78,7 @@ class Theme {
 		}
 		p["accent"] := Theme.CustomAccent ? accent : Theme.LegibleAccent(accent, dark)
 		p["accentText"] := Theme.Luminance(p["accent"]) > 0.45 ? 0x000000 : 0xFFFFFF
+		p["accentSoft"] := Theme.Mix(p["accent"], p["surface"], 0.82)
 		Theme.Palette := p
 	}
 

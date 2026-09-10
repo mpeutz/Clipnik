@@ -1,7 +1,8 @@
 ; Toast.ahk - compact notification cards that never take focus: a Lucide glyph in the kind's color and one line
 ; of text, on a rounded, shadowed, slightly translucent card.
 ;
-;   Toast.Show(text, ms := 1500, kind := "info", slot := "")   kind: info | warn | error | busy ; ms 0 = sticky until Hide(slot)
+;   Toast.Show(text, ms := 1500, kind := "info", slot := "", extra := "")   kind: info | warn | error | busy ; ms 0 = sticky until Hide(slot)
+;     extra: "" or {label, swatch, action: {label, fn} or ""} -- a recognized kind's label (and swatch for colors), plus an optional action chip
 ;   Toast.Hide(slot)
 ;   Toast.Position := "cursor" | "bottomright"                  ([Main] ToastPosition, default cursor)
 ;
@@ -18,7 +19,7 @@ class Toast {
 	static Gap := 8
 	static Margin := 16
 
-	static Show(text, ms := 1500, kind := "info", slot := "") {
+	static Show(text, ms := 1500, kind := "info", slot := "", extra := "") {
 		if (text = "")
 			return
 		if (slot != "")
@@ -27,7 +28,7 @@ class Toast {
 			Toast.Remove(Toast.cards[1])
 		if (ms = 0 && kind = "info")
 			kind := "busy"
-		card := Toast.Create(text, kind, slot)
+		card := Toast.Create(text, kind, slot, extra)
 		Toast.cards.Push(card)
 		Toast.Layout()
 		if (ms > 0)
@@ -49,7 +50,7 @@ class Toast {
 		return ["check", "accent"]
 	}
 
-	static Create(text, kind, slot) {
+	static Create(text, kind, slot, extra := "") {
 		s := Theme.Scale
 		g := Gui("-Caption +AlwaysOnTop +ToolWindow +E0x08000000 -DPIScale +Owner" A_ScriptHwnd, "Clipjump_Toast")
 		g.MarginX := 0, g.MarginY := 0
@@ -78,11 +79,38 @@ class Toast {
 			ph := Round(20 * s)
 			Theme.AddPill(g, "x" (padL + gw + gap + tw + gap) " y" ((h - ph) // 2) " w" pw " h" ph, pill, "accent", "accentText")
 		}
+		lw := 0, aw := 0
+		x := padL + gw + gap + tw + (pw ? gap + pw : 0)
+		if IsObject(extra) {
+			if (extra.HasProp("label") && extra.label != "") {
+				g.SetFont("s8 c" Theme.Hex("muted"), Theme.FontName)
+				if (extra.HasProp("swatch") && extra.swatch != "" && extra.swatch != -1) {
+					sw := Round(10 * s)
+					g.Add("Text", "x" (x + gap) " y" ((h - sw) // 2) " w" sw " h" sw " Background" Format("{:06X}", extra.swatch))
+					x += gap + sw
+				}
+				lbl := g.Add("Text", "x" (x + gap) " y0 h" h " +0x200", extra.label)
+				lbl.GetPos(, , &lw)
+				lw += gap
+				x += lw
+			}
+			if (extra.HasProp("action") && IsObject(extra.action)) {
+				g.SetFont("s8 bold c" Theme.Hex("text"), Theme.FontName)
+				meter := g.Add("Text", "x0 y0 +Hidden", extra.action.label)
+				meter.GetPos(, , &aw)
+				Theme.Discard(meter)
+				aw += Round(16 * s)
+				ph := Round(20 * s)
+				chip := Theme.AddPill(g, "x" (x + gap) " y" ((h - ph) // 2) " w" aw " h" ph, extra.action.label, "accentSoft", "text")
+				chip.OnEvent("Click", Toast_ActionClick.Bind(extra.action.fn, slot))
+				aw += gap
+			}
+		}
+		w := x + aw + padR
 		if Theme.HasIcons() {
 			g.SetFont("s10 c" Theme.Hex(gl[2]), Theme.IconFont)
 			g.Add("Text", "x" padL " y0 w" gw " h" h " +0x200 +Center", Theme.Icon(gl[1]))
 		}
-		w := padL + gw + gap + tw + (pw ? gap + pw : 0) + padR
 		g.OnEvent("Close", (*) => 0)
 		return {gui: g, w: w, h: h, slot: slot, timer: ""}
 	}
@@ -152,4 +180,9 @@ class Toast {
 		try card.gui.Destroy()
 		Toast.Layout()
 	}
+}
+
+Toast_ActionClick(fn, slot, *) {
+	Toast.Hide(slot)
+	try fn()
 }
