@@ -314,9 +314,3 @@ ClipType_RunLater(id, text, *) {
 ClipType_RunNow(id, text) {
 	ClipType.Run(id, text)
 }
-
-; removed in the transforms task
-class Transforms {
-	static PrettyJson(t) => t
-	static MinifyJson(t) => t
-}

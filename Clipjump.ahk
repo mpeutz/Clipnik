@@ -224,6 +224,8 @@ trayMenu() ; before customization and settings as customization can affect tray
 load_Settings(1)
 validate_Settings()
 loadPlugins()
+Transforms.Register()
+set_pformat()   ; the default format may be a built-in transform
 
 ; ---- modern UI: theme, HUD card, toasts ----
 if FileExist(GHICON_PATH)   ; the icon font must be registered before any card is built (Theme caches the font check)
@@ -1826,6 +1828,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\TrayMenuWin.ahk
 #Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\src\core\cliptype.ahk
+#Include %A_ScriptDir%\src\core\transforms.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
