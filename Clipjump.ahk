@@ -813,6 +813,7 @@ Formatting_Items(kind) {
 		return l
 	}
 	oL := take("", "O")
+	byKey[oL] := "-original-"   ; sentinel: set_pformat("-original-") clears the format instead of reloading the ini default
 	fit.Push({key: oL, caption: TXT.HUD_formatOriginal, check: curPformat = ""})
 	for k, v in PLUGINS.pformat {
 		pref := ""
@@ -826,11 +827,11 @@ Formatting_Items(kind) {
 		items.Push(it)
 	for it in rest
 		items.Push(it)
-	keys := pstIdentifier "Esc"
+	keys := pstIdentifier "Esc " pstIdentifier "Z"   ; Z is reserved in "used" above but carries no format of its own
 	for l in byKey
 		keys .= " " pstIdentifier l
 	keys .= " " pstIdentifier "Enter"
-	byKey["ENTER"] := curPformat
+	byKey["ENTER"] := curPformat != "" ? curPformat : "-original-"
 	return {items: items, keys: keys, byKey: byKey}
 }
 

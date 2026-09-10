@@ -557,7 +557,7 @@ class Hud {
 		loop parse keys, A_Space
 			if (A_LoopField != "")
 				hkZ(A_LoopField, check, 1)
-		while (Hud.pressed = "" && Hud.State == state)
+		while (Hud.pressed = "" && Hud.State == state && Hud.visible)
 			Sleep 20
 		loop parse keys, A_Space
 			if (A_LoopField != "")

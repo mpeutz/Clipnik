@@ -129,9 +129,27 @@ Sleep 500
 SendEvent("z")
 Sleep 500
 check(cj["curPformat"] = "Upper case", "Z then Z leaves the format alone")
+clipBeforeMenu := clipNo()
+SendEvent("v")
+Sleep 400
+check(clipNo() != clipBeforeMenu, "menu closed: V still moves to the next clip (realclipno=" clipNo() ")")
+SendEvent("c")
+Sleep 400
+check(clipNo() = clipBeforeMenu, "C moves back onto the clip we're about to paste")
 SendEvent("{Ctrl up}")
 Sleep 900
 check(ed.Value = StrUpper(ed.Value) && InStr(ed.Value, StrUpper(stamp)), "pasted upper case: [" ed.Value "]")
+
+step("O in the format menu picks Original and clears the format")
+SendEvent("{Ctrl down}v")
+Sleep 400
+SendEvent("z")
+Sleep 700
+SendEvent("o")
+Sleep 700
+check(cj["curPformat"] = "", "O picked Original: [" cj["curPformat"] "]")
+SendEvent("{Ctrl up}")
+Sleep 900
 cj.runFunction("set_pformat()")
 check(cj["curPformat"] = "", "set_pformat() resets the format")
 
