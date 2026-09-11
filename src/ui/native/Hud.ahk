@@ -561,7 +561,7 @@ class Hud {
 			Sleep 20
 		loop parse keys, A_Space
 			if (A_LoopField != "")
-				Hud.BindKey(A_LoopField, check, "Off")
+				Hud.BindKey(A_LoopField, check, "Off T1")   ; T1 again: T2 would outlive the card on shared keys
 		Hud.Hide()
 		return Hud.pressed
 	}
