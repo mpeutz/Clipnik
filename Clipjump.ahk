@@ -1489,6 +1489,8 @@ actionmode_run(*) {
 	update_actionmode()
 	temp_am := Ring.Pick(ActionRing_Items(), {prefix: "", trigger: ActionRing_Trigger(), idleTitle: TXT.RNG_actionTitle
 		, extraKeys: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "D"]})
+	if (temp_am = "")			; cancelled (Esc or an outside click): route through the same exit path Hud.Menu used
+		temp_am := "Esc"
 	act := ACTIONMODE[temp_am]
 	if (act != "Exit_actmd")
 	{

@@ -66,8 +66,9 @@ Sleep 700
 SendEvent("h")
 hist := cj["TXT.HST__name"] " ahk_class AutoHotkeyGUI"
 check(WinWait(hist, , 5) != 0, "H opened Clipboard History")
+Sleep 2500		; let History's WebView2 finish initializing before closing it (matches history_flow.ahk's settle time)
 try WinClose(hist)
-Sleep 500
+check(WinWaitClose(hist, , 5), "History closed")
 WinActivate("cj-pm-target")
 ed.Focus()
 Sleep 300
