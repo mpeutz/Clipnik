@@ -1929,6 +1929,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\Toast.ahk
 #Include %A_ScriptDir%\src\ui\native\Hud.ahk
 #Include %A_ScriptDir%\src\ui\native\RingGeom.ahk
+#Include %A_ScriptDir%\src\ui\native\Ring.ahk
 #Include %A_ScriptDir%\src\ui\native\SettingsWin.ahk
 #Include %A_ScriptDir%\src\ui\native\AboutWin.ahk
 #Include %A_ScriptDir%\src\ui\native\IgnoredWindowsWin.ahk

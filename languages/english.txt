@@ -661,3 +661,9 @@ HUD_helpClose = V closes
 HUD_menuClose = Esc closes
 HUD_formatTitle = Paste format
 HUD_formatOriginal = Original
+; v14 action ring
+RNG_keys = release · click · Esc
+RNG_more = More
+RNG_back = Back
+RNG_moreDesc = the next page
+RNG_backDesc = back to the first page
