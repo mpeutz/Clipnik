@@ -29,8 +29,8 @@ class Ring {
 		Ring.openedAt := A_TickCount
 		if o.HasProp("dim") && o.dim {
 			Ring.prevAlpha := ""
-			try Ring.prevAlpha := WinGetTransparent("ahk_id " o.dim)
-			try WinSetTransparent(128, "ahk_id " o.dim)
+			try Ring.prevAlpha := WinGetTransparent(o.dim)
+			try WinSetTransparent(128, o.dim)
 		}
 		Ring.isOpen := true
 		Ring.BindKeys(true)
@@ -46,7 +46,7 @@ class Ring {
 		DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 0)
 		Ring.visible := false
 		if o.HasProp("dim") && o.dim
-			try WinSetTransparent(Ring.prevAlpha = "" ? "Off" : Ring.prevAlpha, "ahk_id " o.dim)
+			try WinSetTransparent(Ring.prevAlpha = "" ? "Off" : Ring.prevAlpha, o.dim)
 		Ring.isOpen := false
 		return Ring.result
 	}

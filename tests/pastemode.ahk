@@ -5,6 +5,7 @@
 #Include ..\publicAPI.ahk
 SetTitleMatchMode 2
 SendLevel 1
+CoordMode "Mouse", "Screen"
 fails := 0
 step(s) => FileAppend("     .. " s "`n", "*")
 check(cond, msg) {
@@ -14,6 +15,15 @@ check(cond, msg) {
         fails++
 }
 errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
+; the card's alpha even while hidden (DetectHiddenWindows scoped to this one call only, so it doesn't
+; change what WinExist("Clipjump_HUD ...") sees elsewhere in this file)
+cardAlpha() {
+    DetectHiddenWindows(true)
+    a := ""
+    try a := WinGetTransparent("Clipjump_HUD ahk_class AutoHotkeyGUI")
+    DetectHiddenWindows(false)
+    return a
+}
 ; tooltip texts via UI Automation; only used while no keys are held (slow)
 tipText() {
     f := A_Temp "\cj_tips.txt"
@@ -114,6 +124,8 @@ Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 900
 
+cardAlphaNormal := cardAlpha()
+
 step("Z opens the format ring; U picks Upper case")
 ed.Value := ""
 SendEvent("{Ctrl down}v")
@@ -183,6 +195,7 @@ SendEvent("{Ctrl up}")
 Sleep 1200
 check(cj.runFunction("Ring_IsOpen()") = 0, "the ring closed with paste mode")
 check(InStr(ed.Value, stamp), "the clip was pasted: [" ed.Value "]")
+check(cardAlpha() = cardAlphaNormal, "the card's opacity is restored: [" cardAlpha() "]")
 cj.runFunction("set_pformat()")
 check(cj["curPformat"] = "", "set_pformat() resets the format")
 
@@ -235,6 +248,10 @@ if WinWait(cj["TXT._tags"] " ahk_class #32770", , 4) {
     check(!errorDialog(), "getClipByTag works")
 } else
     check(false, "tag InputBox did not appear")
+; the InputBox belongs to Clipjump, not this script's own window; closing it does not reliably hand
+; focus back to our target, so reclaim it explicitly before the next step types into it
+WinActivate("cj-pm-target")
+WinWaitActive("cj-pm-target", , 2)
 
 step("Enter (multipaste) pastes and keeps paste mode open")
 ed.Value := ""
