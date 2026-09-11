@@ -1655,12 +1655,12 @@ Rules_ApplyTransform(formatName) {
 	API.blockMonitoring(1)
 	try {
 		A_Clipboard := t
-		ClipWait(1)
 		FileDelete(CLIPS_dir "/" CURSAVE ".avc")
 		FileAppend(ClipboardAll(), CLIPS_dir "/" CURSAVE ".avc")
 		CDS[CN.NG][CURSAVE] := t, LASTCLIP := t
 	}
 	API.blockMonitoring(0, 5)
+	Critical "On"
 }
 
 reloadRules() {
