@@ -43,6 +43,7 @@ for mode in ["dark", "light"] {
     Ring.RenderToFile(Ring.State(fp[2], 7, Ring.NavLabel("back"), TXT.RNG_backDesc), "tests\out\ring-" mode "-format-page2.png")
     Ring.RenderToFile(Ring.State(ap[1], 0, "Clipboard History", "every clip ever copied"), "tests\out\ring-" mode "-action.png")
     Ring.RenderToFile(Ring.State(ap[1], 1, "Channel Organizer", "channels and their clips"), "tests\out\ring-" mode "-action-organizer.png")
+    Ring.RenderToFile(Ring.State(ap[1], 2, "Settings", "all of Clipjump's options"), "tests\out\ring-" mode "-action-settings.png")
 }
 FileAppend("done`n", "*")
 ExitApp

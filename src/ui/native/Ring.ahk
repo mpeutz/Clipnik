@@ -131,13 +131,36 @@ class Ring {
 		return StrSplit(it.label, " ")[1]
 	}
 
-	; the hub: the full name, its description (two lines at most) and the keys line, one gap inside the hub's edge
+	; the hub: the full name, its description and the keys line, one gap inside the hub's edge. The title
+	; takes as many lines as it needs (measured, normally 1 or 2); the description gets whatever is left
+	; of a fixed block height, so a one-line title leaves room for a two-line description and a two-line
+	; title leaves room for one, each ending in an ellipsis rather than clipping when it still doesn't fit.
 	static Hub(G, st, ox, oy) {
 		global TXT
 		p := st.pal, k := st.k, f := Ring.Fonts(), w := 2 * st.s.hub - 8 * k
-		Ring.Text(G, st.hubTitle, f.text, 12 * k, true, 0xFF000000 | (st.titleAccent ? p["accent"] : p["text"]), ox - w / 2, oy - 34 * k, w, 32 * k)
-		Ring.Text(G, st.hubSub, f.text, 10 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy - 2 * k, w, 20 * k)
-		Ring.Text(G, TXT.RNG_keys, f.text, 9 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy + 18 * k, w, 12 * k)
+		twoLine := Ring.MeasureLines(G, st.hubTitle, f.text, 12 * k, w) > 1
+		titleH := (twoLine ? 32 : 18) * k, descH := (twoLine ? 16 : 30) * k, keysH := 12 * k
+		top := oy - (titleH + descH + keysH) / 2
+		Ring.Text(G, st.hubTitle, f.text, 12 * k, true, 0xFF000000 | (st.titleAccent ? p["accent"] : p["text"]), ox - w / 2, top, w, titleH)
+		Ring.Text(G, st.hubSub, f.text, 10 * k, false, 0xFF000000 | p["muted"], ox - w / 2, top + titleH, w, descH)
+		Ring.Text(G, TXT.RNG_keys, f.text, 9 * k, false, 0xFF000000 | p["muted"], ox - w / 2, top + titleH + descH, w, keysH)
+	}
+
+	; how many lines the bold title needs to wrap to at width w, using the same font/format Ring.Text
+	; draws it with; frees the font and format it creates for the measurement
+	static MeasureLines(G, text, fam, size, w) {
+		if (text = "" || !fam)
+			return 1
+		font := 0, fmt := 0
+		DllCall("gdiplus\GdipCreateFont", "Ptr", fam, "Float", size, "Int", 1, "Int", 2, "Ptr*", &font)
+		DllCall("gdiplus\GdipCreateStringFormat", "Int", 0x2000, "Int", 0, "Ptr*", &fmt)   ; LineLimit
+		DllCall("gdiplus\GdipSetStringFormatTrimming", "Ptr", fmt, "Int", 4)               ; EllipsisWord
+		CreateRectF(&rc, 0, 0, w, 200)
+		result := Gdip_MeasureString(G, text, font, fmt, &rc)
+		DllCall("gdiplus\GdipDeleteStringFormat", "Ptr", fmt)
+		DllCall("gdiplus\GdipDeleteFont", "Ptr", font)
+		parts := StrSplit(result, "|")
+		return parts.Length >= 6 ? Integer(parts[6]) : 1
 	}
 
 	; key hint centred on cx, top edge at top
