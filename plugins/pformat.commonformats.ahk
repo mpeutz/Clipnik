@@ -148,15 +148,41 @@ plugin_pformat_commonformats(zin) {
 
 	w := 680, x := 20, y := 14, listW := 150, colGap := 16
 	editW := w - 2 * x - listW - colGap
+	zFormats := StrSplit(formats, "|")
+	zRowsMax := 12 	; a long user.ahk list scrolls instead of growing the dialog
+	zRowsShown := Min(zFormats.Length, zRowsMax)
+
 	lb := Theme.Add(g, "ListView", "x" x " y" y " w" listW " h200 -Hdr -Multi -E0x200 +Border vzchosenformat", ["Format"])
-	lb.ModifyCol(1, listW - 24) 	; leaves room for the vertical scrollbar so no horizontal one appears
 	lb.Opt("Background" Theme.Hex("surface"))
-	for zfName in StrSplit(formats, "|")
+	for zfName in zFormats
 		lb.Add("", zfName)
+
+	; Measure the real row height (LVM_GETITEMRECT) and the control's border overhead so the list
+	; is sized to whole rows only, showing every format without scrolling when it fits.
+	zItemRc := Buffer(16, 0)
+	NumPut("Int", 0, zItemRc, 0) 	; LVIR_BOUNDS
+	SendMessage(0x100E, 0, zItemRc.Ptr, lb.Hwnd) 	; LVM_GETITEMRECT, row 0
+	zRowTop0 := NumGet(zItemRc, 4, "Int")
+	if (zFormats.Length >= 2) {
+		NumPut("Int", 0, zItemRc, 0)
+		SendMessage(0x100E, 1, zItemRc.Ptr, lb.Hwnd) 	; row 1
+		zRowH := NumGet(zItemRc, 4, "Int") - zRowTop0
+	} else
+		zRowH := NumGet(zItemRc, 12, "Int") - zRowTop0
+	zClientRc := Buffer(16, 0)
+	DllCall("GetClientRect", "Ptr", lb.Hwnd, "Ptr", zClientRc)
+	zBorderH := 200 - (NumGet(zClientRc, 12, "Int") - NumGet(zClientRc, 4, "Int"))
+	listH := zRowsShown * zRowH + zBorderH
+	lb.Move(,, , listH)
+
+	; the column only needs to leave room for the scrollbar when the list actually scrolls
+	zNeedsScroll := zFormats.Length > zRowsShown
+	lb.ModifyCol(1, listW - (zNeedsScroll ? SysGet(2) : 0) - 2) 	; SysGet(2) = SM_CXVSCROLL
+
 	g.SetFont("s10", "Consolas")
-	editCtl := Theme.Add(g, "Edit", "x" (x + listW + colGap) " y" y " w" editW " h200 -E0x200 +Border +Multi vzedit", zin)
+	editCtl := Theme.Add(g, "Edit", "x" (x + listW + colGap) " y" y " w" editW " h" listH " -E0x200 +Border +Multi vzedit", zin)
 	g.SetFont("s10 c" Theme.Hex("text"), Theme.FontName)
-	y += 200 + 14
+	y += listH + 14
 
 	Theme.Section(g, x, y, w - 2 * x, TXT.CMF_info)
 	y += 30
