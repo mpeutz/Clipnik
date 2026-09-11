@@ -5,7 +5,7 @@
 ;   IgnoredWindowsWin.Open(ownerGui := "")
 
 class IgnoredWindowsWin {
-	static g := "", lv := "", picking := false, picked := "", pickActive := false
+	static g := "", lv := "", picking := false, picked := "", pickActive := false, pickedExe := ""
 
 	static Open(owner := "") {
 		global PROGNAME, TXT
@@ -79,23 +79,13 @@ class IgnoredWindowsWin {
 
 	; Lets the user pick a window: the card follows the active window's class until Space accepts or Esc cancels.
 	static Add() {
-		global TXT
 		if IgnoredWindowsWin.pickActive
 			return
-		IgnoredWindowsWin.pickActive := true, IgnoredWindowsWin.picked := ""
-		hkZ("Esc", IgnoredWindowsWin_PickEnd, 1)
-		hkZ("Space", IgnoredWindowsWin_PickAccept, 1)
-		SetTimer(IgnoredWindowsWin_PickTick, 200)
-		while IgnoredWindowsWin.pickActive
-			Sleep 20
-		SetTimer(IgnoredWindowsWin_PickTick, 0)
-		hkZ("Esc", IgnoredWindowsWin_PickEnd, 0)
-		hkZ("Space", IgnoredWindowsWin_PickAccept, 0)
-		Hud.Hide()
+		r := IgnoredWindowsWin.Pick()
 		if !IgnoredWindowsWin.g
 			return
 		try WinActivate(IgnoredWindowsWin.g.Hwnd)
-		cls := IgnoredWindowsWin.picked
+		cls := r["class"]
 		if (cls = "")
 			return
 		lv := IgnoredWindowsWin.lv
@@ -105,17 +95,34 @@ class IgnoredWindowsWin {
 		lv.Add("", cls)
 		IgnoredWindowsWin.Save()
 	}
+
+	; lets the user point at a window (Space accepts, Esc cancels); returns Map("class", cls, "exe", exe)
+	static Pick() {
+		IgnoredWindowsWin.pickActive := true, IgnoredWindowsWin.picked := "", IgnoredWindowsWin.pickedExe := ""
+		hkZ("Esc", IgnoredWindowsWin_PickEnd, 1)
+		hkZ("Space", IgnoredWindowsWin_PickAccept, 1)
+		SetTimer(IgnoredWindowsWin_PickTick, 200)
+		while IgnoredWindowsWin.pickActive
+			Sleep 20
+		SetTimer(IgnoredWindowsWin_PickTick, 0)
+		hkZ("Esc", IgnoredWindowsWin_PickEnd, 0)
+		hkZ("Space", IgnoredWindowsWin_PickAccept, 0)
+		Hud.Hide()
+		return Map("class", IgnoredWindowsWin.picked, "exe", IgnoredWindowsWin.pickedExe)
+	}
 }
 
 IgnoredWindowsWin_PickTick() {
 	global TXT
-	cls := ""
+	cls := "", exe := ""
 	try cls := WinGetClass("A")
-	Hud.Message(cls "`n`n" TXT.IGN_tip)
+	try exe := WinGetProcessName("A")
+	Hud.Message(cls " · " exe "`n`n" TXT.IGN_tip)
 }
 
 IgnoredWindowsWin_PickAccept(*) {
 	try IgnoredWindowsWin.picked := WinGetClass("A")
+	try IgnoredWindowsWin.pickedExe := WinGetProcessName("A")
 	IgnoredWindowsWin.pickActive := false
 }
 

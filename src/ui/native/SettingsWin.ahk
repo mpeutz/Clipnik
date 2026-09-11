@@ -12,7 +12,7 @@ class SettingsWin {
 	static g := ""
 	static c := Map()             ; value controls by key
 	static pages := Map()         ; page id -> Array of controls
-	static order := ["general", "history", "shortcuts", "channels", "appearance", "advanced"]
+	static order := ["general", "history", "shortcuts", "channels", "rules", "appearance", "advanced"]
 	static nav := Map()           ; page id -> {label, bar}
 	static current := ""
 	static dirty := false
@@ -27,6 +27,8 @@ class SettingsWin {
 	static NavW := 184, Pad := 24, FooterH := 52, RowH := 32, CheckH := 28, ItemH := 36, W := 760, H := 588
 	static suppress := false      ; true while controls are being filled programmatically
 	static listening := false
+	static rules := []            ; working copy of Rules.List, edited until Apply/OK
+	static rulesLv := ""
 
 	static Open() {
 		if (SettingsWin.g && !GuiAlive(SettingsWin.g))
@@ -66,6 +68,7 @@ class SettingsWin {
 		SettingsWin.BuildHistory()
 		SettingsWin.BuildShortcuts()
 		SettingsWin.BuildChannels()
+		SettingsWin.BuildRules()
 		SettingsWin.BuildAppearance()
 		SettingsWin.BuildAdvanced()
 		for id in SettingsWin.order
@@ -95,8 +98,8 @@ class SettingsWin {
 		global TXT
 		g := SettingsWin.g
 		navW := SettingsWin.NavW, itemH := SettingsWin.ItemH
-		titles := Map("general", TXT.SET_general, "history", TXT.SET_cb, "shortcuts", TXT.SET_shortcuts, "channels", TXT.SET_channels, "appearance", TXT.SET_appearance, "advanced", TXT.SET_advancedPage)
-		icons := Map("general", "settings", "history", "history", "shortcuts", "keyboard", "channels", "layout-grid", "appearance", "palette", "advanced", "sliders-horizontal")
+		titles := Map("general", TXT.SET_general, "history", TXT.SET_cb, "shortcuts", TXT.SET_shortcuts, "channels", TXT.SET_channels, "rules", TXT.SET_rules, "appearance", TXT.SET_appearance, "advanced", TXT.SET_advancedPage)
+		icons := Map("general", "settings", "history", "history", "shortcuts", "keyboard", "channels", "layout-grid", "rules", "zap", "appearance", "palette", "advanced", "sliders-horizontal")
 		hasIcons := Theme.HasIcons()
 		y := 0
 		SettingsWin.Tile(0, 0, navW, 8)                                      ; top pad
@@ -384,6 +387,89 @@ class SettingsWin {
 		SettingsWin.ButtonRow(TXT.IGN__name, TXT.SET_manage, (*) => IgnoredWindowsWin.Open(SettingsWin.g), TXT.SET_ignoredHint)
 	}
 
+	static BuildRules() {
+		global TXT
+		g := SettingsWin.g
+		SettingsWin.PageStart("rules", TXT.SET_rules)
+		x := SettingsWin.ContentX(), w := SettingsWin.ContentW()
+		g.SetFont("s9 c" Theme.Hex("muted"))
+		SettingsWin.Reg(g.Add("Text", "x" x " y" SettingsWin.y " w" w " h18", TXT.SET_rulesHint), "stretch")
+		g.SetFont("s10 c" Theme.Hex("text"))
+		SettingsWin.y += 26
+		lv := Theme.Add(g, "ListView", "x" x " y" SettingsWin.y " w" w " h280 -E0x200 +Border Checked -Multi", ["", TXT.SET_ruleWhen, TXT.SET_ruleThen])
+		lv.ModifyCol(1, 28), lv.ModifyCol(2, 300), lv.ModifyCol(3, 200)
+		lv.OnEvent("ItemCheck", SettingsWin_RuleCheck)
+		lv.OnEvent("DoubleClick", (*) => SettingsWin.RuleEdit())
+		SettingsWin.rulesLv := lv
+		SettingsWin.Reg(lv, "stretch")
+		SettingsWin.y += 290
+		bx := x
+		for spec in [[TXT.SET_ruleAdd, (*) => SettingsWin.RuleAdd()], [TXT.SET_ruleEdit, (*) => SettingsWin.RuleEdit()], [TXT.SET_ruleRemove, (*) => SettingsWin.RuleRemove()]] {
+			b := Theme.Add(g, "Button", "x" bx " y" SettingsWin.y " w84 h28", spec[1])
+			b.OnEvent("Click", spec[2]), SettingsWin.Reg(b), bx += 92
+		}
+		up := Theme.Add(g, "Button", "x" (SettingsWin.ContentRight() - 84 - 8 - 84) " y" SettingsWin.y " w84 h28", TXT.SET_ruleUp)
+		up.OnEvent("Click", (*) => SettingsWin.RuleMove(-1)), SettingsWin.Reg(up, "right", 84 + 8 + 84)
+		dn := Theme.Add(g, "Button", "x" (SettingsWin.ContentRight() - 84) " y" SettingsWin.y " w84 h28", TXT.SET_ruleDown)
+		dn.OnEvent("Click", (*) => SettingsWin.RuleMove(1)), SettingsWin.Reg(dn, "right", 84)
+		SettingsWin.y += 36
+		SettingsWin.rules := []
+		for r in Rules.List
+			SettingsWin.rules.Push(r.Clone())
+		SettingsWin.FillRules()
+	}
+
+	static FillRules(selectRow := 0) {
+		lv := SettingsWin.rulesLv
+		lv.Delete()
+		for r in SettingsWin.rules {
+			d := Rules.Describe(r)
+			lv.Add(r["on"] ? "Check" : "", "", d[1], d[2])
+		}
+		if selectRow
+			lv.Modify(selectRow, "Select Focus")
+	}
+
+	static RuleSelected() {
+		lv := SettingsWin.rulesLv
+		return lv ? lv.GetNext() : 0
+	}
+
+	static RuleAdd() {
+		r := RuleDialog.Open(SettingsWin.g, Rules.New())
+		if (r = "")
+			return
+		SettingsWin.rules.Push(r)
+		SettingsWin.FillRules(SettingsWin.rules.Length), SettingsWin.SetDirty(true)
+	}
+
+	static RuleEdit() {
+		i := SettingsWin.RuleSelected()
+		if !i
+			return
+		r := RuleDialog.Open(SettingsWin.g, SettingsWin.rules[i])
+		if (r = "")
+			return
+		SettingsWin.rules[i] := r
+		SettingsWin.FillRules(i), SettingsWin.SetDirty(true)
+	}
+
+	static RuleRemove() {
+		i := SettingsWin.RuleSelected()
+		if !i
+			return
+		SettingsWin.rules.RemoveAt(i)
+		SettingsWin.FillRules(Min(i, SettingsWin.rules.Length)), SettingsWin.SetDirty(true)
+	}
+
+	static RuleMove(delta) {
+		i := SettingsWin.RuleSelected(), j := i + delta
+		if (!i || j < 1 || j > SettingsWin.rules.Length)
+			return
+		t := SettingsWin.rules[i], SettingsWin.rules[i] := SettingsWin.rules[j], SettingsWin.rules[j] := t
+		SettingsWin.FillRules(j), SettingsWin.SetDirty(true)
+	}
+
 	static BuildAppearance() {
 		global TXT, ini_theme, ini_accent, ini_IsMessage, ini_toastPosition, ini_CopyBeep, beepFrequency, ini_showPastingTip, ini_pstMode_X, ini_pstMode_Y
 		g := SettingsWin.g
@@ -551,6 +637,7 @@ class SettingsWin {
 		v["default_image_editor"] := c["default_image_editor"].Value
 		v["Priority"] := ["L", "B", "N", "A", "H"][c["Priority"].Value]
 		v["RAM_Flush"] := c["RAM_Flush"].Value
+		v["Rules"] := SettingsWin.rules
 		return v
 	}
 
@@ -757,4 +844,11 @@ SettingsWin_PickAccent(*) {
 SettingsWin_UseCursor(*) {
 	SettingsWin.c["pstMode_X"].Value := "", SettingsWin.c["pstMode_Y"].Value := ""
 	SettingsWin.SetDirty(true)
+}
+
+SettingsWin_RuleCheck(lv, row, checked) {
+	if (row >= 1 && row <= SettingsWin.rules.Length) {
+		SettingsWin.rules[row]["on"] := checked ? 1 : 0
+		SettingsWin.SetDirty(true)
+	}
 }

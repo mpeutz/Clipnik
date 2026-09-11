@@ -179,6 +179,8 @@ save_Settings(v) {
 		Theme.SetMode(v["Theme"], v["Accent"])
 	if (v["pstMode_X"] != ini_pstMode_X || v["pstMode_Y"] != ini_pstMode_Y)
 		Hud.ClearAnchor()
+	if v.Has("Rules")
+		Rules.Save(v["Rules"])
 	;load_Settings() then loads the saved values into the globals
 }
 

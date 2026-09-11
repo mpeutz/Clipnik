@@ -96,6 +96,17 @@ ControlClick("&Apply", title)
 Sleep 1500
 check("theme restored", IniRead(ini, "Main", "Theme", "") = oldTheme)
 
+; --- Rules page: Add opens the editor, Cancel closes it
+WinActivate(title)
+ControlClick(cj["TXT.SET_rules"], title)
+Sleep 400
+check("rules list shown", ControlGetVisible("SysListView321", title))
+ControlClick(cj["TXT.SET_ruleAdd"], title)
+check("rule editor opens", WinWait(cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI", , 4) != 0)
+Sleep 300
+ControlClick(cj["TXT.SET_cancel"], cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI")
+check("rule editor closed", WinWaitClose(cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI", , 3))
+
 ; --- restore the other values through the window and close with OK
 WinActivate(title)
 ControlClick("General", title)
