@@ -43,9 +43,9 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .iconbtn:hover { background: var(--hover); color: var(--text); }
 .iconbtn:disabled { opacity: .4; pointer-events: none; }
 .iconbtn svg { width: 15px; height: 15px; }
-.badge { font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); white-space: nowrap; }
+.badge { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 4px; background: var(--surfaceAlt); white-space: nowrap; line-height: 1.4; vertical-align: middle; }
 .badge.accent { background: var(--accent); color: var(--accentText); }
-.badge.kind { background: color-mix(in srgb, var(--accent) 18%, var(--surfaceAlt)); letter-spacing: .04em; font-weight: 600; font-size: 10px; }
+.badge.kind { background: color-mix(in srgb, var(--accent) 18%, var(--surfaceAlt)); letter-spacing: .04em; font-weight: 600; font-size: 10px; line-height: 14px; }
 .split { display: flex; flex-grow: 1; min-height: 0; border-top: 1px solid var(--border); position: relative; }
 .pane { display: flex; flex-direction: column; min-width: 0; flex-grow: 1; }
 .table { flex-grow: 1; overflow: auto; outline: 0; }
