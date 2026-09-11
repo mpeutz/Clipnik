@@ -136,26 +136,39 @@ plugin_pformat_commonformats(zin) {
 	zDone := "", zOut := "", zFobj := ""
 
 	GuiDestroy("commonformat")
-	g := Gui("+AlwaysOnTop +ToolWindow -MaximizeBox", "Choose Format")
+	g := Gui("+AlwaysOnTop +ToolWindow -MaximizeBox", TXT.CMF_title)
 	CJGUI["commonformat"] := g
+	Theme.ApplyToGui(g)
+	g.MarginX := 20, g.MarginY := 14
 
 	ztF := A_ScriptDir "\plugins\pformat.commonformats.lib\user.ahk"
 	formats := plugin_pformat_commonformats_listfunc(A_ScriptDir "\plugins\pformat.commonformats.ahk")
 	if (ztemp := plugin_pformat_commonformats_listfunc(ztF))
 		formats .= "|" ztemp
-	lb := g.Add("ListBox", "x5 y5 r15 w140 vzchosenformat section", StrSplit(formats, "|"))
-	editCtl := g.Add("Edit", "x+10 w500 h200 vzedit +Multi", zin)
 
-	g.Add("GroupBox", "xs y+5 h70 w650", "Info")
-	info := g.Add("Edit", "xp+5 yp+15 w640 h50 +ReadOnly -Border vzinfo")
-
-	g.Add("Button", "xs y+40 +Default", "OK").OnEvent("Click", onOK)
-	g.Add("Button", "x+30 yp", TXT.SET_apply).OnEvent("Click", onApply)
-	g.Add("Text", "x+55 yp-15", "Input Field")
-	g.SetFont("s10", "Lucida Console")
+	w := 680, x := 20, y := 14, listW := 150, colGap := 16
+	editW := w - 2 * x - listW - colGap
+	lb := Theme.Add(g, "ListBox", "x" x " y" y " w" listW " h200 vzchosenformat", StrSplit(formats, "|"))
 	g.SetFont("s10", "Consolas")
-	inputfield := g.Add("Edit", "x+10 yp-2 w441 h40 vzinputfield")
-	g.SetFont()
+	editCtl := Theme.Add(g, "Edit", "x" (x + listW + colGap) " y" y " w" editW " h200 -E0x200 +Border +Multi vzedit", zin)
+	g.SetFont("s10 c" Theme.Hex("text"), Theme.FontName)
+	y += 200 + 14
+
+	Theme.Section(g, x, y, w - 2 * x, TXT.CMF_info)
+	y += 30
+	info := Theme.Add(g, "Edit", "x" x " y" y " w" (w - 2 * x) " h50 +ReadOnly -Border -E0x200 vzinfo")
+	info.Opt("Background" Theme.Hex("bg"))
+	y += 50 + 14
+
+	g.Add("Text", "x" x " y" y " w100 h28 +0x200", TXT.CMF_input)
+	g.SetFont("s10", "Consolas")
+	inputfield := Theme.Add(g, "Edit", "x" (x + 110) " y" y " w" (w - 2 * x - 110) " h28 -E0x200 +Border vzinputfield")
+	g.SetFont("s10 c" Theme.Hex("text"), Theme.FontName)
+	y += 28 + 16
+
+	Theme.Add(g, "Button", "x" (w - x - 76 - 8 - 76) " y" y " w76 h28 Default", "OK").OnEvent("Click", onOK)
+	Theme.Add(g, "Button", "x" (w - x - 76) " y" y " w76 h28", TXT.SET_apply).OnEvent("Click", onApply)
+
 	lb.OnEvent("Change", onChosen)
 	lb.OnEvent("DoubleClick", onChosenDouble)
 	inputfield.OnEvent("Change", onInput)

@@ -719,3 +719,6 @@ TRF_desc_markdownLink = [host](url)
 TRF_desc_prettyJson = Indent two spaces
 TRF_desc_minifyJson = Strip whitespace outside strings
 TRF_desc_base64 = Decode when the clip is valid base64
+CMF_title = Choose Format
+CMF_info = Info
+CMF_input = Input field
