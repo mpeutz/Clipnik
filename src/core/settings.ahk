@@ -78,6 +78,7 @@ load_Settings(all := false) {
 	ini_respectExclusion := IniRead(CONFIGURATION_FILE, "Main", "respectExclusionFormats", 1)
 	ini_searchUsesWindow := IniRead(CONFIGURATION_FILE, "Advanced", "SearchUsesWindow", 0)
 	ini_prewarmWebViews := IniRead(CONFIGURATION_FILE, "Advanced", "PrewarmWebViews", 1) ? 1 : 0
+	Rules.Load()
 	ini_trayMenu := IniRead(CONFIGURATION_FILE, "Main", "TrayMenu", "card") = "system" ? "system" : "card"
 }
 

@@ -548,12 +548,22 @@ clipPref(ch, clip, name) {
 
 clipChange(CErrorlevel, clipboard_copy) {
 	global
-	local temp, activeclass, returnV := ""
+	local temp, activeclass, returnV := "", ruleKind, ruleApp, ruleCls, rule
 
 	if (CErrorlevel = 1)
 	{
 		if (clipboard_copy != LASTCLIP) || (clipboard_copy == "")        ;dont let go if lastclip = clipboard_copy = <empty>
 		{
+			; copy-time rules: evaluated before anything is stored
+			ruleKind := ClipType.Detect(clipboard_copy), ruleApp := "", ruleCls := ""
+			try ruleApp := WinGetProcessName("A")
+			try ruleCls := WinGetClass("A")
+			rule := Rules.Evaluate(Rules.List, ruleKind, clipboard_copy, ruleApp, ruleCls)
+			if IsObject(rule) && (rule["action"] = "ignore") {
+				LASTCLIP := clipboard_copy
+				Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
+				return
+			}
 			CURSAVE += 1
 
 			if ISACTIVEEXCEL
@@ -569,6 +579,13 @@ clipChange(CErrorlevel, clipboard_copy) {
 
 			LASTKIND := ClipType.Detect(LASTCLIP)
 			ClipType.Store(CN.NG, CURSAVE, LASTKIND)
+
+			if IsObject(rule) {
+				switch rule["action"] {
+					case "transform": Rules_ApplyTransform(rule["arg"])
+					case "tag": AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"])
+				}
+			}
 
 			if NOINCOGNITO && (CN.Name != "pit") {
 				addHistoryText(LASTCLIP, A_Now, LASTKIND)
@@ -586,6 +603,10 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 
 			TEMPSAVE := CURSAVE
+			if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total) {
+				API.manageClip(rule["arg"], CN.NG, 1, 0)   ; move the newest clip out of the active channel
+				TEMPSAVE := CURSAVE
+			}
 			while (CURSAVE >= TOTALCLIPS)
 				compacter()
 
@@ -1619,6 +1640,33 @@ showCopyToast(text) {
 	Toast.Show(text, extra != "" ? 2500 : 900, "info", "copy", extra)
 }
 
+; rewrites the just-saved clip (file, in-memory text, LASTCLIP) with a paste format applied
+Rules_ApplyTransform(formatName) {
+	global PLUGINS, LASTCLIP, CDS, CN, CURSAVE, CLIPS_dir
+	fn := ""
+	for k, v in PLUGINS.pformat
+		if (v["name"] = formatName)
+			fn := v["*"]
+	if (fn = "")
+		return
+	t := callPformat(fn, LASTCLIP)
+	if (t == LASTCLIP || t = "")
+		return
+	API.blockMonitoring(1)
+	try {
+		A_Clipboard := t
+		ClipWait(1)
+		FileDelete(CLIPS_dir "/" CURSAVE ".avc")
+		FileAppend(ClipboardAll(), CLIPS_dir "/" CURSAVE ".avc")
+		CDS[CN.NG][CURSAVE] := t, LASTCLIP := t
+	}
+	API.blockMonitoring(0, 5)
+}
+
+reloadRules() {
+	Rules.Load()
+}
+
 changeIcon() {
 	global
 	try {
@@ -1873,6 +1921,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\src\core\cliptype.ahk
 #Include %A_ScriptDir%\src\core\transforms.ahk
+#Include %A_ScriptDir%\src\core\rules.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
