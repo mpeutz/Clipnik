@@ -54,13 +54,23 @@ WinWaitActive("cj-pm-target", , 5)
 ed.Focus()
 Sleep 400
 
-step("action mode: Ctrl+Shift+A shows the console, Esc closes it")
+step("action mode: Ctrl+Shift+A shows the ring, Esc closes it, H opens History")
 SendEvent("^+a")
 Sleep 700
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode card shown")
+check(cj.runFunction("Ring_IsOpen()") = 1, "action ring shown")
 SendEvent("{Esc}")
 Sleep 500
-check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode closed by Esc")
+check(cj.runFunction("Ring_IsOpen()") = 0, "action ring closed by Esc")
+SendEvent("^+a")
+Sleep 700
+SendEvent("h")
+hist := cj["TXT.HST__name"] " ahk_class AutoHotkeyGUI"
+check(WinWait(hist, , 5) != 0, "H opened Clipboard History")
+try WinClose(hist)
+Sleep 500
+WinActivate("cj-pm-target")
+ed.Focus()
+Sleep 300
 check(!errorDialog(), "no error after action mode")
 
 step("Ctrl+V then A goes to clip 1, V moves to clip 2")

@@ -1487,7 +1487,8 @@ actionmode_run(*) {
 	global
 	local temp_am, act
 	update_actionmode()
-	temp_am := Hud.Menu(ACTIONMODE.items, ACTIONMODE.keys, PROGNAME " " TXT.ACT__name)
+	temp_am := Ring.Pick(ActionRing_Items(), {prefix: "", trigger: ActionRing_Trigger(), idleTitle: TXT.RNG_actionTitle
+		, extraKeys: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "D"]})
 	act := ACTIONMODE[temp_am]
 	if (act != "Exit_actmd")
 	{
@@ -1503,6 +1504,39 @@ actionmode_run(*) {
 	}
 	else
 		EmptyMem()
+}
+
+; Action Mode entries for the ring: the everyday ones first, customizer-added ones last. D, Esc and the channel
+; digits stay on the keyboard (digits and D come back through extraKeys).
+ActionRing_Items() {
+	global ACTIONMODE, TXT
+	static order := ["H", "O", "E", "B", "P", "T", "C", "M", "L", "X", "F", "U", "F2", "F1"]
+	static icons := Map("H", "history", "O", "layout-grid", "E", "settings", "B", "pin", "P", "zap", "T", "ban"
+		, "C", "file", "M", "wrench", "L", "eye-off", "X", "folder", "F", "copy", "U", "clipboard-check"
+		, "F2", "keyboard", "F1", "circle-help")
+	items := [], seen := Map()
+	seen.CaseSense := "Off"
+	add(k) {
+		v := ACTIONMODE[k]
+		if (v = "" || seen.Has(k))
+			return
+		seen[k] := 1
+		cap := ACTIONMODE[k "_caption"]
+		ik := StrUpper(k)
+		items.Push({key: k, label: cap != "" ? cap : v, short: TXT["RNG_short_" ik], desc: TXT["RNG_act_" ik], icon: Theme.Icon(icons.Has(ik) ? icons[ik] : "chevron-right")})
+	}
+	for k in order
+		add(k)
+	for k, v in ACTIONMODE
+		if (!InStr(k, "_") && k != "Esc" && k != "D" && k != "keys" && k != "text" && k != "items" && !IsInteger(k))
+			add(k)
+	return items
+}
+
+; the letter of the Action Mode hotkey, whose held state lets a flick commit on release
+ActionRing_Trigger() {
+	global actionmode_K
+	return RegExReplace(actionmode_K, "[~*$!^+#<>]")
 }
 
 init_actionmode() {

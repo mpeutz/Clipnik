@@ -100,10 +100,11 @@ Sleep 800
 ; action mode
 SendEvent("^+a")
 Sleep 800
-snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-actionmode")
+check(cj.runFunction("Ring_IsOpen()") = 1, "action ring shown")
+snapWin("Clipjump_Ring ahk_class AutoHotkeyGUI", "card-actionmode")
 SendEvent("{Esc}")
 Sleep 500
-check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode closed by Esc")
+check(cj.runFunction("Ring_IsOpen()") = 0, "action ring closed by Esc")
 check(!errorDialog(), "no error dialogs")
 g.Destroy()
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
