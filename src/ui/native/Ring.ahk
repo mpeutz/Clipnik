@@ -47,6 +47,10 @@ class Ring {
 					Ring.Close("")
 			}
 		} finally {
+			; done first, before anything else unwinds: a hotkey thread already in flight when the exception
+			; hit (T2, so it can still be running) must find the ring already closed if it calls Choose/Close
+			; while BindKeys(false) is unbinding it, even though Close() itself was never reached on this path.
+			Ring.done := true
 			SetTimer(Ring_Tick, 0)
 			Ring.BindKeys(false)
 			DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 0)
@@ -118,16 +122,18 @@ class Ring {
 	static BindKeys(on) {
 		o := Ring.opts, pre := o.HasProp("prefix") ? o.prefix : ""
 		opt := on ? "On T2" : "Off T1"
-		; "*" (wildcard, placed before the "^"/"" prefix like "~*LButton" places it before its own prefix)
-		; so a letter, Esc or Enter still fires when a modifier is held: the flick gesture invites keeping
-		; Ctrl (paste mode) or Ctrl+Shift (Action Mode) down after the trigger, and a bare "h" hotkey does
-		; not fire while any extra modifier is held.
+		; No "*" wildcard here: the ring must register the SAME hotkey names paste mode already has bound
+		; (e.g. "^s", "^Enter", "^e") so this registration REPLACES them for as long as the ring is open --
+		; Formatting() calls Ring.Pick while every paste-mode hotkey is still live and only restores them
+		; afterwards via hkZ_pasteMode(1). A wildcard hotkey is a distinct hotkey from the plain one in AHK
+		; v2, so it would coexist with paste mode's instead of overriding it, and the paste-mode action would
+		; fire instead of the ring's pick.
 		for page in Ring.pages
 			for it in page
 				if (!it.HasProp("nav") && it.key != "")
-					Ring.BindKey("*" pre it.key, Ring_Key.Bind(it.key), opt)
-		Ring.BindKey("*" pre "Esc", Ring_Esc, opt)
-		Ring.BindKey("*" pre "Enter", Ring_Enter, opt)
+					Ring.BindKey(pre it.key, Ring_Key.Bind(it.key), opt)
+		Ring.BindKey(pre "Esc", Ring_Esc, opt)
+		Ring.BindKey(pre "Enter", Ring_Enter, opt)
 		; a click is caught on the mouse hook's own thread (On T2, ~ so it still reaches whatever is under
 		; the cursor): a synthetic Click() sent from this same process is a single blocking call with no
 		; message-pump gap in it, so GetKeyState polled from another timer can miss the whole down-up pair.
@@ -138,7 +144,7 @@ class Ring {
 		Hotkey("~*LButton up", Ring_MouseUp, opt)
 		if o.HasProp("extraKeys")
 			for kk in o.extraKeys
-				Ring.BindKey("*" pre kk, Ring_Key.Bind(kk), opt)
+				Ring.BindKey(pre kk, Ring_Key.Bind(kk), opt)
 		if (o.HasProp("triggerHotkey") && o.triggerHotkey != "")
 			Ring.BindKey(o.triggerHotkey, Ring_Trigger, opt)
 	}

@@ -94,16 +94,19 @@ check(Ring.Pick(items, {prefix: "", until: () => A_TickCount - t0 > 500}) = "", 
 later(400, () => SendEvent("5"))
 check(Ring.Pick(items, {prefix: "", extraKeys: ["5"]}) = "5", "an extra key returns itself")
 
-; Action Mode's items bind with no modifier -- a user who keeps Ctrl+Shift held after the Ctrl+Shift+A
-; trigger (the flick gesture invites it) must still have the letter fire; BindKeys' "*" wildcard covers
-; this. Ctrl is released in `finally` even if the check throws or fails, so a failure here does not leave
-; the desktop with Ctrl stuck down. The Esc at 1500ms is a safety net: if the wildcard regresses and "h"
-; never fires, this closes the ring (making the check fail cleanly) instead of hanging the suite.
+; Ring.BindKeys registers item letters/Esc/Enter with the SAME hotkey names paste mode already has bound
+; (no "*" wildcard), because paste mode leaves ^s/^Enter/^e/etc. registered while the ring is open and
+; depends on this same-name registration replacing them for the ring's lifetime (see the comment in
+; BindKeys). A wildcard would instead coexist with those hotkeys rather than override them, so a letter
+; typed while an unrelated modifier is held must NOT be picked up by the ring -- it is simply not consumed,
+; like any other AHK hotkey defined without "*". The safety-net timer releases Ctrl *before* sending Esc
+; (Ctrl+Esc opens the Start Menu on Windows) since the letter is expected to never fire here; Ctrl is
+; released again in `finally` so a failure here never leaves the desktop with Ctrl stuck down.
 SendEvent("{Ctrl down}")
 try {
     later(400, () => SendEvent("h"))
-    later(1500, () => SendEvent("{Esc}"))
-    check(Ring.Pick(items, {prefix: ""}) = "H", "a letter picks while a modifier is held")
+    later(700, () => (SendEvent("{Ctrl up}"), SendEvent("{Esc}")))
+    check(Ring.Pick(items, {prefix: ""}) = "", "a letter does not pick while an unrelated modifier is held (no wildcard)")
 } finally {
     SendEvent("{Ctrl up}")
 }
