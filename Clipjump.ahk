@@ -951,14 +951,15 @@ clipSaver() {
 			else
 				tempC := ClipboardAll()
 
+			temp21 := "Y"
 			if (SubStr(CN.Name, 1, 1) = "_") 		; protected channels
 			{
 				Critical "Off"
 				BeepAt(protected_DoBeep, 2000, 200)
-				temp21 := Hud.Confirm("{" CN.Name "}`n" TXT.TIP_confirmcopy, "Y N Insert")
+				temp21 := Hud.Confirm("{" CN.Name "}`n" TXT.TIP_confirmcopy, "Y N Insert")   ; "" = the card was hidden mid-prompt
 				Critical "On"
 			}
-			if (temp21 = "Y") || (temp21 = "")
+			if (temp21 = "Y")
 			{
 				FileAppend(tempC, CLIPS_dir "/" CURSAVE ".avc")
 				CDS[CN.NG][CURSAVE] := ISACTIVEEXCEL ? tempCB : A_Clipboard
@@ -1104,7 +1105,8 @@ ctrlCheck(*) {
 				Coutput := ""
 				if HasFuncByName(curPfunction)
 					Coutput := callPformat(curPfunction, zCb) 	; don't try here, the exception in fileread-filemissing-commonformats will nt allow it.
-				if STORE.ClipboardChanged {
+				; old pformat plugins flag the change themselves; built-in transforms just return the new text
+				if STORE.ClipboardChanged || (Coutput != "" && Coutput !== zCb) {
 					try A_Clipboard := Coutput, IScurCBACTIVE := 0
 				} else
 					ONCLIPBOARD := 1

@@ -114,21 +114,24 @@ Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 900
 
-step("Z opens the format menu; a letter picks Upper case; Z again closes")
+step("Z opens the format menu, Z closes it again; a letter picks Upper case")
 ed.Value := ""
 SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("z")
-Sleep 700
+Sleep 500
 check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "card still visible with the format menu")
+fmtBefore := cj["curPformat"]
+SendEvent("z")
+Sleep 500
+SendEvent("u")      ; a still-open menu would pick Upper case here
+Sleep 500
+check(cj["curPformat"] = fmtBefore, "Z closed the menu: U picked nothing (was [" fmtBefore "], now [" cj["curPformat"] "])")
+SendEvent("z")
+Sleep 700
 SendEvent("u")
 Sleep 700
 check(cj["curPformat"] = "Upper case", "U picked Upper case: [" cj["curPformat"] "]")
-SendEvent("z")
-Sleep 500
-SendEvent("z")
-Sleep 500
-check(cj["curPformat"] = "Upper case", "Z then Z leaves the format alone")
 clipBeforeMenu := clipNo()
 SendEvent("v")
 Sleep 400
@@ -138,7 +141,7 @@ Sleep 400
 check(clipNo() = clipBeforeMenu, "C moves back onto the clip we're about to paste")
 SendEvent("{Ctrl up}")
 Sleep 900
-check(ed.Value = StrUpper(ed.Value) && InStr(ed.Value, StrUpper(stamp)), "pasted upper case: [" ed.Value "]")
+check(ed.Value == StrUpper(ed.Value) && InStr(ed.Value, StrUpper(stamp), true), "pasted upper case: [" ed.Value "]")
 
 step("O in the format menu picks Original and clears the format")
 SendEvent("{Ctrl down}v")

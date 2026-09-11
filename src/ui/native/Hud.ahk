@@ -556,14 +556,30 @@ class Hud {
 		check := Hud.KeyPressed.Bind(Hud)
 		loop parse keys, A_Space
 			if (A_LoopField != "")
-				hkZ(A_LoopField, check, 1)
+				Hud.BindKey(A_LoopField, check, "On T2")
 		while (Hud.pressed = "" && Hud.State == state && Hud.visible)
 			Sleep 20
 		loop parse keys, A_Space
 			if (A_LoopField != "")
-				hkZ(A_LoopField, check, 0)
+				Hud.BindKey(A_LoopField, check, "Off")
 		Hud.Hide()
 		return Hud.pressed
+	}
+
+	; Hotkey() directly (not hkZ): the card's keys need T2, so a second press of the key whose own thread is
+	; blocked here - Z re-pressed to close the format menu - is still delivered. Falls back to vk names like hkZ.
+	static BindKey(key, fn, opt) {
+		try {
+			Hotkey(key, fn, opt)
+			return
+		}
+		t := ""
+		loop parse key
+			t .= IsAlpha(A_LoopField) ? "vk" GetVKList(A_LoopField)[1] : A_LoopField
+		try
+			Hotkey(t, fn, opt)
+		catch
+			MsgBox("It looks like the hotkey " t " doesn't exist ? `nRefer to troubleshooting page in help file.", "Clipjump Warning", 16)
 	}
 
 	static KeyPressed(ThisHotkey := "", *) {
