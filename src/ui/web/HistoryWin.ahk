@@ -63,9 +63,7 @@ class HistoryWin {
 		asc := d is Map && d.Has("asc") ? (d["asc"] ? true : false) : false
 		kind := d is Map && d.Has("kind") ? d["kind"] : ""
 		r := historyQuery(q, partial, sortBy, asc, 0, 2000, kind)
-		for row in r["rows"]
-			if (row["type"] = 0 && row["kind"] = "")
-				row["kind"] := historyEnsureKind(row["id"])
+		historyEnsureKinds(r["rows"])   ; one transaction for the whole page, not an update per row
 		r["partial"] := partial ? 1 : 0
 		HistoryWin.host.Post("list", r)
 		HistoryWin.SendKinds()

@@ -19,7 +19,7 @@ createHisTable(){
 }
 
 ; adds the kind column to databases created before clip kinds existed (cheap: SQLite appends the column)
-historyMigrate() {
+historyAddKindColumn() {
 	global DB
 	has := false
 	if DB.GetTable("pragma table_info(history)", &tb) {
@@ -44,6 +44,26 @@ historyEnsureKind(id) {
 	kind := ClipType.Detect(row[3])
 	execSql('update history set kind="' kind '" where id=' id)
 	return kind
+}
+
+; classifies the unclassified text rows of a historyQuery result in one transaction, filling in each row's "kind"
+historyEnsureKinds(rows) {
+	global DB
+	todo := []
+	for row in rows
+		if (row["type"] = 0 && row["kind"] = "")
+			todo.Push(row)
+	if !todo.Length
+		return 0
+	began := DB.Exec("begin") ? true : false   ; false when a transaction is already open (the startup backfill)
+	try {
+		for row in todo
+			row["kind"] := historyEnsureKind(row["id"])
+	} finally {
+		if began
+			DB.Exec("commit")
+	}
+	return todo.Length
 }
 
 ; classifies up to batch old text rows; returns how many were updated (0 when done)
@@ -204,8 +224,9 @@ historyGet(id) {
 	return Map("id", data[1], "data", data[2], "type", data[3], "time", data[4], "size", data[5], "fileid", data[6], "kind", data[7])
 }
 
+; rewrites a text row; the kind is re-detected so it cannot describe the old text
 historySetText(id, text) {
-	execSql('update history set data="' escapeQuotesSql(text) '", size=' fileSizeFromStr(text) ' where id=' id, 1)
+	execSql('update history set data="' escapeQuotesSql(text) '", size=' fileSizeFromStr(text) ', kind="' ClipType.Detect(text) '" where id=' id, 1)
 }
 
 ; puts a history record on the system clipboard; returns true when something was copied

@@ -302,7 +302,7 @@ if (isnewdb == 1) {
 	migrateHistory()
 }
 
-historyMigrate()
+historyAddKindColumn()
 SetTimer(historyBackfillTick, -4000)   ; classify old rows in small batches after startup
 
 /*
@@ -548,21 +548,25 @@ clipPref(ch, clip, name) {
 
 clipChange(CErrorlevel, clipboard_copy) {
 	global
-	local temp, activeclass, returnV := "", ruleKind, ruleApp, ruleCls, rule
+	local temp, activeclass, returnV := "", ruleKind, ruleApp, ruleCls, rule, msg
 
 	if (CErrorlevel = 1)
 	{
 		if (clipboard_copy != LASTCLIP) || (clipboard_copy == "")        ;dont let go if lastclip = clipboard_copy = <empty>
 		{
-			; copy-time rules: evaluated before anything is stored
-			ruleKind := ClipType.Detect(clipboard_copy), ruleApp := "", ruleCls := ""
-			try ruleApp := WinGetProcessName("A")
-			try ruleCls := WinGetClass("A")
-			rule := Rules.Evaluate(Rules.List, ruleKind, clipboard_copy, ruleApp, ruleCls)
-			if IsObject(rule) && (rule["action"] = "ignore") {
-				LASTCLIP := clipboard_copy
-				Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
-				return
+			; copy-time rules: evaluated before anything is stored. Skipped for Excel, where clipboard_copy is
+			; still the previous clip's text and every rule would be judged on the wrong content.
+			rule := "", ruleKind := "", ruleApp := "", ruleCls := ""
+			if !ISACTIVEEXCEL {
+				ruleKind := ClipType.Detect(clipboard_copy)
+				try ruleApp := WinGetProcessName("A")
+				try ruleCls := WinGetClass("A")
+				rule := Rules.Evaluate(Rules.List, ruleKind, clipboard_copy, ruleApp, ruleCls)
+				if IsObject(rule) && (rule["action"] = "ignore") {
+					LASTCLIP := clipboard_copy
+					Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
+					return
+				}
 			}
 			CURSAVE += 1
 
@@ -582,7 +586,10 @@ clipChange(CErrorlevel, clipboard_copy) {
 
 			if IsObject(rule) {
 				switch rule["action"] {
-					case "transform": Rules_ApplyTransform(rule["arg"])
+					case "transform":
+						Rules_ApplyTransform(rule["arg"])
+						LASTKIND := ClipType.Detect(LASTCLIP)       ; the transform rewrote the clip
+						ClipType.Store(CN.NG, CURSAVE, LASTKIND)
 					case "tag": AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"])
 				}
 			}
@@ -592,8 +599,12 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 
 			BeepAt(ini_CopyBeep, beepFrequency)
-			if (copyMessage != "")
-				showCopyToast(copyMessage)
+			if (copyMessage != "") {
+				msg := copyMessage
+				if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total)
+					msg := MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}"
+				showCopyToast(msg)
+			}
 
 			if (CLIP_ACTION = "CUT")
 			{
@@ -1794,6 +1805,7 @@ editClip(cnl, clip, owner := "none") {
 		try FileDelete(clipLoc)
 		FileAppend(temp_clipboardall, clipLoc)
 		CDS[cnl][tmpsv] := temp_clipboard2
+		ClipType.Store(cnl, tmpsv, ClipType.Detect(temp_clipboard2))   ; the stored kind described the old text
 	}
 
 	Toast.Hide("edit")

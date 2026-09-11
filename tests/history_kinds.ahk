@@ -47,7 +47,7 @@ DB.Exec('insert into history (data, type, time, size) values ("https://example.c
 DB.Exec('insert into history (data, type, time, size) values ("plain words here", 0, "2026-09-10 10:01:00", 19)')
 DB.Exec('insert into history (data, type, time, size, fileid) values ("[IMAGE]", 1, "2026-09-10 10:02:00", 100, "cache\\history\\x.jpg")')
 
-historyMigrate()
+historyAddKindColumn()
 check(DB.GetTable("pragma table_info(history)", &ti) && InStr(ti2str(ti), "kind"), "migration adds the kind column")
 ti2str(tb) {
     s := ""
@@ -57,7 +57,7 @@ ti2str(tb) {
     }
     return s
 }
-historyMigrate()
+historyAddKindColumn()
 check(true, "migration is idempotent (no error on second run)")
 
 addHistoryText("mike@example.com", A_Now, "email")
@@ -82,6 +82,19 @@ r := historyQuery("", true, "time", false, 0, 50)
 check(r["rows"].Length = 5, "no filter returns all rows")
 kinds := historyKinds()
 check(kinds.Length = 4, "historyKinds lists the distinct kinds present (" kinds.Length ")")
+
+; rewriting a clip's text re-detects its kind (a url row that becomes plain text)
+historySetText(1, "plain words now")
+check(historyGet(1)["kind"] = "text", "historySetText re-detects the kind (" historyGet(1)["kind"] ")")
+
+; the History window classifies a page of rows in one transaction
+DB.Exec('insert into history (data, type, time, size) values ("https://batch.example.com", 0, "2026-09-10 10:03:00", 25)')
+rows := historyQuery("batch.example", true, "time", false, 0, 50)["rows"]
+check(rows.Length = 1 && rows[1]["kind"] = "", "the new row starts unclassified")
+check(historyEnsureKinds(rows) = 1, "historyEnsureKinds classifies the one unclassified row")
+check(rows[1]["kind"] = "url", "historyEnsureKinds fills the kind in the array")
+check(historyGet(rows[1]["id"])["kind"] = "url", "historyEnsureKinds writes the kind back")
+check(historyEnsureKinds(rows) = 0, "nothing to classify: no transaction")
 
 DB.CloseDB()
 try FileDelete(tmp)
