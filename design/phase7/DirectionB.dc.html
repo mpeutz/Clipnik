@@ -17,12 +17,13 @@
     .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
     .ring { position: absolute; user-select: none; }
     .ring svg { display: block; }
-    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10px; line-height: 1.2; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
+    .wl .lt { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 13px; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: .02em; }
     .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
-    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
-    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
-    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .hub .ht { font-size: 12px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
     .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
     .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
     .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -36,7 +37,7 @@
   </style>
 </helmet>
 <div class="stage" style="width: 580px; height: 620px; {{vars}}">
-      <div class="hd"><span class="t">B · Two tracks</span><span class="s">all sixteen formats in one gesture</span></div>
+      <div class="hd"><span class="t">B · Two tracks</span><span class="s">all fourteen formats in one gesture</span></div>
       <div class="desk">
       <div class="ring" style="{{ringStyle}}" onMouseMove="{{move}}" onMouseLeave="{{leave}}" onClick="{{pick}}">
         <svg width="460" height="460" viewBox="0 0 460 460">
@@ -47,10 +48,10 @@
           <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
             <g transform="{{w.itf}}" style="{{w.istyle}}"><path d="{{w.icon}}"></path></g>
           </sc-for>
-          <circle cx="230" cy="230" r="46" style="{{hubStyle}}"></circle>
+          <circle cx="230" cy="230" r="{{hubR}}" style="{{hubStyle}}"></circle>
         </svg>
         <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
-          <div class="wl" style="{{w.lstyle}}"><div>{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
+          <div class="wl" style="{{w.lstyle}}"><div class="lt">{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
         </sc-for>
         <div class="hub" style="{{hubBox}}">
           <div class="ht" style="{{hubTitleStyle}}">{{hubTitle}}</div>
@@ -65,7 +66,7 @@
       </div>
 </div>
 </x-dc>
-<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"$preview":{"width":580,"height":620}}'>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"gap":{"editor":"range","min":2,"max":10,"step":1,"unit":"px","default":8,"section":"Ring"},"corner":{"editor":"range","min":0,"max":14,"step":1,"unit":"px","default":8,"section":"Ring"},"$preview":{"width":580,"height":620}}'>
 class Component extends DCLogic {
   hex(s) { return parseInt(String(s).replace('#', ''), 16); }
   mix(a, b, t) {
@@ -106,51 +107,78 @@ class Component extends DCLogic {
     var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
     return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
   }
+  look(n, r0, r1) {
+    var gap = this.props.gap === undefined ? 8 : Number(this.props.gap);
+    var corner = this.props.corner === undefined ? 8 : Number(this.props.corner);
+    var step = 2 * Math.PI / n;
+    return { gap: gap, corner: Math.max(0, Math.min(corner, 0.3 * r0 * step, (r1 - r0) / 2 - 2)) };
+  }
+  roundSector(cx, cy, r0, r1, a0, a1, gap, rad) {
+    if (a1 - a0 >= 359.9) {
+      return 'M ' + (cx - r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx + r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx - r1) + ' ' + cy + ' Z'
+        + ' M ' + (cx - r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx + r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx - r0) + ' ' + cy + ' Z';
+    }
+    var d = gap / 2, k = Math.PI / 180;
+    var corner = function (a, sign, R, outer) {
+      var e = [Math.sin(a * k), -Math.cos(a * k)], nn = [sign * Math.cos(a * k), sign * Math.sin(a * k)];
+      var cr = outer ? R - rad : R + rad, off = d + rad;
+      var t = Math.sqrt(Math.max(cr * cr - off * off, 0));
+      var c = [e[0] * t + nn[0] * off, e[1] * t + nn[1] * off];
+      var len = Math.sqrt(c[0] * c[0] + c[1] * c[1]) || 1;
+      return { line: [e[0] * t + nn[0] * d, e[1] * t + nn[1] * d], arc: [c[0] / len * R, c[1] / len * R] };
+    };
+    var P = function (q) { return (Math.round((cx + q[0]) * 100) / 100) + ' ' + (Math.round((cy + q[1]) * 100) / 100); };
+    var AO = corner(a0, 1, r1, true), BO = corner(a1, -1, r1, true), BI = corner(a1, -1, r0, false), AI = corner(a0, 1, r0, false);
+    var big = (a1 - a0) > 180 ? 1 : 0, f = ' A ' + rad + ' ' + rad + ' 0 0 1 ';
+    return 'M ' + P(AO.arc) + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + P(BO.arc) + f + P(BO.line)
+      + ' L ' + P(BI.line) + f + P(BI.arc) + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + P(AI.arc) + f + P(AI.line)
+      + ' L ' + P(AO.line) + f + P(AO.arc) + ' Z';
+  }
   renderVals() {
     var p = this.pal(), st = this.state || {}, self = this;
-    var inner = [{"label":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","key":"T","desc":"Drop fonts and colors, keep the text","dim":false},{"label":"Strip URL tracking","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","key":"M","desc":"[host](url)","dim":false},{"label":"No formatting","key":"N","desc":"Plain text only","dim":false},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"Pretty JSON","key":"P","desc":"Indent two spaces","dim":false},{"label":"Minified JSON","key":"J","desc":"Strip whitespace outside strings","dim":false}], outer = [{"label":"Upper case","key":"U","desc":"THE WHOLE CLIP","dim":true},{"label":"Lower case","key":"W","desc":"the whole clip","dim":true},{"label":"Title case","key":"I","desc":"First Letter Of Each Word","dim":true},{"label":"Sentence case","key":"E","desc":"First letter of each sentence","dim":true},{"label":"Slugify","key":"G","desc":"lower-case-with-dashes","dim":true},{"label":"Decode base64","key":"B","desc":"Decode when the clip is valid base64","dim":true},{"label":"No formatting","key":"N","desc":"Plain text only","dim":true},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":true}];
-    var CX = 230, CY = 230, HUB = 46, n = 8, step = 45, gap = 1.8;
-    var tracks = [[inner, 66, 146, 0.52, 78, 39], [outer, 154, 212, 0.5, 96, 48]];
+    var inner = [{"label":"Original","short":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","short":"Trim","key":"T","desc":"Strip off formatting","dim":false},{"label":"Strip URL tracking","short":"Untrack","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","short":"Markdown","key":"M","desc":"[host](url)","dim":false},{"label":"Pretty JSON","short":"Pretty","key":"P","desc":"Indent two spaces","dim":false},{"label":"Minified JSON","short":"Minify","key":"J","desc":"Strip whitespace outside strings","dim":false},{"label":"SentenceCase","short":"Sentence","key":"E","desc":"Paste text in sentence case","dim":false},{"label":"Common Formats","short":"Common","key":"N","desc":"Pick from many predefined formats","dim":false}], outer = [{"label":"Title case","short":"Title","key":"I","desc":"First Letter Of Each Word","dim":true},{"label":"Upper case","short":"UPPER","key":"U","desc":"THE WHOLE CLIP","dim":true},{"label":"Lower case","short":"lower","key":"W","desc":"the whole clip","dim":true},{"label":"One line","short":"Flatten","key":"L","desc":"Collapse every run of whitespace","dim":true},{"label":"Slugify","short":"Slug","key":"G","desc":"lower-case-with-dashes","dim":true},{"label":"Decode base64","short":"Base64","key":"B","desc":"Decode when the clip is valid base64","dim":true}];
+    var CX = 230, CY = 230, HUB = 50;
+    var G = this.look(8, HUB + 8, 146).gap;
+    var tracks = [[inner, HUB + G, 146], [outer, 146 + G, 212]];
     var hv = st.hv || { t: -1, i: -1 };
     var onLabel = st.on || 'Trim Formatting';
     var wedges = [];
     tracks.forEach(function (tr, ti) {
+      var m = tr[0].length, step = 360 / m, mid = (tr[1] + tr[2]) / 2, corner = self.look(m, tr[1], tr[2]).corner;
+      var lw = Math.min(90, Math.floor(2 * mid * Math.sin(Math.PI / m) - G - 14));
       tr[0].forEach(function (it, i) {
         var isHover = hv.t === ti && hv.i === i, isOn = it.label === onLabel && ti === 0;
-        var c = self.pt(CX, CY, tr[1] + (tr[2] - tr[1]) * tr[3], i * step);
+        var c = self.pt(CX, CY, mid, i * step);
         var fill = isHover ? p.accent : (isOn ? p.accentSoft : (ti ? p.dim : p.surfaceAlt));
         wedges.push({
-          d: self.sector(CX, CY, tr[1], tr[2], i * step - step / 2 + gap / 2, i * step + step / 2 - gap / 2),
-          style: 'fill:' + fill + ';stroke:' + ((isOn && !isHover) ? p.accent : 'none') + ';stroke-width:1',
-          lstyle: 'left:' + (c[0] - tr[5]) + 'px; top:' + (c[1] - 18) + 'px; width:' + tr[4] + 'px; color:' + (isHover ? p.accentText : (ti ? p.muted : p.text)),
+          d: self.roundSector(CX, CY, tr[1], tr[2], i * step - step / 2, i * step + step / 2, G, corner),
+          style: 'fill:' + fill + ';stroke:' + ((isOn && !isHover) ? p.accent : 'none') + ';stroke-width:1;fill-rule:evenodd',
+          lstyle: 'left:' + (c[0] - lw / 2) + 'px; top:' + (c[1] - 14) + 'px; width:' + lw + 'px; color:' + (isHover ? p.accentText : (ti ? p.muted : p.text)),
           kstyle: 'background:' + (isHover ? 'rgba(0,0,0,.16)' : p.surface) + ';color:' + (isHover ? p.accentText : p.muted),
-          label: it.label, key: it.key, icon: '', itf: 'translate(-99,-99)', istyle: 'display:none'
+          label: it.short || it.label, key: it.key, icon: '', itf: 'translate(-99,-99)', istyle: 'display:none'
         });
       });
     });
     var h = hv.t >= 0 ? tracks[hv.t][0][hv.i] : null;
+    var which = function (e) {
+      var t = self.aim(e, CX, CY, 8);
+      if (t.dist < HUB || t.dist > 214) return { t: -1, i: -1 };
+      var tr = t.dist < 146 + G / 2 ? 0 : 1, m = tracks[tr][0].length;
+      return { t: tr, i: Math.round(t.deg / (360 / m)) % m };
+    };
     return {
-      vars: p.vars, wedges: wedges,
+      vars: p.vars, wedges: wedges, hubR: HUB,
       ringStyle: 'left: 50%; top: 50%; width: 460px; height: 460px; transform: translate(-50%, -50%);',
       shadowR: 210, shadowStyle: 'fill:rgba(0,0,0,.32)',
       hubStyle: 'fill:' + p.surface + ';stroke:rgba(255,255,255,.10);stroke-width:1',
-      hubBox: 'left: 172px; top: 172px; width: 116px; height: 116px;',
+      hubBox: 'left: 178px; top: 178px; width: 104px; height: 104px;',
       hubTitle: h ? h.label : onLabel,
       hubTitleStyle: 'color:' + (h ? p.text : p.accent),
       hubSub: h ? h.desc : 'inner ring fits this clip',
       hubKeys: 'release · click · Esc',
-      move: function (e) {
-        var t = self.aim(e, CX, CY, n);
-        if (t.dist < 58) return self.setState({ hv: { t: -1, i: -1 } });
-        self.setState({ hv: { t: t.dist < 150 ? 0 : 1, i: t.idx } });
-      },
+      move: function (e) { self.setState({ hv: which(e) }); },
       leave: function () { self.setState({ hv: { t: -1, i: -1 } }); },
-      pick: function (e) {
-        var t = self.aim(e, CX, CY, n);
-        if (t.dist < 58 || t.dist > 214) return;
-        var tr = t.dist < 150 ? 0 : 1;
-        self.setState({ on: tracks[tr][0][t.idx].label });
-      }
+      pick: function (e) { var w = which(e); if (w.t >= 0) self.setState({ on: tracks[w.t][0][w.i].label }); }
     };
   }
 }

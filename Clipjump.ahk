@@ -807,8 +807,9 @@ manualClipboardTimer(*) {
 	wasManualClipboard := false
 }
 
-; Z in paste mode: a menu of paste formats on the card. Formats that fit the clip's kind come first, the rest are
-; dimmed; the active format is checked. A letter or Enter picks, Z or Esc closes. Ctrl stays held throughout.
+; Z in paste mode: the format ring at the pointer. Formats that fit the clip's kind come first, the rest are
+; dimmed; the active format is outlined. Release Z over a wedge, click one, or press its letter; Z again or Esc
+; closes. Ctrl stays held throughout; releasing it pastes with the current format and closes the ring.
 Formatting(*) {
 	global
 	local kind, m, picked, letter
@@ -816,42 +817,62 @@ Formatting(*) {
 		return
 	kind := (temp_clipboard != "") ? ClipType.Of(CN.NG, realActive) : ""
 	m := Formatting_Items(kind)
-	picked := Hud.Menu(m.items, m.keys, TXT.HUD_formatTitle)
-	if !is_pstMode_active      ; Ctrl was released while the menu was open: the paste already happened
+	picked := Ring.Pick(m.items, {prefix: pstIdentifier, trigger: pastemodekey.z, triggerHotkey: pstIdentifier pastemodekey.z
+		, dim: Hud.g.Hwnd, until: Formatting_Ended, idleTitle: curPformat != "" ? curPformat : TXT.HUD_formatOriginal
+		, idleSub: TXT.RNG_activeFormat})
+	if !is_pstMode_active      ; Ctrl was released while the ring was open: the paste already happened
 		return
-	hkZ_pasteMode(1)           ; the menu turned the letters it used off; paste-mode keys come back
-	letter := StrUpper(RegExReplace(picked, "^[~*$!^+#<>]*"))
-	if (letter = "" || letter = "Z" || letter = "ESC")
-		PasteModeTooltip(temp_clipboard)
-	else if m.byKey.Has(letter) {
+	hkZ_pasteMode(1)           ; the ring replaced ^z and the letters; paste-mode keys come back
+	letter := StrUpper(picked)
+	if (letter != "" && m.byKey.Has(letter)) {
 		set_pformat(m.byKey[letter])
 		if (temp_clipboard != "") {
 			halfClip := StrLen(temp_clipboard) > 200 ? SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW : temp_clipboard
 			if curPisPreviewable
 				halfClip := callPformat(curPfunction, halfClip)
 		}
-		PasteModeTooltip(temp_clipboard)
-	} else
-		PasteModeTooltip(temp_clipboard)
+	}
+	PasteModeTooltip(temp_clipboard)
 }
 
-; items for the format menu; returns {items, keys, byKey}: byKey maps a letter to the format name ("" = original)
+Formatting_Ended() {
+	global is_pstMode_active
+	return !is_pstMode_active
+}
+
+; ring items for the format ring; returns {items, byKey}: byKey maps an upper-case letter to a format name
+; ("-original-" for Original, the sentinel set_pformat reads as "no format"). Formats are listed in a fixed
+; priority order, those that fit the clip's kind first. Letters: formats with a preferred letter (the built-ins)
+; claim theirs before the others pick from their names, so a plugin can never take a built-in's letter.
 Formatting_Items(kind) {
-	global PLUGINS, curPformat, pstIdentifier, TXT
-	used := Map("V", 1, "C", 1, "Z", 1), byKey := Map(), fit := [], rest := []
-	take(name, pref) {
-		l := Formatting_Letter(name, pref, used)
-		used[l] := 1, byKey[l] := name
-		return l
-	}
-	oL := take("", "O")
-	byKey[oL] := "-original-"   ; sentinel: set_pformat("-original-") clears the format instead of reloading the ini default
-	fit.Push({key: oL, caption: TXT.HUD_formatOriginal, check: curPformat = ""})
-	for k, v in PLUGINS.pformat {
-		pref := ""
-		try pref := v["key"]
-		l := take(v["name"], pref)
-		it := {key: l, caption: v["name"], check: curPformat = v["name"], dim: !Transforms.AppliesTo(v, kind)}
+	global PLUGINS, curPformat, TXT
+	static priority := ["noformatting", "stripTracking", "markdownLink", "prettyJson", "minifyJson", "sentencecase"
+		, "title", "upper", "lower", "oneLine", "slugify", "base64", "commonformats"]
+	used := Map("V", 1, "C", 1, "Z", 1), byKey := Map(), letters := Map(), order := [], seen := Map(), fit := [], rest := []
+	seen.CaseSense := "Off"
+	for k in priority
+		if PLUGINS.pformat.HasKey(k)
+			order.Push(k), seen[k] := 1
+	for k in PLUGINS.pformat
+		if !seen.Has(k)
+			order.Push(k)
+	oL := Formatting_Letter("", "O", used)
+	used[oL] := 1, byKey[oL] := "-original-"
+	for pass in [1, 2]
+		for k in order {
+			v := PLUGINS.pformat[k], pref := ""
+			try pref := v["key"]
+			if ((pass = 1 && pref = "") || (pass = 2 && pref != ""))
+				continue
+			l := Formatting_Letter(v["name"], pref, used)
+			used[l] := 1, byKey[l] := v["name"], letters[k] := l
+		}
+	fit.Push({key: oL, label: TXT.HUD_formatOriginal, short: TXT.RNG_origShort, desc: TXT.RNG_origDesc, active: curPformat = ""})
+	for k in order {
+		v := PLUGINS.pformat[k]
+		desc := v["desc"] != "" ? v["desc"] : v["Description"]
+		it := {key: letters[k], label: v["name"], short: v["short"], desc: desc, active: curPformat = v["name"]
+			, dim: !Transforms.AppliesTo(v, kind)}
 		(it.dim ? rest : fit).Push(it)
 	}
 	items := []
@@ -859,12 +880,7 @@ Formatting_Items(kind) {
 		items.Push(it)
 	for it in rest
 		items.Push(it)
-	keys := pstIdentifier "Esc " pstIdentifier "Z"   ; Z is reserved in "used" above but carries no format of its own
-	for l in byKey
-		keys .= " " pstIdentifier l
-	keys .= " " pstIdentifier "Enter"
-	byKey["ENTER"] := curPformat != "" ? curPformat : "-original-"
-	return {items: items, keys: keys, byKey: byKey}
+	return {items: items, byKey: byKey}
 }
 
 ; first free letter: the preferred one, then letters of the name, then the alphabet
@@ -1471,7 +1487,10 @@ actionmode_run(*) {
 	global
 	local temp_am, act
 	update_actionmode()
-	temp_am := Hud.Menu(ACTIONMODE.items, ACTIONMODE.keys, PROGNAME " " TXT.ACT__name)
+	temp_am := Ring.Pick(ActionRing_Items(), {prefix: "", trigger: ActionRing_Trigger(), idleTitle: TXT.RNG_actionTitle
+		, extraKeys: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "D"]})
+	if (temp_am = "")			; cancelled (Esc or an outside click): route through the same exit path Hud.Menu used
+		temp_am := "Esc"
 	act := ACTIONMODE[temp_am]
 	if (act != "Exit_actmd")
 	{
@@ -1487,6 +1506,39 @@ actionmode_run(*) {
 	}
 	else
 		EmptyMem()
+}
+
+; Action Mode entries for the ring: the everyday ones first, customizer-added ones last. D, Esc and the channel
+; digits stay on the keyboard (digits and D come back through extraKeys).
+ActionRing_Items() {
+	global ACTIONMODE, TXT
+	static order := ["H", "O", "E", "B", "P", "T", "C", "M", "L", "X", "F", "U", "F2", "F1"]
+	static icons := Map("H", "history", "O", "layout-grid", "E", "settings", "B", "pin", "P", "zap", "T", "ban"
+		, "C", "file", "M", "wrench", "L", "eye-off", "X", "folder", "F", "copy", "U", "clipboard-check"
+		, "F2", "keyboard", "F1", "circle-help")
+	items := [], seen := Map()
+	seen.CaseSense := "Off"
+	add(k) {
+		v := ACTIONMODE[k]
+		if (v = "" || seen.Has(k))
+			return
+		seen[k] := 1
+		cap := ACTIONMODE[k "_caption"]
+		ik := StrUpper(k)
+		items.Push({key: k, label: cap != "" ? cap : v, short: TXT["RNG_short_" ik], desc: TXT["RNG_act_" ik], icon: Theme.Icon(icons.Has(ik) ? icons[ik] : "chevron-right")})
+	}
+	for k in order
+		add(k)
+	for k, v in ACTIONMODE
+		if (!InStr(k, "_") && k != "Esc" && k != "D" && k != "keys" && k != "text" && k != "items" && !IsInteger(k))
+			add(k)
+	return items
+}
+
+; the letter of the Action Mode hotkey, whose held state lets a flick commit on release
+ActionRing_Trigger() {
+	global actionmode_K
+	return RegExReplace(actionmode_K, "[~*$!^+#<>]")
 }
 
 init_actionmode() {
@@ -1928,6 +1980,8 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\Theme.ahk
 #Include %A_ScriptDir%\src\ui\native\Toast.ahk
 #Include %A_ScriptDir%\src\ui\native\Hud.ahk
+#Include %A_ScriptDir%\src\ui\native\RingGeom.ahk
+#Include %A_ScriptDir%\src\ui\native\Ring.ahk
 #Include %A_ScriptDir%\src\ui\native\SettingsWin.ahk
 #Include %A_ScriptDir%\src\ui\native\AboutWin.ahk
 #Include %A_ScriptDir%\src\ui\native\IgnoredWindowsWin.ahk

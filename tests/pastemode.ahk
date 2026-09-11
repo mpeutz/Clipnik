@@ -5,6 +5,7 @@
 #Include ..\publicAPI.ahk
 SetTitleMatchMode 2
 SendLevel 1
+CoordMode "Mouse", "Screen"
 fails := 0
 step(s) => FileAppend("     .. " s "`n", "*")
 check(cond, msg) {
@@ -14,6 +15,15 @@ check(cond, msg) {
         fails++
 }
 errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
+; the card's alpha even while hidden (DetectHiddenWindows scoped to this one call only, so it doesn't
+; change what WinExist("Clipjump_HUD ...") sees elsewhere in this file)
+cardAlpha() {
+    DetectHiddenWindows(true)
+    a := ""
+    try a := WinGetTransparent("Clipjump_HUD ahk_class AutoHotkeyGUI")
+    DetectHiddenWindows(false)
+    return a
+}
 ; tooltip texts via UI Automation; only used while no keys are held (slow)
 tipText() {
     f := A_Temp "\cj_tips.txt"
@@ -44,13 +54,24 @@ WinWaitActive("cj-pm-target", , 5)
 ed.Focus()
 Sleep 400
 
-step("action mode: Ctrl+Shift+A shows the console, Esc closes it")
+step("action mode: Ctrl+Shift+A shows the ring, Esc closes it, H opens History")
 SendEvent("^+a")
 Sleep 700
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode card shown")
+check(cj.runFunction("Ring_IsOpen()") = 1, "action ring shown")
 SendEvent("{Esc}")
 Sleep 500
-check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "action mode closed by Esc")
+check(cj.runFunction("Ring_IsOpen()") = 0, "action ring closed by Esc")
+SendEvent("^+a")
+Sleep 700
+SendEvent("h")
+hist := cj["TXT.HST__name"] " ahk_class AutoHotkeyGUI"
+check(WinWait(hist, , 5) != 0, "H opened Clipboard History")
+Sleep 2500		; let History's WebView2 finish initializing before closing it (matches history_flow.ahk's settle time)
+try WinClose(hist)
+check(WinWaitClose(hist, , 5), "History closed")
+WinActivate("cj-pm-target")
+ed.Focus()
+Sleep 300
 check(!errorDialog(), "no error after action mode")
 
 step("Ctrl+V then A goes to clip 1, V moves to clip 2")
@@ -114,45 +135,78 @@ Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 900
 
-step("Z opens the format menu, Z closes it again; a letter picks Upper case")
+cardAlphaNormal := cardAlpha()
+
+step("Z opens the format ring; U picks Upper case")
 ed.Value := ""
 SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("z")
-Sleep 500
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "card still visible with the format menu")
-fmtBefore := cj["curPformat"]
-SendEvent("z")
-Sleep 500
-SendEvent("u")      ; a still-open menu would pick Upper case here
-Sleep 500
-check(cj["curPformat"] = fmtBefore, "Z closed the menu: U picked nothing (was [" fmtBefore "], now [" cj["curPformat"] "])")
-SendEvent("z")
-Sleep 700
+Sleep 600
+check(cj.runFunction("Ring_IsOpen()") = 1, "Z opens the ring")
+check(cj.runFunction("Ring_LabelAt(0)") = "Original" && cj.runFunction("Ring_LabelAt(1)") = "Trim Formatting", "Original then Trim Formatting lead the ring")
 SendEvent("u")
-Sleep 700
+Sleep 500
 check(cj["curPformat"] = "Upper case", "U picked Upper case: [" cj["curPformat"] "]")
-clipBeforeMenu := clipNo()
-SendEvent("v")
+check(cj.runFunction("Ring_IsOpen()") = 0, "picking closes the ring")
+SendEvent("z")
+Sleep 500
+SendEvent("z")
+Sleep 500
+check(cj.runFunction("Ring_IsOpen()") = 0, "a second tap of Z closes the ring")
+SendEvent("u")
 Sleep 400
-check(clipNo() != clipBeforeMenu, "menu closed: V still moves to the next clip (realclipno=" clipNo() ")")
-SendEvent("c")
-Sleep 400
-check(clipNo() = clipBeforeMenu, "C moves back onto the clip we're about to paste")
+check(cj["curPformat"] = "Upper case", "U after the ring closed changes nothing")
 SendEvent("{Ctrl up}")
 Sleep 900
 check(ed.Value == StrUpper(ed.Value) && InStr(ed.Value, StrUpper(stamp), true), "pasted upper case: [" ed.Value "]")
 
-step("O in the format menu picks Original and clears the format")
+step("a click on a wedge picks it; a flick picks it")
+ed.Value := ""
 SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("z")
-Sleep 700
+Sleep 600
+xy := StrSplit(cj.runFunction("Ring_WedgePoint(2)"), ","), lbl := cj.runFunction("Ring_LabelAt(2)")
+MouseMove(xy[1], xy[2], 5)
+Sleep 150
+Click()
+Sleep 500
+check(lbl != "" && cj["curPformat"] = lbl, "a click picked [" lbl "]: [" cj["curPformat"] "]")
+SendEvent("{z down}")
+Sleep 500
+xy := StrSplit(cj.runFunction("Ring_WedgePoint(3)"), ","), lbl := cj.runFunction("Ring_LabelAt(3)")
+MouseMove(xy[1], xy[2], 10)
+Sleep 200
+SendEvent("{z up}")
+Sleep 500
+check(lbl != "" && cj["curPformat"] = lbl, "a flick picked [" lbl "]: [" cj["curPformat"] "]")
+
+step("built-in letters win over plugin letters")
+SendEvent("z")
+Sleep 500
+SendEvent("m")
+Sleep 500
+check(cj["curPformat"] = "Markdown link", "M picked Markdown link: [" cj["curPformat"] "]")
+SendEvent("z")
+Sleep 500
+SendEvent("s")
+Sleep 500
+check(cj["curPformat"] = "Strip URL tracking", "S picked Strip URL tracking: [" cj["curPformat"] "]")
+
+step("O picks Original; releasing Ctrl with the ring open leaves no ring")
+SendEvent("z")
+Sleep 500
 SendEvent("o")
-Sleep 700
-check(cj["curPformat"] = "", "O picked Original: [" cj["curPformat"] "]")
+Sleep 500
+check(cj["curPformat"] = "", "O picked Original")
+SendEvent("z")
+Sleep 500
 SendEvent("{Ctrl up}")
-Sleep 900
+Sleep 1200
+check(cj.runFunction("Ring_IsOpen()") = 0, "the ring closed with paste mode")
+check(InStr(ed.Value, stamp), "the clip was pasted: [" ed.Value "]")
+check(cardAlpha() = cardAlphaNormal, "the card's opacity is restored: [" cardAlpha() "]")
 cj.runFunction("set_pformat()")
 check(cj["curPformat"] = "", "set_pformat() resets the format")
 
@@ -205,6 +259,10 @@ if WinWait(cj["TXT._tags"] " ahk_class #32770", , 4) {
     check(!errorDialog(), "getClipByTag works")
 } else
     check(false, "tag InputBox did not appear")
+; the InputBox belongs to Clipjump, not this script's own window; closing it does not reliably hand
+; focus back to our target, so reclaim it explicitly before the next step types into it
+WinActivate("cj-pm-target")
+WinWaitActive("cj-pm-target", , 2)
 
 step("Enter (multipaste) pastes and keeps paste mode open")
 ed.Value := ""

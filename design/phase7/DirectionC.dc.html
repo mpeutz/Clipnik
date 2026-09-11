@@ -17,12 +17,13 @@
     .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
     .ring { position: absolute; user-select: none; }
     .ring svg { display: block; }
-    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10px; line-height: 1.2; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
+    .wl .lt { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 13px; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: .02em; }
     .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
-    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
-    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
-    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .hub .ht { font-size: 12px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
     .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
     .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
     .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -47,10 +48,10 @@
           <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
             <g transform="{{w.itf}}" style="{{w.istyle}}"><path d="{{w.icon}}"></path></g>
           </sc-for>
-          <circle cx="160" cy="160" r="46" style="{{hubStyle}}"></circle>
+          <circle cx="160" cy="160" r="{{hubR}}" style="{{hubStyle}}"></circle>
         </svg>
         <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
-          <div class="wl" style="{{w.lstyle}}"><div>{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
+          <div class="wl" style="{{w.lstyle}}"><div class="lt">{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
         </sc-for>
         <div class="hub" style="{{hubBox}}">
           <div class="ht" style="{{hubTitleStyle}}">{{hubTitle}}</div>
@@ -65,7 +66,7 @@
       </div>
 </div>
 </x-dc>
-<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"$preview":{"width":520,"height":560}}'>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"gap":{"editor":"range","min":2,"max":10,"step":1,"unit":"px","default":8,"section":"Ring"},"corner":{"editor":"range","min":0,"max":14,"step":1,"unit":"px","default":8,"section":"Ring"},"$preview":{"width":520,"height":560}}'>
 class Component extends DCLogic {
   hex(s) { return parseInt(String(s).replace('#', ''), 16); }
   mix(a, b, t) {
@@ -106,9 +107,36 @@ class Component extends DCLogic {
     var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
     return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
   }
+  look(n, r0, r1) {
+    var gap = this.props.gap === undefined ? 8 : Number(this.props.gap);
+    var corner = this.props.corner === undefined ? 8 : Number(this.props.corner);
+    var step = 2 * Math.PI / n;
+    return { gap: gap, corner: Math.max(0, Math.min(corner, 0.3 * r0 * step, (r1 - r0) / 2 - 2)) };
+  }
+  roundSector(cx, cy, r0, r1, a0, a1, gap, rad) {
+    if (a1 - a0 >= 359.9) {
+      return 'M ' + (cx - r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx + r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx - r1) + ' ' + cy + ' Z'
+        + ' M ' + (cx - r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx + r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx - r0) + ' ' + cy + ' Z';
+    }
+    var d = gap / 2, k = Math.PI / 180;
+    var corner = function (a, sign, R, outer) {
+      var e = [Math.sin(a * k), -Math.cos(a * k)], nn = [sign * Math.cos(a * k), sign * Math.sin(a * k)];
+      var cr = outer ? R - rad : R + rad, off = d + rad;
+      var t = Math.sqrt(Math.max(cr * cr - off * off, 0));
+      var c = [e[0] * t + nn[0] * off, e[1] * t + nn[1] * off];
+      var len = Math.sqrt(c[0] * c[0] + c[1] * c[1]) || 1;
+      return { line: [e[0] * t + nn[0] * d, e[1] * t + nn[1] * d], arc: [c[0] / len * R, c[1] / len * R] };
+    };
+    var P = function (q) { return (Math.round((cx + q[0]) * 100) / 100) + ' ' + (Math.round((cy + q[1]) * 100) / 100); };
+    var AO = corner(a0, 1, r1, true), BO = corner(a1, -1, r1, true), BI = corner(a1, -1, r0, false), AI = corner(a0, 1, r0, false);
+    var big = (a1 - a0) > 180 ? 1 : 0, f = ' A ' + rad + ' ' + rad + ' 0 0 1 ';
+    return 'M ' + P(AO.arc) + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + P(BO.arc) + f + P(BO.line)
+      + ' L ' + P(BI.line) + f + P(BI.arc) + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + P(AI.arc) + f + P(AI.line)
+      + ' L ' + P(AO.line) + f + P(AO.arc) + ' Z';
+  }
   renderVals() {
     var p = this.pal(), st = this.state || {}, self = this;
-    var cats = [{"label":"Windows","key":"1","icon":"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z","desc":"history, organizer, settings","items":[{"label":"Clipboard History","key":"H","icon":"M3 12a9 9 0 1 0 2.5-6.2M3 4v4h4M12 7v5l3.5 2","desc":"every clip ever copied","more":false},{"label":"Channel Organizer","key":"O","icon":"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z","desc":"channels and their clips","more":false},{"label":"Settings","key":"E","icon":"M4 6h9M17 6h3M4 12h3M11 12h9M4 18h13M21 18h0M15 4v4M9 10v4M19 16v4","desc":"all of Clipjump's options","more":false},{"label":"Plugin Manager","key":"M","icon":"M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5","desc":"enable and edit plugins","more":false},{"label":"Ignored Windows","key":"L","icon":"M10.7 5.1A9 9 0 0 1 21 12a17 17 0 0 1-2.2 2.9M6.6 6.6A17 17 0 0 0 3 12a9 9 0 0 0 13 6.3M3 3l18 18M9.9 9.9a3 3 0 0 0 4.2 4.2","desc":"apps Clipjump leaves alone","more":false}]},{"label":"Clip","key":"2","icon":"M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z","desc":"hold, swap, skip, sync","items":[{"label":"Hold clip","key":"B","icon":"M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z","desc":"keep the next copy at the top","more":false},{"label":"PitSwap","key":"P","icon":"M8 3 4 7l4 4M4 7h15M16 21l4-4-4-4M20 17H5","desc":"swap with the pit channel","more":false},{"label":"One-time stop","key":"T","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM10 9v6M14 9v6","desc":"skip recording the next copy","more":false},{"label":"Sync clipboard","key":"U","icon":"M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8M3 19v-4h4M21 5v4h-4","desc":"push the active clip to Windows","more":false}]},{"label":"Copy","key":"3","icon":"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5","desc":"path, folder, file data","items":[{"label":"Copy file path","key":"C","icon":"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5","desc":"the selected file's full path","more":false},{"label":"Copy folder path","key":"X","icon":"M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2z","desc":"the open folder's path","more":false},{"label":"Copy file data","key":"F","icon":"M12 3 3 8l9 5 9-5zM3 14l9 5 9-5","desc":"the file itself, not its path","more":false}]},{"label":"Channels","key":"4","icon":"M4 9h16M4 15h16M10 3 8 21M16 3l-2 18","desc":"switch to channel 0 to 9","items":"channels"},{"label":"Help","key":"5","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.5M12 17h.01","desc":"keys and shortcuts","items":[{"label":"Help","key":"F1","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.5M12 17h.01","desc":"what every key does","more":false},{"label":"Paste-mode keys","key":"F2","icon":"M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10","desc":"the shortcut sheet","more":false}]},{"label":"Off","key":"6","icon":"M12 3v9M6.5 6.8a8 8 0 1 0 11 0","desc":"disable or exit","items":[{"label":"Disable","key":"D","icon":"M12 3v9M6.5 6.8a8 8 0 1 0 11 0","desc":"stop monitoring the clipboard","more":false}]}];
+    var cats = [{"label":"Windows","key":"1","icon":"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z","desc":"history, organizer, settings","items":[{"label":"Clipboard History","short":"History","key":"H","icon":"M3 12a9 9 0 1 0 2.5-6.2M3 4v4h4M12 7v5l3.5 2","desc":"every clip ever copied","more":false},{"label":"Channel Organizer","short":"Organizer","key":"O","icon":"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z","desc":"channels and their clips","more":false},{"label":"Settings","short":"Settings","key":"E","icon":"M4 6h9M17 6h3M4 12h3M11 12h9M4 18h13M21 18h0M15 4v4M9 10v4M19 16v4","desc":"all of Clipjump's options","more":false},{"label":"Plugin Manager","short":"Plugins","key":"M","icon":"M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5","desc":"enable and edit plugins","more":false},{"label":"Ignored Windows","short":"Ignore","key":"L","icon":"M10.7 5.1A9 9 0 0 1 21 12a17 17 0 0 1-2.2 2.9M6.6 6.6A17 17 0 0 0 3 12a9 9 0 0 0 13 6.3M3 3l18 18M9.9 9.9a3 3 0 0 0 4.2 4.2","desc":"apps Clipjump leaves alone","more":false}]},{"label":"Clip","key":"2","icon":"M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z","desc":"hold, swap, skip, sync","items":[{"label":"Hold clip","short":"Hold","key":"B","icon":"M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z","desc":"keep the next copy at the top","more":false},{"label":"PitSwap","short":"PitSwap","key":"P","icon":"M8 3 4 7l4 4M4 7h15M16 21l4-4-4-4M20 17H5","desc":"swap with the pit channel","more":false},{"label":"One-time stop","short":"Skip","key":"T","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM10 9v6M14 9v6","desc":"skip recording the next copy","more":false},{"label":"Sync clipboard","short":"Sync","key":"U","icon":"M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8M3 19v-4h4M21 5v4h-4","desc":"push the active clip to Windows","more":false}]},{"label":"Copy","key":"3","icon":"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5","desc":"path, folder, file data","items":[{"label":"Copy file path","short":"Path","key":"C","icon":"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5","desc":"the selected file's full path","more":false},{"label":"Copy folder path","short":"Folder","key":"X","icon":"M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2z","desc":"the open folder's path","more":false},{"label":"Copy file data","short":"File","key":"F","icon":"M12 3 3 8l9 5 9-5zM3 14l9 5 9-5","desc":"the file itself, not its path","more":false}]},{"label":"Channels","key":"4","icon":"M4 9h16M4 15h16M10 3 8 21M16 3l-2 18","desc":"switch to channel 0 to 9","items":"channels"},{"label":"Help","key":"5","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.5M12 17h.01","desc":"keys and shortcuts","items":[{"label":"Help","short":"Help","key":"F1","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.5M12 17h.01","desc":"what every key does","more":false},{"label":"Paste-mode keys","short":"Keys","key":"F2","icon":"M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10","desc":"the shortcut sheet","more":false}]},{"label":"Off","key":"6","icon":"M12 3v9M6.5 6.8a8 8 0 1 0 11 0","desc":"disable or exit","items":[{"label":"Disable","short":"Disable","key":"D","icon":"M12 3v9M6.5 6.8a8 8 0 1 0 11 0","desc":"stop monitoring the clipboard","more":false}]}];
     var open = st.open === undefined ? -1 : st.open;
     var items = cats, level = 0;
     if (open >= 0) {
@@ -116,36 +144,35 @@ class Component extends DCLogic {
       items = cats[open].items;
       if (items === 'channels') {
         items = [];
-        for (var i = 0; i < 10; i++) items.push({ label: i === 0 ? 'Default' : 'Channel ' + i, key: String(i), icon: '', desc: 'switch the active channel' });
+        for (var i = 0; i < 10; i++) items.push({ label: i === 0 ? 'Default' : 'Channel ' + i, short: i === 0 ? 'Default' : 'Ch ' + i, key: String(i), icon: '', desc: 'switch the active channel' });
       }
     }
-    var n = items.length, step = 360 / n, gap = n > 8 ? 1.6 : 2.2;
-    var CX = 160, CY = 160, R0 = 52, R1 = 148;
+    var n = items.length, step = 360 / n;
+    var CX = 160, CY = 160, R0 = 56, R1 = 148, L = this.look(n, R0, R1);
     var hover = st.hover === undefined ? -1 : st.hover;
-    var wide = n > 8 ? 64 : 86;
+    var mr = R0 + (R1 - R0) * 0.5, wide = Math.min(90, Math.floor(2 * mr * Math.sin(Math.PI / n) - L.gap - 14));
     var wedges = items.map(function (it, i) {
       var isHover = i === hover;
       var hasIcon = !!it.icon;
-      var c = self.pt(CX, CY, R0 + (R1 - R0) * (hasIcon ? 0.62 : 0.5), i * step);
-      var ic = self.pt(CX, CY, R0 + (R1 - R0) * 0.3, i * step);
+      var c = self.pt(CX, CY, mr, i * step);
       return {
-        d: self.sector(CX, CY, R0, R1, i * step - step / 2 + gap / 2, i * step + step / 2 - gap / 2),
-        style: 'fill:' + (isHover ? p.accent : p.surfaceAlt) + ';stroke:none',
-        lstyle: 'left:' + (c[0] - wide / 2) + 'px; top:' + (c[1] - (hasIcon ? 8 : 14)) + 'px; width:' + wide + 'px; color:' + (isHover ? p.accentText : p.text),
+        d: self.roundSector(CX, CY, R0, R1, i * step - step / 2, i * step + step / 2, L.gap, L.corner),
+        style: 'fill:' + (isHover ? p.accent : p.surfaceAlt) + ';stroke:none;fill-rule:evenodd',
+        lstyle: 'left:' + (c[0] - wide / 2) + 'px; top:' + (c[1] - (hasIcon ? 5 : 14)) + 'px; width:' + wide + 'px; color:' + (isHover ? p.accentText : p.text),
         kstyle: 'background:' + (isHover ? 'rgba(0,0,0,.16)' : p.surface) + ';color:' + (isHover ? p.accentText : p.muted),
-        label: it.label, key: it.key,
+        label: it.short || it.label, key: it.key,
         icon: it.icon || '',
-        itf: hasIcon ? ('translate(' + (ic[0] - 9) + ',' + (ic[1] - 9) + ') scale(0.75)') : 'translate(-99,-99)',
+        itf: hasIcon ? ('translate(' + (c[0] - 8) + ',' + (c[1] - 24) + ') scale(0.6667)') : 'translate(-99,-99)',
         istyle: hasIcon ? ('fill:none;stroke:' + (isHover ? p.accentText : p.muted) + ';stroke-width:2;stroke-linecap:round;stroke-linejoin:round') : 'display:none'
       };
     });
     var h = hover >= 0 ? items[hover] : null;
     return {
-      vars: p.vars, wedges: wedges,
+      vars: p.vars, wedges: wedges, hubR: R0 - L.gap,
       ringStyle: 'left: 50%; top: 50%; width: 320px; height: 320px; transform: translate(-50%, -50%);',
       shadowR: 150, shadowStyle: 'fill:rgba(0,0,0,.34)',
       hubStyle: 'fill:' + p.surface + ';stroke:' + (level ? p.accent : 'rgba(255,255,255,.10)') + ';stroke-width:1',
-      hubBox: 'left: 88px; top: 88px; width: 144px; height: 144px;',
+      hubBox: 'left: 110px; top: 110px; width: 100px; height: 100px;',
       hubTitle: h ? h.label : (level ? cats[open].label : 'Action mode'),
       hubTitleStyle: 'color:' + (h ? p.text : p.accent),
       hubSub: h ? h.desc : (level ? 'click the centre to go back' : 'six groups, seventeen actions'),

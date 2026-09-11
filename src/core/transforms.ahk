@@ -25,7 +25,7 @@ class Transforms {
 			if PLUGINS.pformat.HasKey(t[1])
 				continue
 			e := CJMap()
-			e["name"] := ClipType_T(t[2]), e["*"] := t[3], e["Previewable"] := 1, e["kinds"] := t[4], e["key"] := t[5], e["builtin"] := 1
+			e["name"] := ClipType_T(t[2]), e["*"] := t[3], e["Previewable"] := 1, e["kinds"] := t[4], e["key"] := t[5], e["builtin"] := 1, e["desc"] := ClipType_T("TRF_desc_" t[1]), e["short"] := ClipType_T("TRF_short_" t[1])
 			PLUGINS.pformat[t[1]] := e
 		}
 	}

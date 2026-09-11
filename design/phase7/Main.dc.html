@@ -17,12 +17,13 @@
     .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
     .ring { position: absolute; user-select: none; }
     .ring svg { display: block; }
-    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10px; line-height: 1.2; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
+    .wl .lt { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 13px; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: .02em; }
     .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
-    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
-    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
-    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .hub .ht { font-size: 12px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
     .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
     .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
     .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -56,10 +57,10 @@
           <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
             <g transform="{{w.itf}}" style="{{w.istyle}}"><path d="{{w.icon}}"></path></g>
           </sc-for>
-          <circle cx="160" cy="160" r="46" style="{{hubStyle}}"></circle>
+          <circle cx="160" cy="160" r="{{hubR}}" style="{{hubStyle}}"></circle>
         </svg>
         <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
-          <div class="wl" style="{{w.lstyle}}"><div>{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
+          <div class="wl" style="{{w.lstyle}}"><div class="lt">{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
         </sc-for>
         <div class="hub" style="{{hubBox}}">
           <div class="ht" style="{{hubTitleStyle}}">{{hubTitle}}</div>
@@ -69,12 +70,12 @@
       </div>
       </div>
       <div class="notes">
-        <div class="note"><b>Why</b>The seven formats that fit this clip are one flick away and never move, so the gesture becomes muscle memory. More… flips the ring to the other eight.</div>
+        <div class="note"><b>Why</b>The seven formats that fit this clip are one flick away and never move, so the gesture becomes muscle memory. More… flips the ring to the other seven.</div>
         <div class="note"><b>Cost</b>A GDI+ layered window, roughly 300 lines: geometry, paint, angle hit test, input. The keyboard card stays for people who never reach for the mouse.</div>
       </div>
 </div>
 </x-dc>
-<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"kind":{"editor":"enum","options":["URL","JSON","Plain text"],"default":"URL","section":"Clip"},"$preview":{"width":560,"height":560}}'>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"gap":{"editor":"range","min":2,"max":10,"step":1,"unit":"px","default":8,"section":"Ring"},"corner":{"editor":"range","min":0,"max":14,"step":1,"unit":"px","default":8,"section":"Ring"},"kind":{"editor":"enum","options":["URL","JSON","Plain text"],"default":"URL","section":"Clip"},"$preview":{"width":560,"height":560}}'>
 class Component extends DCLogic {
   hex(s) { return parseInt(String(s).replace('#', ''), 16); }
   mix(a, b, t) {
@@ -115,9 +116,36 @@ class Component extends DCLogic {
     var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
     return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
   }
-  wedgeSet(items, p, hover, onLabel, CX, CY, R0, R1) {
-    var self = this, n = items.length, step = 360 / n, gap = 2.2;
-    var labelR = R0 + (R1 - R0) * 0.54;
+  look(n, r0, r1) {
+    var gap = this.props.gap === undefined ? 8 : Number(this.props.gap);
+    var corner = this.props.corner === undefined ? 8 : Number(this.props.corner);
+    var step = 2 * Math.PI / n;
+    return { gap: gap, corner: Math.max(0, Math.min(corner, 0.3 * r0 * step, (r1 - r0) / 2 - 2)) };
+  }
+  roundSector(cx, cy, r0, r1, a0, a1, gap, rad) {
+    if (a1 - a0 >= 359.9) {
+      return 'M ' + (cx - r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx + r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx - r1) + ' ' + cy + ' Z'
+        + ' M ' + (cx - r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx + r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx - r0) + ' ' + cy + ' Z';
+    }
+    var d = gap / 2, k = Math.PI / 180;
+    var corner = function (a, sign, R, outer) {
+      var e = [Math.sin(a * k), -Math.cos(a * k)], nn = [sign * Math.cos(a * k), sign * Math.sin(a * k)];
+      var cr = outer ? R - rad : R + rad, off = d + rad;
+      var t = Math.sqrt(Math.max(cr * cr - off * off, 0));
+      var c = [e[0] * t + nn[0] * off, e[1] * t + nn[1] * off];
+      var len = Math.sqrt(c[0] * c[0] + c[1] * c[1]) || 1;
+      return { line: [e[0] * t + nn[0] * d, e[1] * t + nn[1] * d], arc: [c[0] / len * R, c[1] / len * R] };
+    };
+    var P = function (q) { return (Math.round((cx + q[0]) * 100) / 100) + ' ' + (Math.round((cy + q[1]) * 100) / 100); };
+    var AO = corner(a0, 1, r1, true), BO = corner(a1, -1, r1, true), BI = corner(a1, -1, r0, false), AI = corner(a0, 1, r0, false);
+    var big = (a1 - a0) > 180 ? 1 : 0, f = ' A ' + rad + ' ' + rad + ' 0 0 1 ';
+    return 'M ' + P(AO.arc) + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + P(BO.arc) + f + P(BO.line)
+      + ' L ' + P(BI.line) + f + P(BI.arc) + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + P(AI.arc) + f + P(AI.line)
+      + ' L ' + P(AO.line) + f + P(AO.arc) + ' Z';
+  }
+  wedgeSet(items, p, hover, onLabel, CX, CY, R0, R1, L) {
+    var self = this, n = items.length, step = 360 / n;
+    var labelR = R0 + (R1 - R0) * 0.5, lw = Math.floor(2 * labelR * Math.sin(Math.PI / n) - L.gap - 14);
     return items.map(function (it, i) {
       var isHover = i === hover, isOn = it.label === onLabel && !it.more;
       var fill = isHover ? p.accent : (isOn ? p.accentSoft : (it.more ? p.surface : (it.dim ? p.dim : p.surfaceAlt)));
@@ -125,31 +153,32 @@ class Component extends DCLogic {
       var c = self.pt(CX, CY, labelR, i * step);
       var color = isHover ? p.accentText : ((it.dim || it.more) ? p.muted : p.text);
       return {
-        d: self.sector(CX, CY, R0, R1, i * step - step / 2 + gap / 2, i * step + step / 2 - gap / 2),
-        style: 'fill:' + fill + ';stroke:' + stroke + ';stroke-width:1',
-        lstyle: 'left:' + (c[0] - 42) + 'px; top:' + (c[1] - 20) + 'px; width:84px; color:' + color,
+        d: self.roundSector(CX, CY, R0, R1, i * step - step / 2, i * step + step / 2, L.gap, L.corner),
+        style: 'fill:' + fill + ';stroke:' + stroke + ';stroke-width:1;fill-rule:evenodd',
+        lstyle: 'left:' + (c[0] - lw / 2) + 'px; top:' + (c[1] - 14) + 'px; width:' + lw + 'px; color:' + color,
         kstyle: 'background:' + (isHover ? 'rgba(0,0,0,.16)' : p.surface) + ';color:' + (isHover ? p.accentText : p.muted),
-        label: it.label, key: it.key, icon: '', itf: 'translate(-99,-99)', istyle: 'display:none'
+        label: it.short || it.label, key: it.key, icon: '', itf: 'translate(-99,-99)', istyle: 'display:none'
       };
     });
   }
   renderVals() {
     var p = this.pal(), st = this.state || {};
     var kindKey = this.props.kind || 'URL';
-    var set = {"URL":{"on":"Trim Formatting","sample":"https://github.com/aviaryan/Clipjump/issues/143?utm_source=news","pages":[[{"label":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","key":"T","desc":"Drop fonts and colors, keep the text","dim":false},{"label":"Strip URL tracking","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","key":"M","desc":"[host](url)","dim":false},{"label":"No formatting","key":"N","desc":"Plain text only","dim":false},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"Upper case","key":"U","desc":"THE WHOLE CLIP","dim":true},{"label":"More…","key":"→","desc":"eight more formats","more":true}],[{"label":"Lower case","key":"W","desc":"the whole clip","dim":true},{"label":"Title case","key":"I","desc":"First Letter Of Each Word","dim":true},{"label":"Sentence case","key":"E","desc":"First letter of each sentence","dim":true},{"label":"Slugify","key":"G","desc":"lower-case-with-dashes","dim":true},{"label":"Pretty JSON","key":"P","desc":"Indent two spaces","dim":true},{"label":"Minified JSON","key":"J","desc":"Strip whitespace outside strings","dim":true},{"label":"Decode base64","key":"B","desc":"Decode when the clip is valid base64","dim":true},{"label":"Back","key":"←","desc":"back to the first ring","more":true}]]},"JSON":{"on":"Pretty JSON","sample":"{\"id\": 143, \"title\": \"Paste mode ignores Ctrl release\"}","pages":[[{"label":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Pretty JSON","key":"P","desc":"Indent two spaces","dim":false},{"label":"Minified JSON","key":"J","desc":"Strip whitespace outside strings","dim":false},{"label":"Trim Formatting","key":"T","desc":"Drop fonts and colors, keep the text","dim":false},{"label":"No formatting","key":"N","desc":"Plain text only","dim":false},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"Decode base64","key":"B","desc":"Decode when the clip is valid base64","dim":true},{"label":"More…","key":"→","desc":"eight more formats","more":true}],[{"label":"Upper case","key":"U","desc":"THE WHOLE CLIP","dim":true},{"label":"Lower case","key":"W","desc":"the whole clip","dim":true},{"label":"Title case","key":"I","desc":"First Letter Of Each Word","dim":true},{"label":"Sentence case","key":"E","desc":"First letter of each sentence","dim":true},{"label":"Slugify","key":"G","desc":"lower-case-with-dashes","dim":true},{"label":"Strip URL tracking","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":true},{"label":"Markdown link","key":"M","desc":"[host](url)","dim":true},{"label":"Back","key":"←","desc":"back to the first ring","more":true}]]},"Plain text":{"on":"Original","sample":"Brings the Latest Resources widget in line with the Figma mockup","pages":[[{"label":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","key":"T","desc":"Drop fonts and colors, keep the text","dim":false},{"label":"Sentence case","key":"E","desc":"First letter of each sentence","dim":false},{"label":"Upper case","key":"U","desc":"THE WHOLE CLIP","dim":false},{"label":"Lower case","key":"W","desc":"the whole clip","dim":false},{"label":"Title case","key":"I","desc":"First Letter Of Each Word","dim":false},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"More…","key":"→","desc":"eight more formats","more":true}],[{"label":"Slugify","key":"G","desc":"lower-case-with-dashes","dim":false},{"label":"No formatting","key":"N","desc":"Plain text only","dim":false},{"label":"Decode base64","key":"B","desc":"Decode when the clip is valid base64","dim":true},{"label":"Pretty JSON","key":"P","desc":"Indent two spaces","dim":true},{"label":"Minified JSON","key":"J","desc":"Strip whitespace outside strings","dim":true},{"label":"Strip URL tracking","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":true},{"label":"Markdown link","key":"M","desc":"[host](url)","dim":true},{"label":"Back","key":"←","desc":"back to the first ring","more":true}]]}}[kindKey];
+    var set = {"URL":{"on":"Trim Formatting","sample":"https://github.com/aviaryan/Clipjump/issues/143?utm_source=news","pages":[[{"label":"Original","short":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","short":"Trim","key":"T","desc":"Strip off formatting","dim":false},{"label":"Strip URL tracking","short":"Untrack","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","short":"Markdown","key":"M","desc":"[host](url)","dim":false},{"label":"SentenceCase","short":"Sentence","key":"E","desc":"Paste text in sentence case","dim":false},{"label":"Common Formats","short":"Common","key":"N","desc":"Pick from many predefined formats","dim":false},{"label":"Pretty JSON","short":"Pretty","key":"P","desc":"Indent two spaces","dim":true},{"label":"More…","short":"More","key":"→","desc":"seven more formats","more":true}],[{"label":"Minified JSON","short":"Minify","key":"J","desc":"Strip whitespace outside strings","dim":true},{"label":"Title case","short":"Title","key":"I","desc":"First Letter Of Each Word","dim":true},{"label":"Upper case","short":"UPPER","key":"U","desc":"THE WHOLE CLIP","dim":true},{"label":"Lower case","short":"lower","key":"W","desc":"the whole clip","dim":true},{"label":"One line","short":"Flatten","key":"L","desc":"Collapse every run of whitespace","dim":true},{"label":"Slugify","short":"Slug","key":"G","desc":"lower-case-with-dashes","dim":true},{"label":"Decode base64","short":"Base64","key":"B","desc":"Decode when the clip is valid base64","dim":true},{"label":"Back","short":"Back","key":"←","desc":"back to the first ring","more":true}]]},"JSON":{"on":"Pretty JSON","sample":"{\"id\": 143, \"title\": \"Paste mode ignores Ctrl release\"}","pages":[[{"label":"Original","short":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","short":"Trim","key":"T","desc":"Strip off formatting","dim":false},{"label":"Pretty JSON","short":"Pretty","key":"P","desc":"Indent two spaces","dim":false},{"label":"Minified JSON","short":"Minify","key":"J","desc":"Strip whitespace outside strings","dim":false},{"label":"SentenceCase","short":"Sentence","key":"E","desc":"Paste text in sentence case","dim":false},{"label":"Common Formats","short":"Common","key":"N","desc":"Pick from many predefined formats","dim":false},{"label":"Strip URL tracking","short":"Untrack","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":true},{"label":"More…","short":"More","key":"→","desc":"seven more formats","more":true}],[{"label":"Markdown link","short":"Markdown","key":"M","desc":"[host](url)","dim":true},{"label":"Title case","short":"Title","key":"I","desc":"First Letter Of Each Word","dim":true},{"label":"Upper case","short":"UPPER","key":"U","desc":"THE WHOLE CLIP","dim":true},{"label":"Lower case","short":"lower","key":"W","desc":"the whole clip","dim":true},{"label":"One line","short":"Flatten","key":"L","desc":"Collapse every run of whitespace","dim":true},{"label":"Slugify","short":"Slug","key":"G","desc":"lower-case-with-dashes","dim":true},{"label":"Decode base64","short":"Base64","key":"B","desc":"Decode when the clip is valid base64","dim":true},{"label":"Back","short":"Back","key":"←","desc":"back to the first ring","more":true}]]},"Plain text":{"on":"Original","sample":"Brings the Latest Resources widget in line with the Figma mockup","pages":[[{"label":"Original","short":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","short":"Trim","key":"T","desc":"Strip off formatting","dim":false},{"label":"SentenceCase","short":"Sentence","key":"E","desc":"Paste text in sentence case","dim":false},{"label":"Title case","short":"Title","key":"I","desc":"First Letter Of Each Word","dim":false},{"label":"Upper case","short":"UPPER","key":"U","desc":"THE WHOLE CLIP","dim":false},{"label":"Lower case","short":"lower","key":"W","desc":"the whole clip","dim":false},{"label":"One line","short":"Flatten","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"More…","short":"More","key":"→","desc":"seven more formats","more":true}],[{"label":"Slugify","short":"Slug","key":"G","desc":"lower-case-with-dashes","dim":false},{"label":"Decode base64","short":"Base64","key":"B","desc":"Decode when the clip is valid base64","dim":false},{"label":"Common Formats","short":"Common","key":"N","desc":"Pick from many predefined formats","dim":false},{"label":"Strip URL tracking","short":"Untrack","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":true},{"label":"Markdown link","short":"Markdown","key":"M","desc":"[host](url)","dim":true},{"label":"Pretty JSON","short":"Pretty","key":"P","desc":"Indent two spaces","dim":true},{"label":"Minified JSON","short":"Minify","key":"J","desc":"Strip whitespace outside strings","dim":true},{"label":"Back","short":"Back","key":"←","desc":"back to the first ring","more":true}]]}}[kindKey];
     var page = st.page || 0, items = set.pages[page];
     var onLabel = st.on && st.onKind === kindKey ? st.on : set.on;
     var hover = st.hover === undefined ? -1 : st.hover;
-    var CX = 160, CY = 160, R0 = 52, R1 = 148, n = items.length;
+    var CX = 160, CY = 160, R0 = 56, R1 = 148, n = items.length;
     var self = this;
     var h = hover >= 0 ? items[hover] : null;
     return {
       vars: p.vars,
-      wedges: this.wedgeSet(items, p, hover, onLabel, CX, CY, R0, R1),
+      wedges: this.wedgeSet(items, p, hover, onLabel, CX, CY, R0, R1, this.look(n, R0, R1)),
+      hubR: R0 - this.look(n, R0, R1).gap,
       ringStyle: 'left: 26px; top: 14px; width: 320px; height: 320px;',
       shadowR: 150, shadowStyle: 'fill:rgba(0,0,0,.34)',
       hubStyle: 'fill:' + p.surface + ';stroke:rgba(255,255,255,.10);stroke-width:1',
-      hubBox: 'left: 88px; top: 88px; width: 144px; height: 144px;',
+      hubBox: 'left: 110px; top: 110px; width: 100px; height: 100px;',
       hubTitle: h ? h.label : onLabel,
       hubTitleStyle: 'color:' + (h ? p.text : p.accent),
       hubSub: h ? h.desc : 'active format',

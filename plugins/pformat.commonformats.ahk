@@ -1,4 +1,5 @@
 ;@Plugin-Name Common Formats
+;@Plugin-Short Common
 ;@Plugin-Description Shows a gui to paste with a format from many types of predefined formats. Can be easily extended to include more formats.
 ;@Plugin-Description For that edit the pformat.commonformats.lib/user.ahk file. This file if needed is created when you run this plugin for the first time.
 ;@Plugin-Description Only works for Text ([Text] or [File/Folder]) type data.
@@ -135,27 +136,70 @@ plugin_pformat_commonformats(zin) {
 	zDone := "", zOut := "", zFobj := ""
 
 	GuiDestroy("commonformat")
-	g := Gui("+AlwaysOnTop +ToolWindow -MaximizeBox", "Choose Format")
+	g := Gui("+AlwaysOnTop +ToolWindow -MaximizeBox", TXT.CMF_title)
 	CJGUI["commonformat"] := g
+	Theme.ApplyToGui(g)
+	g.MarginX := 20, g.MarginY := 14
 
 	ztF := A_ScriptDir "\plugins\pformat.commonformats.lib\user.ahk"
 	formats := plugin_pformat_commonformats_listfunc(A_ScriptDir "\plugins\pformat.commonformats.ahk")
 	if (ztemp := plugin_pformat_commonformats_listfunc(ztF))
 		formats .= "|" ztemp
-	lb := g.Add("ListBox", "x5 y5 r15 w140 vzchosenformat section", StrSplit(formats, "|"))
-	editCtl := g.Add("Edit", "x+10 w500 h200 vzedit +Multi", zin)
 
-	g.Add("GroupBox", "xs y+5 h70 w650", "Info")
-	info := g.Add("Edit", "xp+5 yp+15 w640 h50 +ReadOnly -Border vzinfo")
+	w := 680, x := 20, y := 14, listW := 150, colGap := 16
+	editW := w - 2 * x - listW - colGap
+	zFormats := StrSplit(formats, "|")
+	zRowsMax := 12 	; a long user.ahk list scrolls instead of growing the dialog
+	zRowsShown := Min(zFormats.Length, zRowsMax)
 
-	g.Add("Button", "xs y+40 +Default", "OK").OnEvent("Click", onOK)
-	g.Add("Button", "x+30 yp", TXT.SET_apply).OnEvent("Click", onApply)
-	g.Add("Text", "x+55 yp-15", "Input Field")
-	g.SetFont("s10", "Lucida Console")
+	lb := Theme.Add(g, "ListView", "x" x " y" y " w" listW " h200 -Hdr -Multi -E0x200 +Border vzchosenformat", ["Format"])
+	lb.Opt("Background" Theme.Hex("surface"))
+	for zfName in zFormats
+		lb.Add("", zfName)
+
+	; Measure the real row height (LVM_GETITEMRECT) and the control's border overhead so the list
+	; is sized to whole rows only, showing every format without scrolling when it fits.
+	zItemRc := Buffer(16, 0)
+	NumPut("Int", 0, zItemRc, 0) 	; LVIR_BOUNDS
+	SendMessage(0x100E, 0, zItemRc.Ptr, lb.Hwnd) 	; LVM_GETITEMRECT, row 0
+	zRowTop0 := NumGet(zItemRc, 4, "Int")
+	if (zFormats.Length >= 2) {
+		NumPut("Int", 0, zItemRc, 0)
+		SendMessage(0x100E, 1, zItemRc.Ptr, lb.Hwnd) 	; row 1
+		zRowH := NumGet(zItemRc, 4, "Int") - zRowTop0
+	} else
+		zRowH := NumGet(zItemRc, 12, "Int") - zRowTop0
+	zClientRc := Buffer(16, 0)
+	DllCall("GetClientRect", "Ptr", lb.Hwnd, "Ptr", zClientRc)
+	zBorderH := 200 - (NumGet(zClientRc, 12, "Int") - NumGet(zClientRc, 4, "Int"))
+	listH := zRowsShown * zRowH + zBorderH
+	lb.Move(,, , listH)
+
+	; the column only needs to leave room for the scrollbar when the list actually scrolls
+	zNeedsScroll := zFormats.Length > zRowsShown
+	lb.ModifyCol(1, listW - (zNeedsScroll ? SysGet(2) : 0) - 2) 	; SysGet(2) = SM_CXVSCROLL
+
 	g.SetFont("s10", "Consolas")
-	inputfield := g.Add("Edit", "x+10 yp-2 w441 h40 vzinputfield")
-	g.SetFont()
-	lb.OnEvent("Change", onChosen)
+	editCtl := Theme.Add(g, "Edit", "x" (x + listW + colGap) " y" y " w" editW " h" listH " -E0x200 +Border +Multi vzedit", zin)
+	g.SetFont("s10 c" Theme.Hex("text"), Theme.FontName)
+	y += listH + 14
+
+	Theme.Section(g, x, y, w - 2 * x, TXT.CMF_info)
+	y += 30
+	info := Theme.Add(g, "Edit", "x" x " y" y " w" (w - 2 * x) " h50 +ReadOnly -Border -E0x200 vzinfo")
+	info.Opt("Background" Theme.Hex("bg"))
+	y += 50 + 14
+
+	g.Add("Text", "x" x " y" y " w100 h28 +0x200", TXT.CMF_input)
+	g.SetFont("s10", "Consolas")
+	inputfield := Theme.Add(g, "Edit", "x" (x + 110) " y" y " w" (w - 2 * x - 110) " h28 -E0x200 +Border vzinputfield")
+	g.SetFont("s10 c" Theme.Hex("text"), Theme.FontName)
+	y += 28 + 16
+
+	Theme.Add(g, "Button", "x" (w - x - 76 - 8 - 76) " y" y " w76 h28 Default", "OK").OnEvent("Click", onOK)
+	Theme.Add(g, "Button", "x" (w - x - 76) " y" y " w76 h28", TXT.SET_apply).OnEvent("Click", onApply)
+
+	lb.OnEvent("ItemSelect", onChosen)
 	lb.OnEvent("DoubleClick", onChosenDouble)
 	inputfield.OnEvent("Change", onInput)
 	g.OnEvent("Close", onCancel)
@@ -168,7 +212,21 @@ plugin_pformat_commonformats(zin) {
 		FileAppend("; Add User paste formats here (AutoHotkey v2 syntax)`n; Prefix - plugin_pformat_commonformats_", ztF)
 	}
 
-	lb.Choose(zchosenformat = "" ? "None" : zchosenformat) ; choose the previous active format
+	zRestoreTarget := zchosenformat = "" ? "None" : zchosenformat 	; choose the previous active format
+	zRestoreRow := 0
+	loop lb.GetCount()
+		if (lb.GetText(A_Index) = zRestoreTarget) {
+			zRestoreRow := A_Index
+			break
+		}
+	if !zRestoreRow
+		loop lb.GetCount()
+			if (lb.GetText(A_Index) = "None") {
+				zRestoreRow := A_Index
+				break
+			}
+	if zRestoreRow
+		lb.Modify(zRestoreRow, "Select Focus Vis")
 	onChosen()
 	zDone := 0 	; used as an identifier in onChosen
 	while !zDone
@@ -207,11 +265,12 @@ plugin_pformat_commonformats(zin) {
 			onOK()
 	}
 
-	onChosen(*) {
+	onChosen(zCtrl := "", zItem := 0, zSelected := 1) {
+		if !zSelected 	; ItemSelect also fires on deselect; only react when a row becomes selected
+			return
 		inputfield.Value := ""
-		zchosenformat := lb.Text
-		if (zchosenformat = "")
-			zchosenformat := "None"
+		zRow := lb.GetNext(0)
+		zchosenformat := zRow ? lb.GetText(zRow) : "None"
 		zFobj := FuncByName("plugin_pformat_commonformats_" zchosenformat)
 		if !zFobj
 			return

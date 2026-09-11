@@ -17,12 +17,13 @@
     .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
     .ring { position: absolute; user-select: none; }
     .ring svg { display: block; }
-    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10px; line-height: 1.2; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
+    .wl .lt { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 13px; padding: 0 4px; border-radius: 4px; font-size: 9px; font-weight: 600; letter-spacing: .02em; }
     .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
-    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
-    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
-    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .hub .ht { font-size: 12px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
     .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
     .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
     .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -96,9 +97,36 @@ class Component extends DCLogic {
     var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
     return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
   }
+  look(n, r0, r1) {
+    var gap = this.props.gap === undefined ? 8 : Number(this.props.gap);
+    var corner = this.props.corner === undefined ? 8 : Number(this.props.corner);
+    var step = 2 * Math.PI / n;
+    return { gap: gap, corner: Math.max(0, Math.min(corner, 0.3 * r0 * step, (r1 - r0) / 2 - 2)) };
+  }
+  roundSector(cx, cy, r0, r1, a0, a1, gap, rad) {
+    if (a1 - a0 >= 359.9) {
+      return 'M ' + (cx - r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx + r1) + ' ' + cy + ' A ' + r1 + ' ' + r1 + ' 0 1 1 ' + (cx - r1) + ' ' + cy + ' Z'
+        + ' M ' + (cx - r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx + r0) + ' ' + cy + ' A ' + r0 + ' ' + r0 + ' 0 1 0 ' + (cx - r0) + ' ' + cy + ' Z';
+    }
+    var d = gap / 2, k = Math.PI / 180;
+    var corner = function (a, sign, R, outer) {
+      var e = [Math.sin(a * k), -Math.cos(a * k)], nn = [sign * Math.cos(a * k), sign * Math.sin(a * k)];
+      var cr = outer ? R - rad : R + rad, off = d + rad;
+      var t = Math.sqrt(Math.max(cr * cr - off * off, 0));
+      var c = [e[0] * t + nn[0] * off, e[1] * t + nn[1] * off];
+      var len = Math.sqrt(c[0] * c[0] + c[1] * c[1]) || 1;
+      return { line: [e[0] * t + nn[0] * d, e[1] * t + nn[1] * d], arc: [c[0] / len * R, c[1] / len * R] };
+    };
+    var P = function (q) { return (Math.round((cx + q[0]) * 100) / 100) + ' ' + (Math.round((cy + q[1]) * 100) / 100); };
+    var AO = corner(a0, 1, r1, true), BO = corner(a1, -1, r1, true), BI = corner(a1, -1, r0, false), AI = corner(a0, 1, r0, false);
+    var big = (a1 - a0) > 180 ? 1 : 0, f = ' A ' + rad + ' ' + rad + ' 0 0 1 ';
+    return 'M ' + P(AO.arc) + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + P(BO.arc) + f + P(BO.line)
+      + ' L ' + P(BI.line) + f + P(BI.arc) + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + P(AI.arc) + f + P(AI.line)
+      + ' L ' + P(AO.line) + f + P(AO.arc) + ' Z';
+  }
   renderVals() {
     var p = this.pal(), st = this.state || {}, self = this;
-    var items = [{"label":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","key":"T","desc":"Drop fonts and colors, keep the text","dim":false},{"label":"Strip URL tracking","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","key":"M","desc":"[host](url)","dim":false},{"label":"No formatting","key":"N","desc":"Plain text only","dim":false},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"Upper case","key":"U","desc":"THE WHOLE CLIP","dim":false},{"label":"More…","key":"→","desc":"eight more formats","more":true}];
+    var items = [{"label":"Original","short":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","short":"Trim","key":"T","desc":"Strip off formatting","dim":false},{"label":"Strip URL tracking","short":"Untrack","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","short":"Markdown","key":"M","desc":"[host](url)","dim":false},{"label":"SentenceCase","short":"Sentence","key":"E","desc":"Paste text in sentence case","dim":false},{"label":"Common Formats","short":"Common","key":"N","desc":"Pick from many predefined formats","dim":false},{"label":"Pretty JSON","short":"Pretty","key":"P","desc":"Indent two spaces","dim":true},{"label":"More…","short":"More","key":"→","desc":"seven more formats","more":true}];
     var CX = 170, CY = 170, RAD = 118, n = items.length, step = 360 / n;
     var hover = st.hover === undefined ? -1 : st.hover;
     var onLabel = st.on || 'Trim Formatting';
@@ -106,7 +134,7 @@ class Component extends DCLogic {
       var c = self.pt(CX, CY, RAD, i * step);
       var isHover = i === hover, isOn = it.label === onLabel && !it.more;
       return {
-        label: it.label, key: it.key,
+        label: it.short || it.label, key: it.key,
         style: 'left:' + (c[0] - 54) + 'px; top:' + (c[1] - 20) + 'px; width:108px; height:40px;'
           + 'background:' + (isHover ? p.accent : (isOn ? p.accentSoft : p.surface)) + ';'
           + 'color:' + (isHover ? p.accentText : p.text) + ';'
