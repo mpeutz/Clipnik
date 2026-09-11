@@ -94,6 +94,38 @@ check(Ring.Pick(items, {prefix: "", until: () => A_TickCount - t0 > 500}) = "", 
 later(400, () => SendEvent("5"))
 check(Ring.Pick(items, {prefix: "", extraKeys: ["5"]}) = "5", "an extra key returns itself")
 
+; Action Mode's items bind with no modifier -- a user who keeps Ctrl+Shift held after the Ctrl+Shift+A
+; trigger (the flick gesture invites it) must still have the letter fire; BindKeys' "*" wildcard covers
+; this. Ctrl is released in `finally` even if the check throws or fails, so a failure here does not leave
+; the desktop with Ctrl stuck down. The Esc at 1500ms is a safety net: if the wildcard regresses and "h"
+; never fires, this closes the ring (making the check fail cleanly) instead of hanging the suite.
+SendEvent("{Ctrl down}")
+try {
+    later(400, () => SendEvent("h"))
+    later(1500, () => SendEvent("{Esc}"))
+    check(Ring.Pick(items, {prefix: ""}) = "H", "a letter picks while a modifier is held")
+} finally {
+    SendEvent("{Ctrl up}")
+}
+
+; an exception inside Pick (here, a throwing `until`) must not leave isOpen stuck true, the keys bound
+; system-wide, the 16ms timer running or the ring visible -- Ring.Pick's try/finally must unwind all of
+; it so a normal Pick right after still works.
+until_throws() {
+    throw Error("boom")
+}
+threw := false
+try {
+    Ring.Pick(items, {prefix: "", until: until_throws})
+} catch as e {
+    threw := (e.Message = "boom")
+}
+check(threw, "an exception inside Pick propagates")
+check(Ring_IsOpen() = 0 && !WinExist("Clipjump_Ring ahk_class AutoHotkeyGUI"), "the ring is closed and hidden after the exception")
+
+later(400, () => SendEvent("b"))
+check(Ring.Pick(items, {prefix: ""}) = "B", "a normal Pick still works after a prior Pick threw")
+
 g.Destroy()
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

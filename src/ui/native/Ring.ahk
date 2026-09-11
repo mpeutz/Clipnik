@@ -33,21 +33,28 @@ class Ring {
 			try WinSetTransparent(128, o.dim)
 		}
 		Ring.isOpen := true
-		Ring.BindKeys(true)
-		Ring.Draw()
-		SetTimer(Ring_Tick, 16)
-		while !Ring.done {
-			Sleep 15
-			if o.HasProp("until") && o.until.Call()
-				Ring.Close("")
+		; anything thrown from BindKeys(true) through the wait loop (Draw, o.until.Call()) must not leave the
+		; 16 ms timer running, the keys bound system-wide, the dim window stuck at alpha 128 or isOpen stuck
+		; true (which would make every later Pick return "" until Clipjump restarts) -- finally always undoes
+		; everything BindKeys(true)/dim set up, whatever happened in between.
+		try {
+			Ring.BindKeys(true)
+			Ring.Draw()
+			SetTimer(Ring_Tick, 16)
+			while !Ring.done {
+				Sleep 15
+				if o.HasProp("until") && o.until.Call()
+					Ring.Close("")
+			}
+		} finally {
+			SetTimer(Ring_Tick, 0)
+			Ring.BindKeys(false)
+			DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 0)
+			Ring.visible := false
+			if o.HasProp("dim") && o.dim
+				try WinSetTransparent(Ring.prevAlpha = "" ? "Off" : Ring.prevAlpha, o.dim)
+			Ring.isOpen := false
 		}
-		SetTimer(Ring_Tick, 0)
-		Ring.BindKeys(false)
-		DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 0)
-		Ring.visible := false
-		if o.HasProp("dim") && o.dim
-			try WinSetTransparent(Ring.prevAlpha = "" ? "Off" : Ring.prevAlpha, o.dim)
-		Ring.isOpen := false
 		return Ring.result
 	}
 
@@ -91,6 +98,8 @@ class Ring {
 	}
 
 	static Choose(idx) {
+		if Ring.done
+			return
 		it := Ring.pages[Ring.page][idx + 1]
 		if it.HasProp("nav") {
 			Ring.page := it.nav = "more" ? Ring.page + 1 : 1
@@ -101,18 +110,24 @@ class Ring {
 	}
 
 	static Close(result) {
+		if Ring.done
+			return
 		Ring.result := result, Ring.done := true
 	}
 
 	static BindKeys(on) {
 		o := Ring.opts, pre := o.HasProp("prefix") ? o.prefix : ""
 		opt := on ? "On T2" : "Off T1"
+		; "*" (wildcard, placed before the "^"/"" prefix like "~*LButton" places it before its own prefix)
+		; so a letter, Esc or Enter still fires when a modifier is held: the flick gesture invites keeping
+		; Ctrl (paste mode) or Ctrl+Shift (Action Mode) down after the trigger, and a bare "h" hotkey does
+		; not fire while any extra modifier is held.
 		for page in Ring.pages
 			for it in page
 				if (!it.HasProp("nav") && it.key != "")
-					Ring.BindKey(pre it.key, Ring_Key.Bind(it.key), opt)
-		Ring.BindKey(pre "Esc", Ring_Esc, opt)
-		Ring.BindKey(pre "Enter", Ring_Enter, opt)
+					Ring.BindKey("*" pre it.key, Ring_Key.Bind(it.key), opt)
+		Ring.BindKey("*" pre "Esc", Ring_Esc, opt)
+		Ring.BindKey("*" pre "Enter", Ring_Enter, opt)
 		; a click is caught on the mouse hook's own thread (On T2, ~ so it still reaches whatever is under
 		; the cursor): a synthetic Click() sent from this same process is a single blocking call with no
 		; message-pump gap in it, so GetKeyState polled from another timer can miss the whole down-up pair.
@@ -123,7 +138,7 @@ class Ring {
 		Hotkey("~*LButton up", Ring_MouseUp, opt)
 		if o.HasProp("extraKeys")
 			for kk in o.extraKeys
-				Ring.BindKey(pre kk, Ring_Key.Bind(kk), opt)
+				Ring.BindKey("*" pre kk, Ring_Key.Bind(kk), opt)
 		if (o.HasProp("triggerHotkey") && o.triggerHotkey != "")
 			Ring.BindKey(o.triggerHotkey, Ring_Trigger, opt)
 	}
