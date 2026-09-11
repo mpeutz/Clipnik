@@ -114,45 +114,75 @@ Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 900
 
-step("Z opens the format menu, Z closes it again; a letter picks Upper case")
+step("Z opens the format ring; U picks Upper case")
 ed.Value := ""
 SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("z")
-Sleep 500
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "card still visible with the format menu")
-fmtBefore := cj["curPformat"]
-SendEvent("z")
-Sleep 500
-SendEvent("u")      ; a still-open menu would pick Upper case here
-Sleep 500
-check(cj["curPformat"] = fmtBefore, "Z closed the menu: U picked nothing (was [" fmtBefore "], now [" cj["curPformat"] "])")
-SendEvent("z")
-Sleep 700
+Sleep 600
+check(cj.runFunction("Ring_IsOpen()") = 1, "Z opens the ring")
+check(cj.runFunction("Ring_LabelAt(0)") = "Original" && cj.runFunction("Ring_LabelAt(1)") = "Trim Formatting", "Original then Trim Formatting lead the ring")
 SendEvent("u")
-Sleep 700
+Sleep 500
 check(cj["curPformat"] = "Upper case", "U picked Upper case: [" cj["curPformat"] "]")
-clipBeforeMenu := clipNo()
-SendEvent("v")
+check(cj.runFunction("Ring_IsOpen()") = 0, "picking closes the ring")
+SendEvent("z")
+Sleep 500
+SendEvent("z")
+Sleep 500
+check(cj.runFunction("Ring_IsOpen()") = 0, "a second tap of Z closes the ring")
+SendEvent("u")
 Sleep 400
-check(clipNo() != clipBeforeMenu, "menu closed: V still moves to the next clip (realclipno=" clipNo() ")")
-SendEvent("c")
-Sleep 400
-check(clipNo() = clipBeforeMenu, "C moves back onto the clip we're about to paste")
+check(cj["curPformat"] = "Upper case", "U after the ring closed changes nothing")
 SendEvent("{Ctrl up}")
 Sleep 900
 check(ed.Value == StrUpper(ed.Value) && InStr(ed.Value, StrUpper(stamp), true), "pasted upper case: [" ed.Value "]")
 
-step("O in the format menu picks Original and clears the format")
+step("a click on a wedge picks it; a flick picks it")
+ed.Value := ""
 SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("z")
-Sleep 700
+Sleep 600
+xy := StrSplit(cj.runFunction("Ring_WedgePoint(2)"), ","), lbl := cj.runFunction("Ring_LabelAt(2)")
+MouseMove(xy[1], xy[2], 5)
+Sleep 150
+Click()
+Sleep 500
+check(lbl != "" && cj["curPformat"] = lbl, "a click picked [" lbl "]: [" cj["curPformat"] "]")
+SendEvent("{z down}")
+Sleep 500
+xy := StrSplit(cj.runFunction("Ring_WedgePoint(3)"), ","), lbl := cj.runFunction("Ring_LabelAt(3)")
+MouseMove(xy[1], xy[2], 10)
+Sleep 200
+SendEvent("{z up}")
+Sleep 500
+check(lbl != "" && cj["curPformat"] = lbl, "a flick picked [" lbl "]: [" cj["curPformat"] "]")
+
+step("built-in letters win over plugin letters")
+SendEvent("z")
+Sleep 500
+SendEvent("m")
+Sleep 500
+check(cj["curPformat"] = "Markdown link", "M picked Markdown link: [" cj["curPformat"] "]")
+SendEvent("z")
+Sleep 500
+SendEvent("s")
+Sleep 500
+check(cj["curPformat"] = "Strip URL tracking", "S picked Strip URL tracking: [" cj["curPformat"] "]")
+
+step("O picks Original; releasing Ctrl with the ring open leaves no ring")
+SendEvent("z")
+Sleep 500
 SendEvent("o")
-Sleep 700
-check(cj["curPformat"] = "", "O picked Original: [" cj["curPformat"] "]")
+Sleep 500
+check(cj["curPformat"] = "", "O picked Original")
+SendEvent("z")
+Sleep 500
 SendEvent("{Ctrl up}")
-Sleep 900
+Sleep 1200
+check(cj.runFunction("Ring_IsOpen()") = 0, "the ring closed with paste mode")
+check(InStr(ed.Value, stamp), "the clip was pasted: [" ed.Value "]")
 cj.runFunction("set_pformat()")
 check(cj["curPformat"] = "", "set_pformat() resets the format")
 

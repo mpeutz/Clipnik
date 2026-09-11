@@ -1,4 +1,5 @@
 ;@Plugin-Name Trim Formatting
+;@Plugin-Short Trim
 ;@Plugin-Description Strip off Formatting
 ;@Plugin-Author Avi
 ;@Plugin-Tags pformat

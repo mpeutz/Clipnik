@@ -1,4 +1,5 @@
 ;@Plugin-Name SentenceCase
+;@Plugin-Short Sentence
 ;@Plugin-Description Paste Text in Sentence Case
 ;@Plugin-Author Avi
 ;@Plugin-Tags pformat

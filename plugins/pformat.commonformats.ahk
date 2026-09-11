@@ -1,4 +1,5 @@
 ;@Plugin-Name Common Formats
+;@Plugin-Short Common
 ;@Plugin-Description Shows a gui to paste with a format from many types of predefined formats. Can be easily extended to include more formats.
 ;@Plugin-Description For that edit the pformat.commonformats.lib/user.ahk file. This file if needed is created when you run this plugin for the first time.
 ;@Plugin-Description Only works for Text ([Text] or [File/Folder]) type data.
