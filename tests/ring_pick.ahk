@@ -50,6 +50,17 @@ check(Ring.Pick(items, {prefix: ""}) = "D", "Enter picks the hovered wedge")
 later(400, () => (at(1), Click()))
 check(Ring.Pick(items, {prefix: ""}) = "B", "a click on wedge 1 picks it")
 
+; paste mode holds Ctrl (prefix "^") and Action Mode holds Ctrl+Shift while the ring is up; a click
+; must still register then. Ctrl is released in `finally` even if the check throws or fails, so a
+; failure here does not leave the desktop with Ctrl stuck down.
+SendEvent("{Ctrl down}")
+try {
+    later(400, () => (at(1), Click()))
+    check(Ring.Pick(items, {prefix: "^"}) = "B", "a click still registers with Ctrl held")
+} finally {
+    SendEvent("{Ctrl up}")
+}
+
 later(400, () => (MouseMove(200, 150, 3), Sleep(100), Click()))   ; on the test's own window, outside the disc
 check(Ring.Pick(items, {prefix: ""}) = "", "a click outside cancels")
 MouseMove(900, 500, 0), Sleep(200)

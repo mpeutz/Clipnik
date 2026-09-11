@@ -116,8 +116,11 @@ class Ring {
 		; a click is caught on the mouse hook's own thread (On T2, ~ so it still reaches whatever is under
 		; the cursor): a synthetic Click() sent from this same process is a single blocking call with no
 		; message-pump gap in it, so GetKeyState polled from another timer can miss the whole down-up pair.
-		Ring.BindKey("~LButton", Ring_MouseDown, opt)
-		Ring.BindKey("~LButton up", Ring_MouseUp, opt)
+		; "*" so a click still registers with a modifier held (paste mode holds Ctrl, Action Mode holds
+		; Ctrl+Shift while the ring is up); Hotkey() directly, since BindKey's letter vk-fallback would
+		; mangle "~*LButton up" if it were ever reached.
+		Hotkey("~*LButton", Ring_MouseDown, opt)
+		Hotkey("~*LButton up", Ring_MouseUp, opt)
 		if o.HasProp("extraKeys")
 			for kk in o.extraKeys
 				Ring.BindKey(pre kk, Ring_Key.Bind(kk), opt)
