@@ -135,9 +135,9 @@ class Ring {
 	static Hub(G, st, ox, oy) {
 		global TXT
 		p := st.pal, k := st.k, f := Ring.Fonts(), w := 2 * st.s.hub - 8 * k
-		Ring.Text(G, st.hubTitle, f.text, 12 * k, true, 0xFF000000 | (st.titleAccent ? p["accent"] : p["text"]), ox - w / 2, oy - 24 * k, w, 18 * k, true)
-		Ring.Text(G, st.hubSub, f.text, 10 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy - 6 * k, w, 28 * k)
-		Ring.Text(G, TXT.RNG_keys, f.text, 9 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy + 22 * k, w, 12 * k)
+		Ring.Text(G, st.hubTitle, f.text, 12 * k, true, 0xFF000000 | (st.titleAccent ? p["accent"] : p["text"]), ox - w / 2, oy - 34 * k, w, 32 * k)
+		Ring.Text(G, st.hubSub, f.text, 10 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy - 2 * k, w, 20 * k)
+		Ring.Text(G, TXT.RNG_keys, f.text, 9 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy + 18 * k, w, 12 * k)
 	}
 
 	; key hint centred on cx, top edge at top

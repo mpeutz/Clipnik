@@ -42,6 +42,7 @@ for mode in ["dark", "light"] {
     Ring.RenderToFile(Ring.State(fp[1], 5, "Common Formats", fmt[6].desc), "tests\out\ring-" mode "-format-hover-long.png")
     Ring.RenderToFile(Ring.State(fp[2], 7, Ring.NavLabel("back"), TXT.RNG_backDesc), "tests\out\ring-" mode "-format-page2.png")
     Ring.RenderToFile(Ring.State(ap[1], 0, "Clipboard History", "every clip ever copied"), "tests\out\ring-" mode "-action.png")
+    Ring.RenderToFile(Ring.State(ap[1], 1, "Channel Organizer", "channels and their clips"), "tests\out\ring-" mode "-action-organizer.png")
 }
 FileAppend("done`n", "*")
 ExitApp
