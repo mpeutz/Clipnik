@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.33px; line-height: 1.35; }
+    a { color: #76B84E; } a:hover { color: #8ECB68; }
+    .stage { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 20px; background: var(--bg); color: var(--text); }
+    .hd { display: flex; align-items: baseline; gap: 10px; flex: 0 0 auto; }
+    .hd .t { font-size: 15px; font-weight: 600; }
+    .hd .s { font-size: 12px; color: var(--muted); }
+    .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
+    .ring { position: absolute; user-select: none; }
+    .ring svg { display: block; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
+    .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
+    .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill { display: inline-flex; align-items: center; height: 19px; padding: 0 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: .03em; }
+    .notes { flex: 0 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+    .note { font-size: 11px; color: var(--muted); line-height: 1.45; }
+    .note b { color: var(--text); font-weight: 600; display: block; }
+    .tiles { position: absolute; user-select: none; }
+    .tile { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,.08); font-size: 11px; font-weight: 600; text-align: center; pointer-events: none; }
+    .tile .k { font-size: 9.5px; font-weight: 600; opacity: .75; }
+  </style>
+</helmet>
+<div class="stage" style="width: 620px; height: 560px; {{vars}}">
+      <div class="hd"><span class="t">Building A</span><span class="s">what the renderer can do, and what was decided</span></div>
+      <div style="flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 14px; overflow: hidden;">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px;">
+        <div class="note" style="color: var(--text);"><b>A GDI+ layered window can</b><span style="color: var(--muted)">Draw true arcs with antialiased edges and per-pixel alpha, so there is no rectangular window edge and the shadow is part of the bitmap. Hit testing is angle and radius arithmetic, so there are no dead gaps between wedges. Repainting the whole 320px bitmap on every pointer move costs well under a millisecond.</span></div>
+        <div class="note" style="color: var(--text);"><b>It cannot</b><span style="color: var(--muted)">Hold native controls, so no scrolling list and no text field inside the ring. Text is drawn by GDI+, which means grayscale antialiasing rather than the ClearType the card uses: fine at 11px and up, marginally softer. Every hover repaints the whole bitmap.</span></div>
+        <div class="note" style="color: var(--text);"><b>Both gestures, one ring</b><span style="color: var(--muted)">Hold the trigger and release over a wedge, or let go and click. The hub is the dead zone for both: release or click there and nothing happens. A minimum travel of about 30px stops a twitch from picking.</span></div>
+        <div class="note" style="color: var(--text);"><b>Keyboard survives</b><span style="color: var(--muted)">Every wedge keeps its letter, and the letters are the ones already assigned, so the list card and the ring stay interchangeable.</span></div>
+        </div>
+        <div style="height: 1px; background: var(--border);"></div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px;">
+        <div class="note" style="color: var(--text);"><b>Decided</b><span style="color: var(--muted)">The ring replaces the list: Z always opens it, and the letters still pick while it is open. It opens at the pointer, clamped to the monitor. The paste card dims to half behind it. Action mode opens its ring from Ctrl+Shift+A only.</span></div>
+        <div class="note" style="color: var(--text);"><b>Rough cost</b><span style="color: var(--muted)">One renderer of about 300 lines (geometry, paint, hit test, input), shared by both rings, plus the two call sites. The list menus go; the help card and confirm prompts stay on the card.</span></div>
+        </div>
+      </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"$preview":{"width":620,"height":560}}'>
+class Component extends DCLogic {
+  hex(s) { return parseInt(String(s).replace('#', ''), 16); }
+  mix(a, b, t) {
+    var A = this.hex(a), B = this.hex(b);
+    var ch = function (s, e) { return Math.round(s + (e - s) * t); };
+    var r = ch((A >> 16) & 255, (B >> 16) & 255), g = ch((A >> 8) & 255, (B >> 8) & 255), bl = ch(A & 255, B & 255);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1).toUpperCase();
+  }
+  lum(a) { var v = this.hex(a); return 0.2126 * (((v >> 16) & 255) / 255) + 0.7152 * (((v >> 8) & 255) / 255) + 0.0722 * ((v & 255) / 255); }
+  pal() {
+    var dark = this.props.dark === undefined ? true : this.props.dark;
+    var accent = this.props.accent || '#76B84E';
+    var p = dark
+      ? { bg: '#202020', surface: '#2B2B2B', surfaceAlt: '#363636', border: '#3F3F3F', text: '#F0F0F0', muted: '#9A9A9A', danger: '#E5484D' }
+      : { bg: '#F3F3F3', surface: '#FFFFFF', surfaceAlt: '#EDEDED', border: '#D9D9D9', text: '#1B1B1B', muted: '#6B6B6B', danger: '#C42B1C' };
+    p.accent = accent;
+    p.accentText = this.lum(accent) > 0.45 ? '#101010' : '#FFFFFF';
+    p.accentSoft = this.mix(accent, p.surface, 0.82);
+    p.dim = this.mix(p.surfaceAlt, p.bg, 0.5);
+    var keys = ['bg', 'surface', 'surfaceAlt', 'border', 'text', 'muted', 'danger', 'accent', 'accentText', 'accentSoft'];
+    p.vars = keys.map(function (k) { return '--' + k + ':' + p[k]; }).join(';');
+    return p;
+  }
+  pt(cx, cy, r, deg) {
+    var a = (deg - 90) * Math.PI / 180;
+    return [Math.round((cx + r * Math.cos(a)) * 100) / 100, Math.round((cy + r * Math.sin(a)) * 100) / 100];
+  }
+  sector(cx, cy, r0, r1, a0, a1) {
+    var o0 = this.pt(cx, cy, r1, a0), o1 = this.pt(cx, cy, r1, a1), i1 = this.pt(cx, cy, r0, a1), i0 = this.pt(cx, cy, r0, a0);
+    var big = (a1 - a0) > 180 ? 1 : 0;
+    return 'M ' + o0[0] + ' ' + o0[1] + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + o1[0] + ' ' + o1[1]
+      + ' L ' + i1[0] + ' ' + i1[1] + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + i0[0] + ' ' + i0[1] + ' Z';
+  }
+  aim(e, cx, cy, n) {
+    var r = e.currentTarget.getBoundingClientRect();
+    var dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
+  }
+  renderVals() { return { vars: this.pal().vars }; }
+}
+</script>
+</body>
+</html>

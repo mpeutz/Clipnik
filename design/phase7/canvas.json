@@ -1,0 +1,95 @@
+{
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Chosen"
+    },
+    {
+      "id": "page-2",
+      "name": "Directions"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "A · Format ring",
+      "x": 0,
+      "y": 0,
+      "w": 560,
+      "h": 560,
+      "is_interactive": true,
+      "page": "page-1"
+    },
+    {
+      "file": "ActionRing.dc.html",
+      "title": "A · Action mode ring",
+      "x": 640,
+      "y": 0,
+      "w": 560,
+      "h": 560,
+      "is_interactive": true,
+      "page": "page-1"
+    },
+    {
+      "file": "Budget.dc.html",
+      "title": "Building A",
+      "x": 1280,
+      "y": 0,
+      "w": 620,
+      "h": 560,
+      "page": "page-1"
+    },
+    {
+      "file": "DirectionB.dc.html",
+      "title": "B · Two tracks",
+      "x": 0,
+      "y": 0,
+      "w": 580,
+      "h": 620,
+      "is_interactive": true,
+      "page": "page-2"
+    },
+    {
+      "file": "DirectionC.dc.html",
+      "title": "C · Two levels",
+      "x": 660,
+      "y": 0,
+      "w": 520,
+      "h": 560,
+      "is_interactive": true,
+      "page": "page-2"
+    },
+    {
+      "file": "DirectionD.dc.html",
+      "title": "D · Tiles on a circle",
+      "x": 1260,
+      "y": 0,
+      "w": 520,
+      "h": 560,
+      "is_interactive": true,
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -170,
+      "w": 820,
+      "page": "page-1",
+      "text": "Chosen: A, the favorites ring. Seven entries that fit the moment are one flick away and never move; More flips to the rest.\nBoth boards are live - move the pointer over a ring and it follows your angle the way the real hit test would, clicking picks, and More turns the page. The kind tweak on the format ring shows it repopulating for a URL, JSON or plain text."
+    },
+    {
+      "id": "directions-note",
+      "x": 0,
+      "y": -130,
+      "w": 820,
+      "page": "page-2",
+      "text": "The alternatives, kept for reference: B shows all sixteen formats on two tracks, C drills through six groups, D is the same gesture built from the tray card's toolkit."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

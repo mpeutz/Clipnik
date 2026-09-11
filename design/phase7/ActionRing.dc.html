@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.33px; line-height: 1.35; }
+    a { color: #76B84E; } a:hover { color: #8ECB68; }
+    .stage { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 20px; background: var(--bg); color: var(--text); }
+    .hd { display: flex; align-items: baseline; gap: 10px; flex: 0 0 auto; }
+    .hd .t { font-size: 15px; font-weight: 600; }
+    .hd .s { font-size: 12px; color: var(--muted); }
+    .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
+    .ring { position: absolute; user-select: none; }
+    .ring svg { display: block; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
+    .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
+    .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill { display: inline-flex; align-items: center; height: 19px; padding: 0 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: .03em; }
+    .notes { flex: 0 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+    .note { font-size: 11px; color: var(--muted); line-height: 1.45; }
+    .note b { color: var(--text); font-weight: 600; display: block; }
+    .tiles { position: absolute; user-select: none; }
+    .tile { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,.08); font-size: 11px; font-weight: 600; text-align: center; pointer-events: none; }
+    .tile .k { font-size: 9.5px; font-weight: 600; opacity: .75; }
+  </style>
+</helmet>
+<div class="stage" style="width: 560px; height: 560px; {{vars}}">
+      <div class="hd"><span class="t">A · Action mode as a ring</span><span class="s">the same structure, icons instead of long labels</span></div>
+      <div class="desk">
+      <div class="ring" style="{{ringStyle}}" onMouseMove="{{move}}" onMouseLeave="{{leave}}" onClick="{{pick}}">
+        <svg width="320" height="320" viewBox="0 0 320 320">
+          <circle cx="160" cy="160" r="{{shadowR}}" style="{{shadowStyle}}"></circle>
+          <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
+            <path d="{{w.d}}" style="{{w.style}}"></path>
+          </sc-for>
+          <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
+            <g transform="{{w.itf}}" style="{{w.istyle}}"><path d="{{w.icon}}"></path></g>
+          </sc-for>
+          <circle cx="160" cy="160" r="46" style="{{hubStyle}}"></circle>
+        </svg>
+        <sc-for list="{{wedges}}" as="w" hint-placeholder-count="8">
+          <div class="wl" style="{{w.lstyle}}"><div>{{w.label}}</div><div class="k" style="{{w.kstyle}}">{{w.key}}</div></div>
+        </sc-for>
+        <div class="hub" style="{{hubBox}}">
+          <div class="ht" style="{{hubTitleStyle}}">{{hubTitle}}</div>
+          <div class="hs">{{hubSub}}</div>
+          <div class="hk">{{hubKeys}}</div>
+        </div>
+      </div>
+      </div>
+      <div class="notes">
+        <div class="note"><b>Why</b>Action mode has seventeen entries and no context to rank them, so the ring carries the seven you reach for and More… holds the rest. Channels stay on the number keys.</div>
+        <div class="note"><b>Open</b>A ring wants a mouse trigger. Ctrl+Shift+A still works, but a side button or middle click would suit it better.</div>
+      </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"$preview":{"width":560,"height":560}}'>
+class Component extends DCLogic {
+  hex(s) { return parseInt(String(s).replace('#', ''), 16); }
+  mix(a, b, t) {
+    var A = this.hex(a), B = this.hex(b);
+    var ch = function (s, e) { return Math.round(s + (e - s) * t); };
+    var r = ch((A >> 16) & 255, (B >> 16) & 255), g = ch((A >> 8) & 255, (B >> 8) & 255), bl = ch(A & 255, B & 255);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1).toUpperCase();
+  }
+  lum(a) { var v = this.hex(a); return 0.2126 * (((v >> 16) & 255) / 255) + 0.7152 * (((v >> 8) & 255) / 255) + 0.0722 * ((v & 255) / 255); }
+  pal() {
+    var dark = this.props.dark === undefined ? true : this.props.dark;
+    var accent = this.props.accent || '#76B84E';
+    var p = dark
+      ? { bg: '#202020', surface: '#2B2B2B', surfaceAlt: '#363636', border: '#3F3F3F', text: '#F0F0F0', muted: '#9A9A9A', danger: '#E5484D' }
+      : { bg: '#F3F3F3', surface: '#FFFFFF', surfaceAlt: '#EDEDED', border: '#D9D9D9', text: '#1B1B1B', muted: '#6B6B6B', danger: '#C42B1C' };
+    p.accent = accent;
+    p.accentText = this.lum(accent) > 0.45 ? '#101010' : '#FFFFFF';
+    p.accentSoft = this.mix(accent, p.surface, 0.82);
+    p.dim = this.mix(p.surfaceAlt, p.bg, 0.5);
+    var keys = ['bg', 'surface', 'surfaceAlt', 'border', 'text', 'muted', 'danger', 'accent', 'accentText', 'accentSoft'];
+    p.vars = keys.map(function (k) { return '--' + k + ':' + p[k]; }).join(';');
+    return p;
+  }
+  pt(cx, cy, r, deg) {
+    var a = (deg - 90) * Math.PI / 180;
+    return [Math.round((cx + r * Math.cos(a)) * 100) / 100, Math.round((cy + r * Math.sin(a)) * 100) / 100];
+  }
+  sector(cx, cy, r0, r1, a0, a1) {
+    var o0 = this.pt(cx, cy, r1, a0), o1 = this.pt(cx, cy, r1, a1), i1 = this.pt(cx, cy, r0, a1), i0 = this.pt(cx, cy, r0, a0);
+    var big = (a1 - a0) > 180 ? 1 : 0;
+    return 'M ' + o0[0] + ' ' + o0[1] + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + o1[0] + ' ' + o1[1]
+      + ' L ' + i1[0] + ' ' + i1[1] + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + i0[0] + ' ' + i0[1] + ' Z';
+  }
+  aim(e, cx, cy, n) {
+    var r = e.currentTarget.getBoundingClientRect();
+    var dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
+  }
+  renderVals() {
+    var p = this.pal(), st = this.state || {}, self = this;
+    var pages = [[{"label":"Clipboard History","key":"H","icon":"M3 12a9 9 0 1 0 2.5-6.2M3 4v4h4M12 7v5l3.5 2","desc":"every clip ever copied","more":false},{"label":"Channel Organizer","key":"O","icon":"M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z","desc":"channels and their clips","more":false},{"label":"Settings","key":"E","icon":"M4 6h9M17 6h3M4 12h3M11 12h9M4 18h13M21 18h0M15 4v4M9 10v4M19 16v4","desc":"all of Clipjump's options","more":false},{"label":"Hold clip","key":"B","icon":"M12 17v5M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9A2 2 0 0 1 15 10.8V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z","desc":"keep the next copy at the top","more":false},{"label":"PitSwap","key":"P","icon":"M8 3 4 7l4 4M4 7h15M16 21l4-4-4-4M20 17H5","desc":"swap with the pit channel","more":false},{"label":"One-time stop","key":"T","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM10 9v6M14 9v6","desc":"skip recording the next copy","more":false},{"label":"Copy file path","key":"C","icon":"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5","desc":"the selected file's full path","more":false},{"label":"More…","key":"→","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8 12h.01M12 12h.01M16 12h.01","desc":"seven more actions","more":true}],[{"label":"Plugin Manager","key":"M","icon":"M9 2v6M15 2v6M6 8h12v3a6 6 0 0 1-12 0zM12 17v5","desc":"enable and edit plugins","more":false},{"label":"Ignored Windows","key":"L","icon":"M10.7 5.1A9 9 0 0 1 21 12a17 17 0 0 1-2.2 2.9M6.6 6.6A17 17 0 0 0 3 12a9 9 0 0 0 13 6.3M3 3l18 18M9.9 9.9a3 3 0 0 0 4.2 4.2","desc":"apps Clipjump leaves alone","more":false},{"label":"Copy folder path","key":"X","icon":"M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2z","desc":"the open folder's path","more":false},{"label":"Copy file data","key":"F","icon":"M12 3 3 8l9 5 9-5zM3 14l9 5 9-5","desc":"the file itself, not its path","more":false},{"label":"Sync clipboard","key":"U","icon":"M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8M3 19v-4h4M21 5v4h-4","desc":"push the active clip to Windows","more":false},{"label":"Paste-mode keys","key":"F2","icon":"M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10","desc":"the shortcut sheet","more":false},{"label":"Help","key":"F1","icon":"M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.5M12 17h.01","desc":"what every key does","more":false},{"label":"Back","key":"←","icon":"M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM13 9l-3 3 3 3","desc":"back to the first ring","more":true}]];
+    var page = st.page || 0, items = pages[page], n = items.length;
+    var hover = st.hover === undefined ? -1 : st.hover;
+    var CX = 160, CY = 160, R0 = 52, R1 = 148, step = 360 / n, gap = 2.2;
+    var iconR = R0 + (R1 - R0) * 0.27, labelR = R0 + (R1 - R0) * 0.66;
+    var wedges = items.map(function (it, i) {
+      var isHover = i === hover;
+      var c = self.pt(CX, CY, labelR, i * step);
+      var color = isHover ? p.accentText : (it.more ? p.muted : p.text);
+      var ic = self.pt(CX, CY, iconR, i * step);
+      return {
+        d: self.sector(CX, CY, R0, R1, i * step - step / 2 + gap / 2, i * step + step / 2 - gap / 2),
+        style: 'fill:' + (isHover ? p.accent : (it.more ? p.surface : p.surfaceAlt)) + ';stroke:none',
+        lstyle: 'left:' + (c[0] - 43) + 'px; top:' + (c[1] - 8) + 'px; width:86px; color:' + color,
+        kstyle: 'background:' + (isHover ? 'rgba(0,0,0,.16)' : p.surface) + ';color:' + (isHover ? p.accentText : p.muted),
+        label: it.label, key: it.key,
+        icon: it.icon,
+        itf: 'translate(' + (ic[0] - 9) + ',' + (ic[1] - 9) + ') scale(0.75)',
+        istyle: 'fill:none;stroke:' + (isHover ? p.accentText : p.muted) + ';stroke-width:2;stroke-linecap:round;stroke-linejoin:round'
+      };
+    });
+    var h = hover >= 0 ? items[hover] : null;
+    return {
+      vars: p.vars, wedges: wedges,
+      ringStyle: 'left: 50%; top: 50%; width: 320px; height: 320px; transform: translate(-50%, -50%);',
+      shadowR: 150, shadowStyle: 'fill:rgba(0,0,0,.34)',
+      hubStyle: 'fill:' + p.surface + ';stroke:rgba(255,255,255,.10);stroke-width:1',
+      hubBox: 'left: 88px; top: 88px; width: 144px; height: 144px;',
+      hubTitle: h ? h.label : 'Action mode',
+      hubTitleStyle: 'color:' + (h ? p.text : p.accent),
+      hubSub: h ? h.desc : (page ? 'page 2 of 2' : 'page 1 of 2'),
+      hubKeys: 'release · click · Esc',
+      move: function (e) { var t = self.aim(e, CX, CY, n); self.setState({ hover: t.dist < R0 - 8 ? -1 : t.idx }); },
+      leave: function () { self.setState({ hover: -1 }); },
+      pick: function (e) {
+        var t = self.aim(e, CX, CY, n);
+        if (t.dist < R0 - 8) return self.setState({ hover: -1 });
+        if (items[t.idx].more) self.setState({ page: 1 - page, hover: -1 });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.33px; line-height: 1.35; }
+    a { color: #76B84E; } a:hover { color: #8ECB68; }
+    .stage { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 20px; background: var(--bg); color: var(--text); }
+    .hd { display: flex; align-items: baseline; gap: 10px; flex: 0 0 auto; }
+    .hd .t { font-size: 15px; font-weight: 600; }
+    .hd .s { font-size: 12px; color: var(--muted); }
+    .desk { position: relative; flex: 1 1 auto; min-height: 0; border-radius: 8px; overflow: hidden; background: #161920; background-image: radial-gradient(circle at 28% 18%, #262d3a 0, transparent 58%), radial-gradient(circle at 80% 90%, #1d2430 0, transparent 50%); }
+    .ring { position: absolute; user-select: none; }
+    .ring svg { display: block; }
+    .wl { position: absolute; text-align: center; pointer-events: none; font-size: 10.5px; line-height: 1.18; font-weight: 600; letter-spacing: .01em; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .wl .k { display: inline-flex; align-items: center; justify-content: center; min-width: 15px; height: 14px; padding: 0 4px; border-radius: 4px; font-size: 9.5px; font-weight: 600; letter-spacing: .02em; }
+    .hub { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+    .hub .ht { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
+    .hub .hs { font-size: 10.5px; color: var(--muted); line-height: 1.25; margin-top: 3px; }
+    .hub .hk { font-size: 9.5px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+    .card { position: absolute; border-radius: 8px; border: 1px solid rgba(255,255,255,.10); background: var(--surface); box-shadow: 0 14px 34px rgba(0,0,0,.5); overflow: hidden; }
+    .card .row { display: flex; align-items: center; gap: 8px; padding: 10px 12px 6px 12px; }
+    .card .body { margin: 0 12px 10px 12px; padding: 8px 10px; border-radius: 2px; background: rgba(240,240,240,.05); font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill { display: inline-flex; align-items: center; height: 19px; padding: 0 8px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: .03em; }
+    .notes { flex: 0 0 auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+    .note { font-size: 11px; color: var(--muted); line-height: 1.45; }
+    .note b { color: var(--text); font-weight: 600; display: block; }
+    .tiles { position: absolute; user-select: none; }
+    .tile { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 6px; border: 1px solid rgba(255,255,255,.08); font-size: 11px; font-weight: 600; text-align: center; pointer-events: none; }
+    .tile .k { font-size: 9.5px; font-weight: 600; opacity: .75; }
+  </style>
+</helmet>
+<div class="stage" style="width: 520px; height: 560px; {{vars}}">
+      <div class="hd"><span class="t">D · Tiles on a circle</span><span class="s">the same gesture with today's toolkit</span></div>
+      <div class="desk">
+        <div class="tiles" style="{{wrapStyle}}" onMouseMove="{{move}}" onMouseLeave="{{leave}}" onClick="{{pick}}">
+          <sc-for list="{{tiles}}" as="t" hint-placeholder-count="8">
+            <div class="tile" style="{{t.style}}"><div>{{t.label}}</div><div class="k">{{t.key}}</div></div>
+          </sc-for>
+          <div class="hub" style="{{hubStyle}}">
+            <div class="ht" style="{{hubTitleStyle}}">{{hubTitle}}</div>
+            <div class="hs">{{hubSub}}</div>
+            <div class="hk">{{hubKeys}}</div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note"><b>Why</b>No wedges, so no new renderer: eight opaque cards on a circle, drawn by the same code as the tray card, and selection is still by angle, so the flick feels identical.</div>
+        <div class="note"><b>Against</b>The desktop shows between the tiles and the shape reads as a constellation rather than a ring. Hit areas are the tiles, so a short flick can fall short.</div>
+      </div>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"dark":{"editor":"boolean","default":true,"section":"Theme"},"accent":{"editor":"color","default":"#76B84E","options":["#76B84E","#C42B1C","#0078D4","#8764B8"],"section":"Theme"},"$preview":{"width":520,"height":560}}'>
+class Component extends DCLogic {
+  hex(s) { return parseInt(String(s).replace('#', ''), 16); }
+  mix(a, b, t) {
+    var A = this.hex(a), B = this.hex(b);
+    var ch = function (s, e) { return Math.round(s + (e - s) * t); };
+    var r = ch((A >> 16) & 255, (B >> 16) & 255), g = ch((A >> 8) & 255, (B >> 8) & 255), bl = ch(A & 255, B & 255);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1).toUpperCase();
+  }
+  lum(a) { var v = this.hex(a); return 0.2126 * (((v >> 16) & 255) / 255) + 0.7152 * (((v >> 8) & 255) / 255) + 0.0722 * ((v & 255) / 255); }
+  pal() {
+    var dark = this.props.dark === undefined ? true : this.props.dark;
+    var accent = this.props.accent || '#76B84E';
+    var p = dark
+      ? { bg: '#202020', surface: '#2B2B2B', surfaceAlt: '#363636', border: '#3F3F3F', text: '#F0F0F0', muted: '#9A9A9A', danger: '#E5484D' }
+      : { bg: '#F3F3F3', surface: '#FFFFFF', surfaceAlt: '#EDEDED', border: '#D9D9D9', text: '#1B1B1B', muted: '#6B6B6B', danger: '#C42B1C' };
+    p.accent = accent;
+    p.accentText = this.lum(accent) > 0.45 ? '#101010' : '#FFFFFF';
+    p.accentSoft = this.mix(accent, p.surface, 0.82);
+    p.dim = this.mix(p.surfaceAlt, p.bg, 0.5);
+    var keys = ['bg', 'surface', 'surfaceAlt', 'border', 'text', 'muted', 'danger', 'accent', 'accentText', 'accentSoft'];
+    p.vars = keys.map(function (k) { return '--' + k + ':' + p[k]; }).join(';');
+    return p;
+  }
+  pt(cx, cy, r, deg) {
+    var a = (deg - 90) * Math.PI / 180;
+    return [Math.round((cx + r * Math.cos(a)) * 100) / 100, Math.round((cy + r * Math.sin(a)) * 100) / 100];
+  }
+  sector(cx, cy, r0, r1, a0, a1) {
+    var o0 = this.pt(cx, cy, r1, a0), o1 = this.pt(cx, cy, r1, a1), i1 = this.pt(cx, cy, r0, a1), i0 = this.pt(cx, cy, r0, a0);
+    var big = (a1 - a0) > 180 ? 1 : 0;
+    return 'M ' + o0[0] + ' ' + o0[1] + ' A ' + r1 + ' ' + r1 + ' 0 ' + big + ' 1 ' + o1[0] + ' ' + o1[1]
+      + ' L ' + i1[0] + ' ' + i1[1] + ' A ' + r0 + ' ' + r0 + ' 0 ' + big + ' 0 ' + i0[0] + ' ' + i0[1] + ' Z';
+  }
+  aim(e, cx, cy, n) {
+    var r = e.currentTarget.getBoundingClientRect();
+    var dx = e.clientX - r.left - cx, dy = e.clientY - r.top - cy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    return { dist: dist, deg: deg, idx: Math.round(deg / (360 / n)) % n };
+  }
+  renderVals() {
+    var p = this.pal(), st = this.state || {}, self = this;
+    var items = [{"label":"Original","key":"O","desc":"Paste the clip exactly as copied","dim":false},{"label":"Trim Formatting","key":"T","desc":"Drop fonts and colors, keep the text","dim":false},{"label":"Strip URL tracking","key":"S","desc":"Remove utm_*, fbclid, gclid","dim":false},{"label":"Markdown link","key":"M","desc":"[host](url)","dim":false},{"label":"No formatting","key":"N","desc":"Plain text only","dim":false},{"label":"One line","key":"L","desc":"Collapse every run of whitespace","dim":false},{"label":"Upper case","key":"U","desc":"THE WHOLE CLIP","dim":false},{"label":"More…","key":"→","desc":"eight more formats","more":true}];
+    var CX = 170, CY = 170, RAD = 118, n = items.length, step = 360 / n;
+    var hover = st.hover === undefined ? -1 : st.hover;
+    var onLabel = st.on || 'Trim Formatting';
+    var tiles = items.map(function (it, i) {
+      var c = self.pt(CX, CY, RAD, i * step);
+      var isHover = i === hover, isOn = it.label === onLabel && !it.more;
+      return {
+        label: it.label, key: it.key,
+        style: 'left:' + (c[0] - 54) + 'px; top:' + (c[1] - 20) + 'px; width:108px; height:40px;'
+          + 'background:' + (isHover ? p.accent : (isOn ? p.accentSoft : p.surface)) + ';'
+          + 'color:' + (isHover ? p.accentText : p.text) + ';'
+          + 'border-color:' + (isOn && !isHover ? p.accent : 'rgba(255,255,255,.08)') + ';'
+          + 'box-shadow: 0 6px 16px rgba(0,0,0,.45);'
+      };
+    });
+    var h = hover >= 0 ? items[hover] : null;
+    return {
+      vars: p.vars, tiles: tiles,
+      wrapStyle: 'left: 50%; top: 50%; width: 340px; height: 340px; transform: translate(-50%, -50%);',
+      hubStyle: 'left: 120px; top: 120px; width: 100px; height: 100px; border-radius: 50%; background:' + p.surface + '; border: 1px solid rgba(255,255,255,.10); box-shadow: 0 8px 22px rgba(0,0,0,.45);',
+      hubTitle: h ? h.label : onLabel,
+      hubTitleStyle: 'color:' + (h ? p.text : p.accent),
+      hubSub: h ? h.desc : 'active format',
+      hubKeys: 'release · click · Esc',
+      move: function (e) { var t = self.aim(e, CX, CY, n); self.setState({ hover: t.dist < 54 ? -1 : t.idx }); },
+      leave: function () { self.setState({ hover: -1 }); },
+      pick: function (e) {
+        var t = self.aim(e, CX, CY, n);
+        if (t.dist < 54) return self.setState({ hover: -1 });
+        var it = items[t.idx];
+        if (!it.more) self.setState({ on: it.label });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
