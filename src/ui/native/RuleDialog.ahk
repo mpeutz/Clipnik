@@ -1,4 +1,4 @@
-﻿; RuleDialog.ahk - the rule editor used by the Settings Rules page.
+; RuleDialog.ahk - the rule editor used by the Settings Rules page.
 ;   RuleDialog.Open(owner, rule) -> edited rule Map, or "" when cancelled
 
 class RuleDialog {
@@ -6,9 +6,13 @@ class RuleDialog {
 
 	static Open(owner, rule) {
 		global TXT, PLUGINS, CN
+		if RuleDialog.g
+			return ""
 		RuleDialog.done := false, RuleDialog.result := ""
 		g := Gui("+ToolWindow -MaximizeBox +Owner" owner.Hwnd, TXT.RUL_title)
+		hwnd := g.Hwnd
 		RuleDialog.g := g, c := RuleDialog.c := Map()
+		owner.Opt("+Disabled")
 		g.MarginX := 20, g.MarginY := 14
 		Theme.ApplyToGui(g)
 		w := 460, x := 20, y := 14
@@ -72,8 +76,9 @@ class RuleDialog {
 		g.OnEvent("Close", RuleDialog_Cancel), g.OnEvent("Escape", RuleDialog_Cancel)
 		RuleDialog_ActionChanged()
 		g.Show("w" w " h" (y + 44))
-		while !RuleDialog.done
+		while !RuleDialog.done && WinExist("ahk_id " hwnd)
 			Sleep 30
+		try owner.Opt("-Disabled")
 		try g.Destroy()
 		RuleDialog.g := ""
 		return RuleDialog.result
@@ -106,6 +111,8 @@ RuleDialog_ActionChanged(*) {
 }
 
 RuleDialog_Pick(*) {
+	if IgnoredWindowsWin.pickActive
+		return
 	r := IgnoredWindowsWin.Pick()
 	if (r["exe"] != "")
 		RuleDialog.c["app"].Value := r["exe"]
