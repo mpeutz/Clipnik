@@ -14,7 +14,8 @@
 
 - AHK v2 only. A static field and a static method of one class must not share a name (case-insensitive). Functions that read globals declare them. `=` compares case-insensitively, `==` case-sensitively.
 - The ring window never takes focus: `WS_EX_NOACTIVATE` (`+E0x08000000`), shown with `ShowWindow(hwnd, 4)` (SW_SHOWNOACTIVATE), hidden with `ShowWindow(hwnd, 0)`. Never `Gui.Show()` (it can move and activate the window).
-- Sizes at 100% DPI (multiply by `Theme.Scale`): outer radius 148, inner radius 52, hub 46, shadow 10, wedge gap 2.2 degrees, flick travel 30, tap threshold 300 ms.
+- Sizes at 100% DPI (multiply by `Theme.Scale`): outer radius 148, inner radius 56, an even gap of 8 (between wedges and between the hub and the ring, so the hub radius is 48), corner fillet 8, shadow 10, flick travel 30, tap threshold 300 ms. Gaps are parallel-sided (constant width from hub to rim), not angular.
+- Wedge text is one word: an item's `short` (else the first word of its `label`) in 10px bold on one line, trimmed with an ellipsis to the wedge's chord at mid-band minus the gap and 14px; its key chip below in 9px. The full `label` and the `desc` show in the hub on hover: title 12px bold, description 10px (at most two lines, ellipsis), the keys line 9px.
 - Key states are read logically (`GetKeyState(key)` without `"P"`), so scripted tests drive the same code as a person.
 - Hotkeys the ring registers use `"On T2"` and are released with `"Off T1"` (a key whose thread is parked in `Ring.Pick` must still accept a second press, and `T2` must not outlive the ring).
 - `RunFunc` in `lib/customizer.ahk` misroutes dotted names to `API.*`; test hooks are plain file-level functions (`Ring_IsOpen`, `Ring_WedgePoint`, `Ring_LabelAt`).
@@ -33,8 +34,9 @@
 | `src/ui/native/RingGeom.ahk` (new) | Pure geometry: sizes, angles, hit zones, wedge arcs and points, pages, clamping |
 | `src/ui/native/Ring.ahk` (new) | GDI+ fonts and painting, the layered window, input polling, `Ring.Pick`, test hooks |
 | `Clipjump.ahk` | includes; `Formatting()` and `Formatting_Items()` use the ring; `actionmode_run()` and new `ActionRing_Items()` / `ActionRing_Trigger()` |
-| `src/core/transforms.ahk` | each built-in format gets a `desc` |
-| `languages/english.txt` | `RNG_*` and `TRF_desc_*` strings |
+| `src/core/transforms.ahk` | each built-in format gets a `desc` and a `short` |
+| `plugins/pformat.noformatting.ahk`, `pformat.commonformats.ahk`, `pformat.sentencecase.ahk` | a `;@Plugin-Short` header: the one-word wedge label |
+| `languages/english.txt` | `RNG_*`, `TRF_desc_*` and `TRF_short_*` strings |
 | `tests/ring_geom.ahk` (new, unit), `tests/ring_demo.ahk` (new, renders PNGs), `tests/ring_pick.ahk` (new, drives `Ring.Pick` in-process) | |
 | `tests/pastemode.ahk`, `tests/hud_live.ahk`, `tests/run-all.sh` | switch the Z and Action Mode steps to the ring |
 
@@ -47,7 +49,7 @@
 - Modify: `Clipjump.ahk` (include after the `Hud.ahk` include line), `tests/run-all.sh`
 
 **Interfaces:**
-- Produces: `RingGeom.Sizes(scale) -> {r1, r0, hub, shadow, travel}`; `RingGeom.Angle(dx, dy) -> Float`; `RingGeom.Hit(dx, dy, n, sizes) -> {zone, index}` (zone `"hub"|"ring"|"outside"`, index 0-based or -1); `RingGeom.Arc(i, n) -> [a0, a1]`; `RingGeom.Point(i, n, radius) -> [dx, dy]`; `RingGeom.Pages(items, cap := 8) -> Array of Arrays` (nav entries are `{nav: "more"}` / `{nav: "back"}`); `RingGeom.Clamp(x, y, rad, l, t, r, b) -> [cx, cy]`; constants `RingGeom.TapMs := 300`, `RingGeom.Gap := 2.2`. All indices 0-based.
+- Produces: `RingGeom.Sizes(scale) -> {r1, r0, gap, corner, hub, shadow, travel}`; `RingGeom.Angle(dx, dy) -> Float`; `RingGeom.Hit(dx, dy, n, sizes) -> {zone, index}` (zone `"hub"|"ring"|"outside"`, index 0-based or -1); `RingGeom.WedgeArcs(i, n, r0, r1, gap, corner) -> Array of {cx, cy, r, start, sweep}` (relative to the centre, GDI+ degrees: 0 = 3 o'clock, clockwise); `RingGeom.Point(i, n, radius) -> [dx, dy]`; `RingGeom.Pages(items, cap := 8) -> Array of Arrays` (nav entries are `{nav: "more"}` / `{nav: "back"}`); `RingGeom.Clamp(x, y, rad, l, t, r, b) -> [cx, cy]`; constant `RingGeom.TapMs := 300`. All indices 0-based.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -75,9 +77,9 @@ check(near(RingGeom.Angle(-10, 0), 270), "left is 270")
 check(near(RingGeom.Angle(-1, -1000), 359.94, 0.01), "just left of up wraps below 360")
 
 s := RingGeom.Sizes(1)
-check(s.r1 = 148 && s.r0 = 52 && s.hub = 46 && s.shadow = 10 && s.travel = 30, "sizes at 100%")
+check(s.r1 = 148 && s.r0 = 56 && s.gap = 8 && s.corner = 8 && s.hub = 48 && s.shadow = 10 && s.travel = 30, "sizes at 100%")
 s15 := RingGeom.Sizes(1.5)
-check(s15.r1 = 222 && s15.r0 = 78 && s15.hub = 69 && s15.travel = 45, "sizes at 150%")
+check(s15.r1 = 222 && s15.r0 = 84 && s15.gap = 12 && s15.hub = 72 && s15.corner = 12 && s15.travel = 45, "sizes at 150%")
 
 pol(deg, r) => [r * Sin(deg * 0.017453292519943295), -r * Cos(deg * 0.017453292519943295)]
 idx(deg, n) {
@@ -98,10 +100,32 @@ check(h.zone = "ring", "the shadow band still counts as the ring")
 h := RingGeom.Hit(0, -300, 8, s)
 check(h.zone = "outside" && h.index = -1, "outside")
 
-a := RingGeom.Arc(0, 8)
-check(near(a[1], -21.4) && near(a[2], 21.4), "arc of wedge 0 of 8 with the gap")
-a := RingGeom.Arc(2, 8)
-check(near(a[1], 68.6) && near(a[2], 111.4), "arc of wedge 2 of 8")
+arcs := RingGeom.WedgeArcs(0, 8, 52, 148, 5, 0)
+check(arcs.Length = 2, "no corner radius: just the two main arcs")
+check(near(arcs[1].start, 248.47, 0.05) && near(arcs[1].sweep, 43.06, 0.05), "outer arc of wedge 0 leaves an even 5px gap")
+check(near(arcs[2].sweep, -39.49, 0.05), "inner arc runs back, shortened by the same 5px")
+arcs := RingGeom.WedgeArcs(2, 8, 52, 148, 5, 7)
+check(arcs.Length = 6, "rounded: six arcs")
+rad(deg) => deg * 0.017453292519943295
+endPt(a) => [a.cx + a.r * Cos(rad(a.start + a.sweep)), a.cy + a.r * Sin(rad(a.start + a.sweep))]
+startPt(a) => [a.cx + a.r * Cos(rad(a.start)), a.cy + a.r * Sin(rad(a.start))]
+ok := true
+for j in [[1, 2], [3, 4], [4, 5], [6, 1]] {
+    e := endPt(arcs[j[1]]), b := startPt(arcs[j[2]])
+    if (Abs(e[1] - b[1]) > 0.01 || Abs(e[2] - b[2]) > 0.01)
+        ok := false
+}
+check(ok, "fillets meet the main arcs without a step")
+fil := true
+for k in [2, 3, 5, 6]
+    if !(arcs[k].r = 7 && arcs[k].sweep > 0 && arcs[k].sweep < 180)
+        fil := false
+check(fil, "four 7px fillets, each a short clockwise turn")
+nb := [Cos(rad(112.5)), Sin(rad(112.5))]   ; normal of wedge 2's end ray (ring angle 112.5)
+p1 := endPt(arcs[2]), p2 := startPt(arcs[3])   ; both ends of the straight side between them
+check(near(Abs(p1[1] * nb[1] + p1[2] * nb[2]), 2.5) && near(Abs(p2[1] * nb[1] + p2[2] * nb[2]), 2.5), "the side runs parallel to its ray, half a gap in")
+arcs := RingGeom.WedgeArcs(0, 10, 52, 148, 5, 14)
+check(arcs[2].r < 14, "a corner too large for a narrow wedge is clamped")
 pt := RingGeom.Point(2, 8, 100)
 check(near(pt[1], 100) && near(pt[2], 0), "point of wedge 2 of 8 is to the right")
 
@@ -147,11 +171,14 @@ Expected: load error for the missing include, exit code 2.
 ; Angles are degrees, 0 = 12 o'clock, clockwise, screen y down. Wedge i (0-based) of n is centred on i * 360 / n.
 
 class RingGeom {
-	static Gap := 2.2, TapMs := 300
+	static TapMs := 300
 
-	; radii and distances in physical pixels for a DPI scale
-	static Sizes(scale := 1) => {r1: Round(148 * scale), r0: Round(52 * scale), hub: Round(46 * scale)
-		, shadow: Round(10 * scale), travel: Round(30 * scale)}
+	; radii and distances in physical pixels for a DPI scale; the hub sits one gap inside the ring
+	static Sizes(scale := 1) {
+		r0 := Round(56 * scale), gap := Round(8 * scale)
+		return {r1: Round(148 * scale), r0: r0, gap: gap, corner: Round(8 * scale), hub: r0 - gap
+			, shadow: Round(10 * scale), travel: Round(30 * scale)}
+	}
 
 	static Angle(dx, dy) {
 		a := RingGeom.Atan2(dx, -dy) * 57.29577951308232
@@ -178,9 +205,49 @@ class RingGeom {
 		return {zone: "ring", index: Mod(Round(RingGeom.Angle(dx, dy) / (360 / n)), n)}
 	}
 
-	static Arc(i, n) {
-		step := 360 / n
-		return [i * step - step / 2 + RingGeom.Gap / 2, i * step + step / 2 - RingGeom.Gap / 2]
+	; the arcs of wedge i in drawing order, relative to the centre, in GDI+ degrees (0 = 3 o'clock, clockwise):
+	; outer arc, outer-end fillet, inner-end fillet, inner arc (reversed), inner-start fillet, outer-start fillet.
+	; GDI+ joins consecutive arcs with straight lines, which become the two sides. The sides run parallel to the
+	; wedge's boundary rays half a gap in, so neighbours are separated by an even gap from hub to rim. A corner
+	; too large for a narrow wedge is clamped; a zero corner returns only the two main arcs.
+	static WedgeArcs(i, n, r0, r1, gap, corner) {
+		step := 360 / n, a0 := i * step - step / 2, a1 := i * step + step / 2
+		rad := Max(0, Min(corner, 0.3 * r0 * (6.283185307179586 / n), (r1 - r0) / 2 - 2))
+		d := gap / 2
+		AO := RingGeom.Corner(a0, 1, r1, true, d, rad), BO := RingGeom.Corner(a1, -1, r1, true, d, rad)
+		BI := RingGeom.Corner(a1, -1, r0, false, d, rad), AI := RingGeom.Corner(a0, 1, r0, false, d, rad)
+		out := [RingGeom.ArcFrom(0, 0, r1, AO.onArc, BO.onArc, 1)]
+		if (rad >= 0.5)
+			out.Push(RingGeom.ArcFrom(BO.cx, BO.cy, rad, BO.onArc, BO.onLine, 1), RingGeom.ArcFrom(BI.cx, BI.cy, rad, BI.onLine, BI.onArc, 1))
+		out.Push(RingGeom.ArcFrom(0, 0, r0, BI.onArc, AI.onArc, -1))
+		if (rad >= 0.5)
+			out.Push(RingGeom.ArcFrom(AI.cx, AI.cy, rad, AI.onArc, AI.onLine, 1), RingGeom.ArcFrom(AO.cx, AO.cy, rad, AO.onLine, AO.onArc, 1))
+		return out
+	}
+
+	; fillet between the side parallel to ray a (offset d into the wedge; sign 1 = the wedge lies clockwise of
+	; the ray) and the circle of radius R (outer: the fillet sits inside it, else outside). Returns the fillet's
+	; centre and its tangent points on the side and on the circle; with rad 0 both points are the sharp corner.
+	static Corner(a, sign, R, outer, d, rad) {
+		t0 := a * 0.017453292519943295
+		ex := Sin(t0), ey := -Cos(t0), nx := sign * Cos(t0), ny := sign * Sin(t0)
+		cr := outer ? R - rad : R + rad, off := d + rad
+		t := Sqrt(Max(cr * cr - off * off, 0))
+		cx := ex * t + nx * off, cy := ey * t + ny * off
+		len := Sqrt(cx * cx + cy * cy)
+		return {cx: cx, cy: cy, onLine: [ex * t + nx * d, ey * t + ny * d], onArc: [cx / len * R, cy / len * R]}
+	}
+
+	; arc on the circle (cx, cy, r) from point p to point q; dir 1 = clockwise on screen, -1 = counter-clockwise
+	static ArcFrom(cx, cy, r, p, q, dir) {
+		s := RingGeom.Deg(p[1] - cx, p[2] - cy), e := RingGeom.Deg(q[1] - cx, q[2] - cy)
+		return {cx: cx, cy: cy, r: r, start: s, sweep: dir * Mod(dir * (e - s) + 720, 360)}
+	}
+
+	; GDI+ angle of a vector: 0 = +x, clockwise on screen, 0 <= a < 360
+	static Deg(x, y) {
+		a := RingGeom.Atan2(y, x) * 57.29577951308232
+		return a < 0 ? a + 360 : a
 	}
 
 	static Point(i, n, radius) {
@@ -240,39 +307,40 @@ git commit -m "Action ring: geometry with unit tests"
 
 **Interfaces:**
 - Consumes: `RingGeom.*`, `Theme.Palette` (Map name -> RGB int: bg, surface, surfaceAlt, text, muted, accent, accentText, accentSoft), `Theme.Scale`, `Theme.FontName`, `Theme.IconFont`, `Theme.Mix(a, b, t)`, `Theme.Icon(name)`, Gdip_All functions (`Gdip_Startup`, `Gdip_CreatePath`, `Gdip_FillPath`, `Gdip_DeletePath`, `Gdip_BrushCreateSolid`, `Gdip_DeleteBrush`, `Gdip_CreatePen`, `Gdip_DeletePen`, `Gdip_FillEllipse`, `Gdip_SetSmoothingMode`, `Gdip_SetTextRenderingHint`, `Gdip_CreateBitmap`, `Gdip_GraphicsFromImage`, `Gdip_GraphicsClear`, `Gdip_SaveBitmapToFile`, `Gdip_DeleteGraphics`, `Gdip_DisposeImage`, `CreateDIBSection`, `CreateCompatibleDC`, `SelectObject`, `DeleteObject`, `DeleteDC`, `Gdip_GraphicsFromHDC`, `UpdateLayeredWindow`).
-- Produces: `Ring.State(items, hover, hubTitle, hubSub, titleAccent := false) -> state`; `Ring.Paint(G, state, ox, oy)`; `Ring.RenderToFile(state, path)`; `Ring.NavLabel(nav)`. Items: `{key, label, desc?, icon? (a glyph character), active?, dim?}` or nav `{nav: "more"|"back"}`.
+- Produces: `Ring.State(items, hover, hubTitle, hubSub, titleAccent := false) -> state`; `Ring.Paint(G, state, ox, oy)`; `Ring.RenderToFile(state, path)`; `Ring.NavLabel(nav)`. Items: `{key, label, short?, desc?, icon? (a glyph character), active?, dim?}` or nav `{nav: "more"|"back"}`; `Ring.Short(item)` -> the wedge word.
 
 - [ ] **Step 1: Write the demo (the visual test)**
 
 `tests/ring_demo.ahk` renders into `tests/out/`. Bootstrap it the way `tests/hud_demo.ahk` does (read that file's first 50 lines: includes, stubs, how it loads `TXT` from `languages/english.txt`, and `Theme.Init(mode, accent)`), including `..\src\ui\native\RingGeom.ahk` and `..\src\ui\native\Ring.ahk`. Then:
 
 ```ahk
-fmt := [{key: "O", label: "Original", desc: "Paste the clip exactly as copied"}
-    , {key: "T", label: "Trim Formatting", desc: "Drop fonts and colors, keep the text", active: true}
-    , {key: "S", label: "Strip URL tracking", desc: "Remove utm_*, fbclid, gclid"}
-    , {key: "M", label: "Markdown link", desc: "[host](url)"}
-    , {key: "N", label: "No formatting", desc: "Plain text only"}
-    , {key: "L", label: "One line", desc: "Collapse every run of whitespace"}
-    , {key: "U", label: "Upper case", desc: "THE WHOLE CLIP", dim: true}
-    , {key: "W", label: "Lower case", desc: "the whole clip", dim: true}
-    , {key: "I", label: "Title case", desc: "First Letter Of Each Word", dim: true}
-    , {key: "E", label: "Sentence case", desc: "First letter of each sentence", dim: true}
-    , {key: "G", label: "Slugify", desc: "lower-case-with-dashes", dim: true}
-    , {key: "P", label: "Pretty JSON", desc: "Indent two spaces", dim: true}
-    , {key: "J", label: "Minified JSON", desc: "Strip whitespace outside strings", dim: true}
-    , {key: "B", label: "Decode base64", desc: "Decode when the clip is valid base64", dim: true}]
+fmt := [{key: "O", label: "Original", short: "Original", desc: "Paste the clip exactly as copied"}
+    , {key: "T", label: "Trim Formatting", short: "Trim", desc: "Strip off Formatting", active: true}
+    , {key: "S", label: "Strip URL tracking", short: "Untrack", desc: "Remove utm_*, fbclid, gclid"}
+    , {key: "M", label: "Markdown link", short: "Markdown", desc: "[host](url)"}
+    , {key: "E", label: "SentenceCase", short: "Sentence", desc: "Paste Text in Sentence Case"}
+    , {key: "N", label: "Common Formats", short: "Common", desc: "Shows a gui to paste with a format from many types of predefined formats."}
+    , {key: "P", label: "Pretty JSON", short: "Pretty", desc: "Indent two spaces", dim: true}
+    , {key: "J", label: "Minified JSON", short: "Minify", desc: "Strip whitespace outside strings", dim: true}
+    , {key: "I", label: "Title case", short: "Title", desc: "First Letter Of Each Word", dim: true}
+    , {key: "U", label: "Upper case", short: "UPPER", desc: "THE WHOLE CLIP", dim: true}
+    , {key: "W", label: "Lower case", short: "lower", desc: "the whole clip", dim: true}
+    , {key: "L", label: "One line", short: "Flatten", desc: "Collapse every run of whitespace", dim: true}
+    , {key: "G", label: "Slugify", short: "Slug", desc: "lower-case-with-dashes", dim: true}
+    , {key: "B", label: "Decode base64", short: "Base64", desc: "Decode when the clip is valid base64", dim: true}]
 act := []
-for row in [["H", "Clipboard History", "history"], ["O", "Channel Organizer", "layout-grid"], ["E", "Settings", "settings"]
-    , ["B", "Hold clip", "pin"], ["P", "PitSwap", "zap"], ["T", "One-time stop", "ban"], ["C", "Copy file path", "file"]
-    , ["M", "Plugin Manager", "wrench"], ["L", "Ignored Windows", "eye-off"], ["X", "Copy folder path", "folder"]
-    , ["F", "Copy file data", "copy"], ["U", "Sync clipboard", "clipboard-check"], ["F2", "Paste-mode keys", "keyboard"]
-    , ["F1", "Help", "circle-help"]]
-    act.Push({key: row[1], label: row[2], icon: Theme.Icon(row[3])})
+for row in [["H", "Clipboard History", "History", "history"], ["O", "Channel Organizer", "Organizer", "layout-grid"]
+    , ["E", "Settings", "Settings", "settings"], ["B", "Hold clip", "Hold", "pin"], ["P", "PitSwap", "PitSwap", "zap"]
+    , ["T", "One-time stop", "Skip", "ban"], ["C", "Copy file path", "Path", "file"], ["M", "Plugin Manager", "Plugins", "wrench"]
+    , ["L", "Ignored Windows", "Ignore", "eye-off"], ["X", "Copy folder path", "Folder", "folder"], ["F", "Copy file data", "File", "copy"]
+    , ["U", "Sync clipboard", "Sync", "clipboard-check"], ["F2", "Paste-mode keys", "Keys", "keyboard"], ["F1", "Help", "Help", "circle-help"]]
+    act.Push({key: row[1], label: row[2], short: row[3], icon: Theme.Icon(row[4])})
 fp := RingGeom.Pages(fmt), ap := RingGeom.Pages(act)
 for mode in ["dark", "light"] {
     Theme.Init(mode, "76B84E")
     Ring.RenderToFile(Ring.State(fp[1], -1, "Trim Formatting", "active format", true), "tests\out\ring-" mode "-format.png")
     Ring.RenderToFile(Ring.State(fp[1], 2, "Strip URL tracking", "Remove utm_*, fbclid, gclid"), "tests\out\ring-" mode "-format-hover.png")
+    Ring.RenderToFile(Ring.State(fp[1], 5, "Common Formats", fmt[6].desc), "tests\out\ring-" mode "-format-hover-long.png")
     Ring.RenderToFile(Ring.State(fp[2], 7, Ring.NavLabel("back"), TXT.RNG_backDesc), "tests\out\ring-" mode "-format-page2.png")
     Ring.RenderToFile(Ring.State(ap[1], 0, "Clipboard History", "every clip ever copied"), "tests\out\ring-" mode "-action.png")
 }
@@ -291,7 +359,7 @@ Add to `languages/english.txt` (next to the other recent blocks; mind the encodi
 
 ```
 RNG_keys = release · click · Esc
-RNG_more = More…
+RNG_more = More
 RNG_back = Back
 RNG_moreDesc = the next page
 RNG_backDesc = back to the first page
@@ -379,9 +447,8 @@ class Ring {
 		Ring.Disc(G, ox, oy, s.r1 + 1, 0x02000000)   ; nearly invisible: the gaps between wedges catch the pointer
 		for i, it in st.items {
 			idx := i - 1, hot := (idx = st.hover)
-			arc := RingGeom.Arc(idx, n)
 			stroke := (!hot && it.HasProp("active") && it.active) ? 0xFF000000 | p["accent"] : 0
-			Ring.Wedge(G, ox, oy, s.r0, s.r1, arc[1], arc[2], 0xFF000000 | Ring.Fill(it, hot, p), stroke)
+			Ring.Wedge(G, ox, oy, idx, n, s, 0xFF000000 | Ring.Fill(it, hot, p), stroke)
 			Ring.WedgeContent(G, st, it, idx, n, hot, ox, oy)
 		}
 		Ring.Disc(G, ox, oy, s.hub, 0xFF000000 | p["surface"])
@@ -403,52 +470,60 @@ class Ring {
 		return p["surfaceAlt"]
 	}
 
+	; one word per wedge on one line, trimmed to the wedge's width, with its key chip below; icon rings stack a
+	; 16px icon above the word. Everything sits on the middle of the band.
 	static WedgeContent(G, st, it, idx, n, hot, ox, oy) {
 		p := st.pal, s := st.s, k := st.k, f := Ring.Fonts()
-		band := s.r1 - s.r0
+		mid := s.r0 + (s.r1 - s.r0) / 2
+		w := Floor(2 * mid * Sin(3.141592653589793 / n) - s.gap - 14 * k)
 		isNav := it.HasProp("nav")
 		muted := isNav || (it.HasProp("dim") && it.dim)
 		fg := 0xFF000000 | (hot ? p["accentText"] : (muted ? p["muted"] : p["text"]))
-		label := isNav ? Ring.NavLabel(it.nav) : it.label
+		label := isNav ? Ring.NavLabel(it.nav) : Ring.Short(it)
 		key := isNav ? (it.nav = "more" ? "→" : "←") : it.key
+		c := RingGeom.Point(idx, n, mid), x := ox + c[1], y := oy + c[2]
 		if st.iconRing {
-			if (!isNav && it.HasProp("icon") && it.icon != "" && f.icon) {
-				ic := RingGeom.Point(idx, n, s.r0 + band * 0.27)
+			if (!isNav && it.HasProp("icon") && it.icon != "" && f.icon)
 				Ring.Text(G, it.icon, f.icon, 16 * k, false, 0xFF000000 | (hot ? p["accentText"] : p["muted"])
-					, ox + ic[1] - 12 * k, oy + ic[2] - 12 * k, 24 * k, 24 * k)
-			}
-			c := RingGeom.Point(idx, n, s.r0 + band * 0.66)
-			Ring.Text(G, label, f.text, 10.5 * k, true, fg, ox + c[1] - 43 * k, oy + c[2] - 13 * k, 86 * k, 26 * k)
-			Ring.Chip(G, key, ox + c[1], oy + c[2] + 15 * k, hot, p, k)
+					, x - 12 * k, y - 28 * k, 24 * k, 24 * k)
+			Ring.Text(G, label, f.text, 10 * k, true, fg, x - w / 2, y - 7 * k, w, 16 * k, true)
+			Ring.Chip(G, key, x, y + 9 * k, hot, p, k)
 		} else {
-			c := RingGeom.Point(idx, n, s.r0 + band * 0.54)
-			Ring.Text(G, label, f.text, 10.5 * k, true, fg, ox + c[1] - 42 * k, oy + c[2] - 22 * k, 84 * k, 28 * k)
-			Ring.Chip(G, key, ox + c[1], oy + c[2] + 9 * k, hot, p, k)
+			Ring.Text(G, label, f.text, 10 * k, true, fg, x - w / 2, y - 16 * k, w, 16 * k, true)
+			Ring.Chip(G, key, x, y, hot, p, k)
 		}
 	}
 
+	; the wedge word: the item's short label, else the first word of its label
+	static Short(it) {
+		if (it.HasProp("short") && it.short != "")
+			return it.short
+		return StrSplit(it.label, " ")[1]
+	}
+
+	; the hub: the full name, its description (two lines at most) and the keys line, one gap inside the hub's edge
 	static Hub(G, st, ox, oy) {
 		global TXT
-		p := st.pal, k := st.k, f := Ring.Fonts(), w := 116 * k
-		Ring.Text(G, st.hubTitle, f.text, 12.5 * k, true, 0xFF000000 | (st.titleAccent ? p["accent"] : p["text"]), ox - w / 2, oy - 30 * k, w, 30 * k)
-		Ring.Text(G, st.hubSub, f.text, 10.5 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy + 1 * k, w, 26 * k)
-		Ring.Text(G, TXT.RNG_keys, f.text, 9.5 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy + 26 * k, w, 14 * k)
+		p := st.pal, k := st.k, f := Ring.Fonts(), w := 2 * st.s.hub - 8 * k
+		Ring.Text(G, st.hubTitle, f.text, 12 * k, true, 0xFF000000 | (st.titleAccent ? p["accent"] : p["text"]), ox - w / 2, oy - 31 * k, w, 30 * k)
+		Ring.Text(G, st.hubSub, f.text, 10 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy, w, 25 * k)
+		Ring.Text(G, TXT.RNG_keys, f.text, 9 * k, false, 0xFF000000 | p["muted"], ox - w / 2, oy + 25 * k, w, 12 * k)
 	}
 
 	; key hint centred on cx, top edge at top
 	static Chip(G, key, cx, top, hot, p, k) {
 		if (key = "")
 			return
-		w := (10 + 6.5 * StrLen(key)) * k, h := 14 * k
+		w := Max(14, 8 + 6 * StrLen(key)) * k, h := 13 * k
 		Ring.RoundRect(G, cx - w / 2, top, w, h, 4 * k, hot ? 0x29000000 : 0xFF000000 | p["surface"])
-		Ring.Text(G, key, Ring.Fonts().text, 9.5 * k, true, 0xFF000000 | (hot ? p["accentText"] : p["muted"]), cx - w / 2, top, w, h)
+		Ring.Text(G, key, Ring.Fonts().text, 9 * k, true, 0xFF000000 | (hot ? p["accentText"] : p["muted"]), cx - w / 2, top, w, h)
 	}
 
-	; a ring sector: outer arc, then the inner arc reversed; GDI+ angles start at 3 o'clock, ours at 12
-	static Wedge(G, cx, cy, r0, r1, a0, a1, argb, strokeArgb := 0) {
+	; wedge idx of n as a rounded ring sector with even gaps (RingGeom.WedgeArcs), centred on (ox, oy)
+	static Wedge(G, ox, oy, idx, n, s, argb, strokeArgb := 0) {
 		path := Gdip_CreatePath()
-		DllCall("gdiplus\GdipAddPathArc", "Ptr", path, "Float", cx - r1, "Float", cy - r1, "Float", 2 * r1, "Float", 2 * r1, "Float", a0 - 90, "Float", a1 - a0)
-		DllCall("gdiplus\GdipAddPathArc", "Ptr", path, "Float", cx - r0, "Float", cy - r0, "Float", 2 * r0, "Float", 2 * r0, "Float", a1 - 90, "Float", a0 - a1)
+		for a in RingGeom.WedgeArcs(idx, n, s.r0, s.r1, s.gap, s.corner)
+			DllCall("gdiplus\GdipAddPathArc", "Ptr", path, "Float", ox + a.cx - a.r, "Float", oy + a.cy - a.r, "Float", 2 * a.r, "Float", 2 * a.r, "Float", a.start, "Float", a.sweep)
 		DllCall("gdiplus\GdipClosePathFigure", "Ptr", path)
 		br := Gdip_BrushCreateSolid(argb)
 		Gdip_FillPath(G, br, path)
@@ -479,13 +554,15 @@ class Ring {
 		Gdip_DeleteBrush(br), Gdip_DeletePath(path)
 	}
 
-	; centred text in a box, wrapping inside its width; size in pixels
-	static Text(G, text, fam, size, bold, argb, x, y, w, h) {
+	; centred text in a box; size in pixels. Only whole lines that fit are drawn and the last one ends in an ellipsis
+	; when the text runs over; oneLine keeps it to a single line cut with an ellipsis at the box's width.
+	static Text(G, text, fam, size, bold, argb, x, y, w, h, oneLine := false) {
 		if (text = "" || !fam)
 			return
 		font := 0, fmt := 0
 		DllCall("gdiplus\GdipCreateFont", "Ptr", fam, "Float", size, "Int", bold ? 1 : 0, "Int", 2, "Ptr*", &font)
-		DllCall("gdiplus\GdipCreateStringFormat", "Int", 0, "Int", 0, "Ptr*", &fmt)
+		DllCall("gdiplus\GdipCreateStringFormat", "Int", oneLine ? 0x3000 : 0x2000, "Int", 0, "Ptr*", &fmt)   ; LineLimit, + NoWrap
+		DllCall("gdiplus\GdipSetStringFormatTrimming", "Ptr", fmt, "Int", oneLine ? 3 : 4)                   ; ellipsis: character / word
 		DllCall("gdiplus\GdipSetStringFormatAlign", "Ptr", fmt, "Int", 1)
 		DllCall("gdiplus\GdipSetStringFormatLineAlign", "Ptr", fmt, "Int", 1)
 		br := Gdip_BrushCreateSolid(argb)
@@ -500,11 +577,11 @@ class Ring {
 
 `Clipjump.ahk`: after the RingGeom include add `#Include %A_ScriptDir%\src\ui\native\Ring.ahk`.
 
-Note for the implementer: GDI+ has no semibold for most families, so labels use bold. If the demo shows labels that crowd, adjust only the label box offsets in `WedgeContent`, keeping the radii from the constraints.
+Note for the implementer: GDI+ has no semibold for most families, so labels use bold. If the demo shows text that crowds, adjust only the box offsets in `WedgeContent` and `Hub`, keeping the radii and font sizes from the constraints.
 
 - [ ] **Step 4: Verify**
 
-Run the demo (prints `done`). Read `tests/out/ring-dark-format.png`, `ring-dark-format-hover.png`, `ring-dark-format-page2.png`, `ring-dark-action.png` and the light ones, and compare against the canvas (direction A): eight wedges with gaps, labels and key chips inside their wedges, the active format outlined, the hovered wedge solid accent with black text, More/Back muted, icons above labels on the action ring, the hub text inside the hub, a soft shadow. Fix what does not match. Validate: exit 0.
+Run the demo (prints `done`). Read `tests/out/ring-dark-format.png`, `ring-dark-format-hover.png`, `ring-dark-format-hover-long.png`, `ring-dark-format-page2.png`, `ring-dark-action.png` and the light ones, and compare against the canvas (direction A): eight rounded wedges separated by even 8px gaps (the same width at the hub as at the rim, and the same gap around the hub), one word and its key chip inside each wedge with nothing spilling past a wedge's edge, the full name and description inside the hub (the Common Formats description cut with an ellipsis), the active format outlined, the hovered wedge solid accent with black text, More/Back muted, icons above labels on the action ring, the hub text inside the hub, a soft shadow. Fix what does not match. Validate: exit 0.
 
 - [ ] **Step 5: Commit**
 
@@ -842,11 +919,11 @@ git commit -m "Action ring: input, paging and Ring.Pick"
 ### Task 4: The format ring replaces the Z menu
 
 **Files:**
-- Modify: `Clipjump.ahk` (`Formatting`, `Formatting_Items`, new `Formatting_Ended`), `src/core/transforms.ahk` (`Register` adds `desc`), `languages/english.txt`, `tests/pastemode.ahk`
+- Modify: `Clipjump.ahk` (`Formatting`, `Formatting_Items`, new `Formatting_Ended`), `src/core/transforms.ahk` (`Register` adds `desc` and `short`), `plugins/pformat.noformatting.ahk`, `plugins/pformat.commonformats.ahk`, `plugins/pformat.sentencecase.ahk` (a `;@Plugin-Short` header each), `languages/english.txt`, `tests/pastemode.ahk`
 
 **Interfaces:**
 - Consumes: `Ring.Pick`, `Ring_IsOpen`, `Ring_WedgePoint`, `Ring_LabelAt`, `Transforms.AppliesTo`, `set_pformat`, `hkZ_pasteMode(1)`, `Hud.g`, globals `is_pstMode_active`, `pstIdentifier`, `pastemodekey`, `curPformat`, `temp_clipboard`, `halfClip`, `curPisPreviewable`, `curPfunction`, `MSG_MORE_PREVIEW`.
-- Produces: `Formatting_Items(kind) -> {items, byKey}` where items are ring items `{key, label, desc, active, dim}` and `byKey` maps an upper-case letter to a format name (`"-original-"` for Original); pformat entries gain `desc`.
+- Produces: `Formatting_Items(kind) -> {items, byKey}` where items are ring items `{key, label, short, desc, active, dim}` in the fixed priority order below (formats that fit the clip's kind first), and `byKey` maps an upper-case letter to a format name (`"-original-"` for Original); pformat entries gain `desc` and `short`.
 
 - [ ] **Step 1: Rewrite the paste-mode test steps**
 
@@ -860,6 +937,7 @@ Sleep 400
 SendEvent("z")
 Sleep 600
 check(cj.runFunction("Ring_IsOpen()") = 1, "Z opens the ring")
+check(cj.runFunction("Ring_LabelAt(0)") = "Original" && cj.runFunction("Ring_LabelAt(1)") = "Trim Formatting", "Original then Trim Formatting lead the ring")
 SendEvent("u")
 Sleep 500
 check(cj["curPformat"] = "Upper case", "U picked Upper case: [" cj["curPformat"] "]")
@@ -897,6 +975,18 @@ SendEvent("{z up}")
 Sleep 500
 check(lbl != "" && cj["curPformat"] = lbl, "a flick picked [" lbl "]: [" cj["curPformat"] "]")
 
+step("built-in letters win over plugin letters")
+SendEvent("z")
+Sleep 500
+SendEvent("m")
+Sleep 500
+check(cj["curPformat"] = "Markdown link", "M picked Markdown link: [" cj["curPformat"] "]")
+SendEvent("z")
+Sleep 500
+SendEvent("s")
+Sleep 500
+check(cj["curPformat"] = "Strip URL tracking", "S picked Strip URL tracking: [" cj["curPformat"] "]")
+
 step("O picks Original; releasing Ctrl with the ring open leaves no ring")
 SendEvent("z")
 Sleep 500
@@ -917,7 +1007,7 @@ Keep the rest of the file as it is. Make sure only one `set_pformat()` reset + c
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Restart Clipjump, run `tests/pastemode.ahk`: "Z opens the ring" FAILS (the old menu opens).
+Restart Clipjump, run `tests/pastemode.ahk`: "Z opens the ring" FAILS (the old menu opens). "M picked Markdown link" and "S picked Strip URL tracking" also fail today: the plugins are enumerated alphabetically, so Common Formats takes M and SentenceCase takes S before the built-ins claim them.
 
 - [ ] **Step 3: Implement**
 
@@ -926,6 +1016,17 @@ Restart Clipjump, run `tests/pastemode.ahk`: "Z opens the ring" FAILS (the old m
 ```
 RNG_activeFormat = active format
 RNG_origDesc = Paste the clip exactly as copied
+RNG_origShort = Original
+TRF_short_upper = UPPER
+TRF_short_lower = lower
+TRF_short_title = Title
+TRF_short_oneLine = Flatten
+TRF_short_slugify = Slug
+TRF_short_stripTracking = Untrack
+TRF_short_markdownLink = Markdown
+TRF_short_prettyJson = Pretty
+TRF_short_minifyJson = Minify
+TRF_short_base64 = Base64
 TRF_desc_upper = THE WHOLE CLIP
 TRF_desc_lower = the whole clip
 TRF_desc_title = First Letter Of Each Word
@@ -938,7 +1039,13 @@ TRF_desc_minifyJson = Strip whitespace outside strings
 TRF_desc_base64 = Decode when the clip is valid base64
 ```
 
-`src/core/transforms.ahk`, in `Transforms.Register()`, after `e["builtin"] := 1` on the same statement line add `, e["desc"] := ClipType_T("TRF_desc_" t[1])`.
+`src/core/transforms.ahk`, in `Transforms.Register()`, after `e["builtin"] := 1` on the same statement line add `, e["desc"] := ClipType_T("TRF_desc_" t[1]), e["short"] := ClipType_T("TRF_short_" t[1])`.
+
+Plugins: the loader in `lib/pluginManager.ahk` stores every `;@Plugin-<Key> <text>` header under `<Key>` (the map is case-insensitive), so a header is all a plugin needs. Add one line directly below the `;@Plugin-Name` line of each bundled pformat plugin, keeping each file's encoding and line endings:
+
+- `plugins/pformat.noformatting.ahk`: `;@Plugin-Short Trim`
+- `plugins/pformat.commonformats.ahk`: `;@Plugin-Short Common`
+- `plugins/pformat.sentencecase.ahk`: `;@Plugin-Short Sentence`
 
 `Clipjump.ahk`: replace `Formatting(*)` and `Formatting_Items(kind)` with the following (keep `Formatting_Letter` as it is):
 
@@ -977,24 +1084,38 @@ Formatting_Ended() {
 }
 
 ; ring items for the format ring; returns {items, byKey}: byKey maps an upper-case letter to a format name
-; ("-original-" for Original, the sentinel set_pformat reads as "no format")
+; ("-original-" for Original, the sentinel set_pformat reads as "no format"). Formats are listed in a fixed
+; priority order, those that fit the clip's kind first. Letters: formats with a preferred letter (the built-ins)
+; claim theirs before the others pick from their names, so a plugin can never take a built-in's letter.
 Formatting_Items(kind) {
 	global PLUGINS, curPformat, TXT
-	used := Map("V", 1, "C", 1, "Z", 1), byKey := Map(), fit := [], rest := []
-	take(name, pref) {
-		l := Formatting_Letter(name, pref, used)
-		used[l] := 1, byKey[l] := name
-		return l
-	}
-	oL := take("", "O")
-	byKey[oL] := "-original-"
-	fit.Push({key: oL, label: TXT.HUD_formatOriginal, desc: TXT.RNG_origDesc, active: curPformat = ""})
-	for k, v in PLUGINS.pformat {
-		pref := ""
-		try pref := v["key"]
-		l := take(v["name"], pref)
+	static priority := ["noformatting", "stripTracking", "markdownLink", "prettyJson", "minifyJson", "sentencecase"
+		, "title", "upper", "lower", "oneLine", "slugify", "base64", "commonformats"]
+	used := Map("V", 1, "C", 1, "Z", 1), byKey := Map(), letters := Map(), order := [], seen := Map(), fit := [], rest := []
+	seen.CaseSense := "Off"
+	for k in priority
+		if PLUGINS.pformat.HasKey(k)
+			order.Push(k), seen[k] := 1
+	for k in PLUGINS.pformat
+		if !seen.Has(k)
+			order.Push(k)
+	oL := Formatting_Letter("", "O", used)
+	used[oL] := 1, byKey[oL] := "-original-"
+	for pass in [1, 2]
+		for k in order {
+			v := PLUGINS.pformat[k], pref := ""
+			try pref := v["key"]
+			if ((pass = 1 && pref = "") || (pass = 2 && pref != ""))
+				continue
+			l := Formatting_Letter(v["name"], pref, used)
+			used[l] := 1, byKey[l] := v["name"], letters[k] := l
+		}
+	fit.Push({key: oL, label: TXT.HUD_formatOriginal, short: TXT.RNG_origShort, desc: TXT.RNG_origDesc, active: curPformat = ""})
+	for k in order {
+		v := PLUGINS.pformat[k]
 		desc := v["desc"] != "" ? v["desc"] : v["Description"]
-		it := {key: l, label: v["name"], desc: desc, active: curPformat = v["name"], dim: !Transforms.AppliesTo(v, kind)}
+		it := {key: letters[k], label: v["name"], short: v["short"], desc: desc, active: curPformat = v["name"]
+			, dim: !Transforms.AppliesTo(v, kind)}
 		(it.dim ? rest : fit).Push(it)
 	}
 	items := []
@@ -1010,12 +1131,12 @@ Before replacing, read the current `Formatting` / `Formatting_Items` and keep an
 
 - [ ] **Step 4: Verify**
 
-Validate; restart Clipjump; run `tests/pastemode.ahk` and `tests/modes.ahk` (ALL PASSED each; the action-mode step at the top of pastemode still uses the HUD until Task 5, so it must still pass as it is now). Run `tests/transforms.ahk`. Hold Ctrl+V, press Z by hand once: the ring opens at the pointer, the card behind dims, the hub shows the active format; hover a wedge, the hub shows its description; release Z over a wedge after moving: that format is picked and the card updates.
+Validate; restart Clipjump; run `tests/pastemode.ahk` and `tests/modes.ahk` (ALL PASSED each; the action-mode step at the top of pastemode still uses the HUD until Task 5, so it must still pass as it is now). Run `tests/transforms.ahk`. Hold Ctrl+V, press Z by hand once: the ring opens at the pointer, the card behind dims, the hub shows the active format; every wedge shows one word (Original, Trim, Untrack, Markdown, ... for a URL clip) with letters T Trim Formatting, N Common Formats, E SentenceCase, M Markdown link, S Strip URL tracking; hover a wedge, the hub shows its description; release Z over a wedge after moving: that format is picked and the card updates.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add Clipjump.ahk src/core/transforms.ahk languages/english.txt tests/pastemode.ahk
+git add Clipjump.ahk src/core/transforms.ahk languages/english.txt tests/pastemode.ahk plugins/pformat.noformatting.ahk plugins/pformat.commonformats.ahk plugins/pformat.sentencecase.ahk
 git commit -m "Paste mode: Z opens the format ring"
 ```
 
@@ -1081,6 +1202,20 @@ RNG_act_F = the file itself, not its path
 RNG_act_U = push the active clip to Windows
 RNG_act_F2 = the shortcut sheet
 RNG_act_F1 = what every key does
+RNG_short_H = History
+RNG_short_O = Organizer
+RNG_short_E = Settings
+RNG_short_B = Hold
+RNG_short_P = PitSwap
+RNG_short_T = Skip
+RNG_short_C = Path
+RNG_short_M = Plugins
+RNG_short_L = Ignore
+RNG_short_X = Folder
+RNG_short_F = File
+RNG_short_U = Sync
+RNG_short_F2 = Keys
+RNG_short_F1 = Help
 ```
 
 `Clipjump.ahk`, in `actionmode_run(*)`, replace the line `temp_am := Hud.Menu(ACTIONMODE.items, ACTIONMODE.keys, PROGNAME " " TXT.ACT__name)` with:
@@ -1110,7 +1245,7 @@ ActionRing_Items() {
 		seen[k] := 1
 		cap := ACTIONMODE[k "_caption"]
 		ik := StrUpper(k)
-		items.Push({key: k, label: cap != "" ? cap : v, desc: TXT["RNG_act_" ik], icon: Theme.Icon(icons.Has(ik) ? icons[ik] : "chevron-right")})
+		items.Push({key: k, label: cap != "" ? cap : v, short: TXT["RNG_short_" ik], desc: TXT["RNG_act_" ik], icon: Theme.Icon(icons.Has(ik) ? icons[ik] : "chevron-right")})
 	}
 	for k in order
 		add(k)
@@ -1131,7 +1266,7 @@ Check `Theme.Icons` has every glyph name used above (`history`, `layout-grid`, `
 
 - [ ] **Step 4: Verify**
 
-Validate; restart; run `tests/pastemode.ahk`, `tests/hud_live.ahk`, `tests/modes.ahk`, `tests/ring_pick.ahk` (ALL PASSED each). By hand: Ctrl+Shift+A opens the ring at the pointer with icons; More shows page 2; pressing 1 switches to channel 1 (toast); D disables Clipjump (press D again from the tray to re-enable, or Ctrl+Shift+A then D). Then run `bash tests/run-all.sh` on an idle desktop: ALL SUITES PASSED.
+Validate; restart; run `tests/pastemode.ahk`, `tests/hud_live.ahk`, `tests/modes.ahk`, `tests/ring_pick.ahk` (ALL PASSED each). By hand: Ctrl+Shift+A opens the ring at the pointer with icons and one word per wedge (History, Organizer, Settings, ...), the full name in the hub on hover; More shows page 2; pressing 1 switches to channel 1 (toast); D disables Clipjump (press D again from the tray to re-enable, or Ctrl+Shift+A then D). Then run `bash tests/run-all.sh` on an idle desktop: ALL SUITES PASSED.
 
 - [ ] **Step 5: Commit**
 
@@ -1145,5 +1280,5 @@ git commit -m "Action Mode: the action ring replaces the list"
 ## Self-review
 
 - Spec coverage: RingGeom (Task 1), rendering and the demo (Task 2), window, input, paging, `Pick`, test hooks (Task 3), format ring with descriptions, dimming and paste-mode tests (Task 4), action ring with icons, descriptions and tests (Task 5). Out-of-scope items are not planned.
-- Interface consistency: `Ring.Pick(items, opts) -> key`, `RingGeom.Pages` nav entries `{nav}`, 0-based wedge indices in `RingGeom`, `Ring_WedgePoint(i)` and `Ring_LabelAt(i)` 0-based, `Formatting_Items -> {items, byKey}`, `ActionRing_Items -> items` are used the same way everywhere.
-- Known judgment calls: label box offsets in `WedgeContent` may need tuning against the demo PNGs (radii are fixed).
+- Interface consistency: `Ring.Pick(items, opts) -> key`, `RingGeom.WedgeArcs` consumed only by `Ring.Wedge`, `RingGeom.Pages` nav entries `{nav}`, 0-based wedge indices in `RingGeom`, `Ring_WedgePoint(i)` and `Ring_LabelAt(i)` 0-based, `Formatting_Items -> {items, byKey}`, `ActionRing_Items -> items` are used the same way everywhere.
+- Known judgment calls: text box offsets in `WedgeContent` and `Hub` may need tuning against the demo PNGs (radii and font sizes are fixed).
