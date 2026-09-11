@@ -148,7 +148,11 @@ plugin_pformat_commonformats(zin) {
 
 	w := 680, x := 20, y := 14, listW := 150, colGap := 16
 	editW := w - 2 * x - listW - colGap
-	lb := Theme.Add(g, "ListBox", "x" x " y" y " w" listW " h200 vzchosenformat", StrSplit(formats, "|"))
+	lb := Theme.Add(g, "ListView", "x" x " y" y " w" listW " h200 -Hdr -Multi -E0x200 +Border vzchosenformat", ["Format"])
+	lb.ModifyCol(1, listW - 24) 	; leaves room for the vertical scrollbar so no horizontal one appears
+	lb.Opt("Background" Theme.Hex("surface"))
+	for zfName in StrSplit(formats, "|")
+		lb.Add("", zfName)
 	g.SetFont("s10", "Consolas")
 	editCtl := Theme.Add(g, "Edit", "x" (x + listW + colGap) " y" y " w" editW " h200 -E0x200 +Border +Multi vzedit", zin)
 	g.SetFont("s10 c" Theme.Hex("text"), Theme.FontName)
@@ -169,7 +173,7 @@ plugin_pformat_commonformats(zin) {
 	Theme.Add(g, "Button", "x" (w - x - 76 - 8 - 76) " y" y " w76 h28 Default", "OK").OnEvent("Click", onOK)
 	Theme.Add(g, "Button", "x" (w - x - 76) " y" y " w76 h28", TXT.SET_apply).OnEvent("Click", onApply)
 
-	lb.OnEvent("Change", onChosen)
+	lb.OnEvent("ItemSelect", onChosen)
 	lb.OnEvent("DoubleClick", onChosenDouble)
 	inputfield.OnEvent("Change", onInput)
 	g.OnEvent("Close", onCancel)
@@ -182,7 +186,21 @@ plugin_pformat_commonformats(zin) {
 		FileAppend("; Add User paste formats here (AutoHotkey v2 syntax)`n; Prefix - plugin_pformat_commonformats_", ztF)
 	}
 
-	lb.Choose(zchosenformat = "" ? "None" : zchosenformat) ; choose the previous active format
+	zRestoreTarget := zchosenformat = "" ? "None" : zchosenformat 	; choose the previous active format
+	zRestoreRow := 0
+	loop lb.GetCount()
+		if (lb.GetText(A_Index) = zRestoreTarget) {
+			zRestoreRow := A_Index
+			break
+		}
+	if !zRestoreRow
+		loop lb.GetCount()
+			if (lb.GetText(A_Index) = "None") {
+				zRestoreRow := A_Index
+				break
+			}
+	if zRestoreRow
+		lb.Modify(zRestoreRow, "Select Focus Vis")
 	onChosen()
 	zDone := 0 	; used as an identifier in onChosen
 	while !zDone
@@ -221,11 +239,12 @@ plugin_pformat_commonformats(zin) {
 			onOK()
 	}
 
-	onChosen(*) {
+	onChosen(zCtrl := "", zItem := 0, zSelected := 1) {
+		if !zSelected 	; ItemSelect also fires on deselect; only react when a row becomes selected
+			return
 		inputfield.Value := ""
-		zchosenformat := lb.Text
-		if (zchosenformat = "")
-			zchosenformat := "None"
+		zRow := lb.GetNext(0)
+		zchosenformat := zRow ? lb.GetText(zRow) : "None"
 		zFobj := FuncByName("plugin_pformat_commonformats_" zchosenformat)
 		if !zFobj
 			return
