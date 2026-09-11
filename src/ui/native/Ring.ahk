@@ -9,6 +9,133 @@
 
 class Ring {
 	static token := 0, fontSet := ""
+	static g := "", visible := false, isOpen := false, pages := [], page := 1, hover := -1
+	static cx := 0, cy := 0, sx := 0, sy := 0, held := false, openedAt := 0, pressZone := ""
+	static result := "", done := false, opts := "", prevAlpha := ""
+
+	static Pick(items, opts := "") {
+		if Ring.isOpen
+			return ""
+		o := IsObject(opts) ? opts : {}
+		Ring.opts := o, Ring.pages := RingGeom.Pages(items), Ring.page := 1, Ring.hover := -1
+		Ring.result := "", Ring.done := false, Ring.pressZone := ""
+		Ring.Window()
+		MouseGetPos(&mx, &my)
+		Theme.WorkAreaAt(mx, my, &l, &t, &r, &b)
+		s := RingGeom.Sizes(Theme.Scale)
+		c := RingGeom.Clamp(mx, my, s.r1 + s.shadow + 2, l, t, r, b)
+		Ring.cx := c[1], Ring.cy := c[2], Ring.sx := mx, Ring.sy := my
+		Ring.held := o.HasProp("trigger") && o.trigger != "" && GetKeyState(o.trigger)
+		Ring.openedAt := A_TickCount
+		if o.HasProp("dim") && o.dim {
+			Ring.prevAlpha := ""
+			try Ring.prevAlpha := WinGetTransparent("ahk_id " o.dim)
+			try WinSetTransparent(128, "ahk_id " o.dim)
+		}
+		Ring.isOpen := true
+		Ring.BindKeys(true)
+		Ring.Draw()
+		SetTimer(Ring_Tick, 16)
+		while !Ring.done {
+			Sleep 15
+			if o.HasProp("until") && o.until.Call()
+				Ring.Close("")
+		}
+		SetTimer(Ring_Tick, 0)
+		Ring.BindKeys(false)
+		DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 0)
+		Ring.visible := false
+		if o.HasProp("dim") && o.dim
+			try WinSetTransparent(Ring.prevAlpha = "" ? "Off" : Ring.prevAlpha, "ahk_id " o.dim)
+		Ring.isOpen := false
+		return Ring.result
+	}
+
+	; one reusable layered, never-activated window; UpdateLayeredWindow sizes and places it
+	static Window() {
+		if Ring.g
+			return
+		Ring.g := Gui("-Caption +E0x80000 +E0x08000000 +AlwaysOnTop +ToolWindow -DPIScale +Owner" A_ScriptHwnd, "Clipjump_Ring")
+	}
+
+	static Draw() {
+		global TXT
+		items := Ring.pages[Ring.page], o := Ring.opts
+		h := Ring.hover >= 0 ? items[Ring.hover + 1] : ""
+		if IsObject(h) {
+			isNav := h.HasProp("nav")
+			title := isNav ? Ring.NavLabel(h.nav) : h.label
+			sub := isNav ? (h.nav = "more" ? TXT.RNG_moreDesc : TXT.RNG_backDesc) : (h.HasProp("desc") ? h.desc : "")
+			st := Ring.State(items, Ring.hover, title, sub, false)
+		} else {
+			sub := o.HasProp("idleSub") ? o.idleSub : ""
+			if (Ring.pages.Length > 1)
+				sub := sub (sub != "" ? "  ·  " : "") Ring.page "/" Ring.pages.Length
+			st := Ring.State(items, -1, o.HasProp("idleTitle") ? o.idleTitle : "", sub, true)
+		}
+		Ring.Present(st)
+	}
+
+	static Present(st) {
+		D := Ring.Side(st.s)
+		Ring.Start()
+		hbm := CreateDIBSection(D, D), hdc := CreateCompatibleDC(), obm := SelectObject(hdc, hbm)
+		G := Gdip_GraphicsFromHDC(hdc)
+		Ring.Paint(G, st, D / 2, D / 2)
+		UpdateLayeredWindow(Ring.g.Hwnd, hdc, Round(Ring.cx - D / 2), Round(Ring.cy - D / 2), D, D)
+		Gdip_DeleteGraphics(G), SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
+		if !Ring.visible {
+			DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 4)   ; SW_SHOWNOACTIVATE
+			Ring.visible := true
+		}
+	}
+
+	static Choose(idx) {
+		it := Ring.pages[Ring.page][idx + 1]
+		if it.HasProp("nav") {
+			Ring.page := it.nav = "more" ? Ring.page + 1 : 1
+			Ring.hover := -1, Ring.Draw()
+			return
+		}
+		Ring.Close(it.key)
+	}
+
+	static Close(result) {
+		Ring.result := result, Ring.done := true
+	}
+
+	static BindKeys(on) {
+		o := Ring.opts, pre := o.HasProp("prefix") ? o.prefix : ""
+		opt := on ? "On T2" : "Off T1"
+		for page in Ring.pages
+			for it in page
+				if (!it.HasProp("nav") && it.key != "")
+					Ring.BindKey(pre it.key, Ring_Key.Bind(it.key), opt)
+		Ring.BindKey(pre "Esc", Ring_Esc, opt)
+		Ring.BindKey(pre "Enter", Ring_Enter, opt)
+		; a click is caught on the mouse hook's own thread (On T2, ~ so it still reaches whatever is under
+		; the cursor): a synthetic Click() sent from this same process is a single blocking call with no
+		; message-pump gap in it, so GetKeyState polled from another timer can miss the whole down-up pair.
+		Ring.BindKey("~LButton", Ring_MouseDown, opt)
+		Ring.BindKey("~LButton up", Ring_MouseUp, opt)
+		if o.HasProp("extraKeys")
+			for kk in o.extraKeys
+				Ring.BindKey(pre kk, Ring_Key.Bind(kk), opt)
+		if (o.HasProp("triggerHotkey") && o.triggerHotkey != "")
+			Ring.BindKey(o.triggerHotkey, Ring_Trigger, opt)
+	}
+
+	; Hotkey() with the vk fallback Hud.BindKey uses for letters a layout does not map by name
+	static BindKey(key, fn, opt) {
+		try {
+			Hotkey(key, fn, opt)
+			return
+		}
+		t := ""
+		loop parse key
+			t .= IsAlpha(A_LoopField) ? "vk" GetVKList(A_LoopField)[1] : A_LoopField
+		try Hotkey(t, fn, opt)
+	}
 
 	; GDI+ stays started for the life of the process once a ring has been drawn
 	static Start() {
@@ -225,4 +352,81 @@ class Ring {
 		DllCall("gdiplus\GdipDeleteStringFormat", "Ptr", fmt)
 		DllCall("gdiplus\GdipDeleteFont", "Ptr", font)
 	}
+}
+
+Ring_Tick() {
+	if !Ring.isOpen
+		return
+	MouseGetPos(&mx, &my)
+	s := RingGeom.Sizes(Theme.Scale)
+	items := Ring.pages[Ring.page]
+	h := RingGeom.Hit(mx - Ring.cx, my - Ring.cy, items.Length, s)
+	hover := h.zone = "ring" ? h.index : -1
+	if (hover != Ring.hover) {
+		Ring.hover := hover
+		Ring.Draw()
+	}
+	; releasing the held trigger commits a flick; a quick tap without travel keeps the ring open
+	if (Ring.held && !GetKeyState(Ring.opts.trigger)) {
+		Ring.held := false
+		moved := Sqrt((mx - Ring.sx) ** 2 + (my - Ring.sy) ** 2) >= s.travel
+		if (hover >= 0 && (moved || A_TickCount - Ring.openedAt > RingGeom.TapMs))
+			return Ring.Choose(hover)
+	}
+}
+
+; the click's press: recorded only so a release is honoured solely for a press made while the ring was open
+Ring_MouseDown(*) {
+	if !Ring.isOpen
+		return
+	MouseGetPos(&mx, &my)
+	s := RingGeom.Sizes(Theme.Scale), items := Ring.pages[Ring.page]
+	Ring.pressZone := RingGeom.Hit(mx - Ring.cx, my - Ring.cy, items.Length, s).zone
+}
+
+; the click's release: acts on the zone under the cursor now, using the press to gate a stray release
+; (e.g. a button already held when the ring opened) rather than the zone the press itself landed in
+Ring_MouseUp(*) {
+	if (!Ring.isOpen || Ring.pressZone = "")
+		return
+	zone := Ring.pressZone, Ring.pressZone := ""
+	MouseGetPos(&mx, &my)
+	s := RingGeom.Sizes(Theme.Scale), items := Ring.pages[Ring.page]
+	h := RingGeom.Hit(mx - Ring.cx, my - Ring.cy, items.Length, s)
+	if (zone = "outside")
+		return Ring.Close("")
+	if (zone = "ring" && h.zone = "ring")
+		return Ring.Choose(h.index)
+}
+
+Ring_Key(key, *) => Ring.Close(key)
+Ring_Esc(*) => Ring.Close("")
+
+Ring_Enter(*) {
+	if (Ring.hover >= 0)
+		Ring.Choose(Ring.hover)
+}
+
+; a second tap of the trigger closes the ring; auto-repeat while it is still held is ignored
+Ring_Trigger(*) {
+	if !Ring.held
+		Ring.Close("")
+}
+
+Ring_IsOpen() => Ring.isOpen ? 1 : 0
+
+; screen position of wedge i's centre line (mid-band) on the current page, as "x,y"
+Ring_WedgePoint(i) {
+	if !Ring.isOpen
+		return ""
+	s := RingGeom.Sizes(Theme.Scale), n := Ring.pages[Ring.page].Length
+	c := RingGeom.Point(i, n, (s.r0 + s.r1) / 2)
+	return Round(Ring.cx + c[1]) "," Round(Ring.cy + c[2])
+}
+
+Ring_LabelAt(i) {
+	if !Ring.isOpen
+		return ""
+	it := Ring.pages[Ring.page][i + 1]
+	return it.HasProp("nav") ? it.nav : it.label
 }
