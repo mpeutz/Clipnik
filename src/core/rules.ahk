@@ -26,7 +26,7 @@ class Rules {
 			p := InStr(A_LoopField, "=")
 			if !p
 				continue
-			k := Trim(SubStr(A_LoopField, 1, p - 1)), v := SubStr(A_LoopField, p + 1)
+			k := Trim(SubStr(A_LoopField, 1, p - 1)), v := Rules.Unescape(SubStr(A_LoopField, p + 1))
 			switch StrLower(k) {
 				case "on": r["on"] := v ? 1 : 0, seen := true
 				case "kinds":
@@ -52,11 +52,17 @@ class Rules {
 		kinds := ""
 		for i, k in r["kinds"]
 			kinds .= (i > 1 ? "," : "") k
-		s := "on=" (r["on"] ? 1 : 0) ";kinds=" kinds ";regex=" r["regex"] ";app=" r["app"] ";action=" r["action"] (r["arg"] != "" ? ":" r["arg"] : "") ";name=" r["name"]
+		s := "on=" (r["on"] ? 1 : 0) ";kinds=" Rules.Escape(kinds) ";regex=" Rules.Escape(r["regex"]) ";app=" Rules.Escape(r["app"])
+			. ";action=" Rules.Escape(r["action"]) (r["arg"] != "" ? ":" Rules.Escape(r["arg"]) : "") ";name=" Rules.Escape(r["name"])
 		if (r["class"] != "")
-			s .= ";class=" r["class"]
+			s .= ";class=" Rules.Escape(r["class"])
 		return s
 	}
+
+	; ';' separates the fields of a stored line, so a value that contains one is percent-escaped ('%' first, so
+	; unescaping in the reverse order cannot turn a literal "%3B" into a separator)
+	static Escape(v) => StrReplace(StrReplace(v, "%", "%25"), ";", "%3B")
+	static Unescape(v) => StrReplace(StrReplace(v, "%3B", ";"), "%25", "%")
 
 	static HasCondition(r) => r["kinds"].Length || r["regex"] != "" || r["app"] != "" || r["class"] != ""
 
@@ -76,7 +82,7 @@ class Rules {
 			catch
 				return ClipType_T("RUL_badRegex")
 		}
-		if (r["action"] = "channel" && !IsInteger(r["arg"]))
+		if (r["action"] = "channel" && (!IsInteger(r["arg"]) || r["arg"] < 0))
 			return ClipType_T("RUL_badChannel")
 		return ""
 	}

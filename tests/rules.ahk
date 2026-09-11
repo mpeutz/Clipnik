@@ -27,6 +27,20 @@ check(IsObject(r2) && r2["name"] = "Card numbers", "regex-only rule with a name"
 check(Rules.Serialize(Rules.Parse(Rules.Serialize(r2))) = Rules.Serialize(r2), "serialize is stable")
 check(Rules.Validate(Rules.Parse("on=1;kinds=;regex=(unclosed;app=;action=ignore")) != "", "invalid regex reported")
 check(Rules.Validate(r) = "", "valid rule passes")
+check(Rules.Validate(Rules.Parse("on=1;kinds=url;regex=;app=;action=channel:-1")) != "", "a negative channel is rejected")
+check(Rules.Validate(Rules.Parse("on=1;kinds=url;regex=;app=;action=channel:0")) = "", "channel 0 is valid")
+
+; ';' separates the fields on a stored line, so values containing it must survive a round trip
+rs := Rules.New()
+rs["regex"] := "^a;b$", rs["app"] := "a;b.exe", rs["class"] := "A;B", rs["name"] := "semi;colon", rs["action"] := "tag", rs["arg"] := "a;b"
+rp := Rules.Parse(Rules.Serialize(rs))
+check(IsObject(rp) && rp["regex"] == "^a;b$" && rp["arg"] == "a;b", "';' in regex and arg survives serialize/parse")
+check(IsObject(rp) && rp["app"] == "a;b.exe" && rp["class"] == "A;B" && rp["name"] == "semi;colon", "';' in app, class and name survives")
+check(IsObject(rp) && Rules.Match(rp, "text", "a;b", "a;b.exe", "A;B"), "the round-tripped rule still matches a;b")
+rpc := Rules.New()
+rpc["regex"] := "100%;x", rpc["action"] := "tag", rpc["arg"] := "%3B"
+rpc2 := Rules.Parse(Rules.Serialize(rpc))
+check(IsObject(rpc2) && rpc2["regex"] == "100%;x" && rpc2["arg"] == "%3B", "'%' is escaped, not read back as an escape")
 
 check(Rules.Match(r, "url", "https://x.com", "chrome.exe"), "match kind and app")
 check(!Rules.Match(r, "url", "https://x.com", "firefox.exe"), "app mismatch")
