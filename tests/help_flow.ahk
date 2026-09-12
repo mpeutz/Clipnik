@@ -113,5 +113,31 @@ check("restored size " rw "x" rh " matches saved " sw "x" sh, Abs(rw - sw) <= 4 
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))
+
+step("Esc closes the window")
+cj.runFunction("Help_Open()")
+check("help open for the Esc test", WinWait(title, , 8) != 0)
+WinActivate(title)
+Sleep 500
+SendEvent("{Esc}")
+check("Esc closed the window", WinWaitClose(title, , 5) != 0)
+
+step("Esc first clears an active filter, then closes on the second press")
+cj.runFunction("Help_Open()")
+check("help open for the two-stage Esc test", WinWait(title, , 8) != 0)
+WinActivate(title)
+Sleep 500
+cj.runFunction("Help_Filter(channel)")
+Sleep 400
+snapText := cj.runFunction("HelpWin_FilterProbe()")
+check("filter is active before Esc: " snapText, !InStr(snapText, "shown=11"))
+SendEvent("{Esc}")
+Sleep 400
+check("first Esc left the window open", WinExist(title) != 0)
+snapText := cj.runFunction("HelpWin_FilterProbe()")
+check("first Esc cleared the filter: " snapText, InStr(snapText, "shown=11"))
+SendEvent("{Esc}")
+check("second Esc closed the window", WinWaitClose(title, , 5) != 0)
+
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

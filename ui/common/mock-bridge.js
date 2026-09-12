@@ -36,8 +36,8 @@
 
   // ---- help ----
   const i18n = {
-    HLP_title: "Help", HLP_search: "Search help", HLP_noMatch: "No topic matches", HLP_matches: "matches",
-    HLP_topics: "Topics", HLP_key: "Key", HLP_action: "Action", HLP_format: "Format", HLP_appliesTo: "Applies to",
+    HLP_title: "Help", HLP_search: "Search help", HLP_noMatch: "No topic matches", HLP_everyClip: "Every clip",
+    HLP_key: "Key", HLP_action: "Action", HLP_format: "Format", HLP_appliesTo: "Applies to",
     HLP_shortcut: "Shortcut", HLP_description: "Description", HLP_notAvailable: "Not available in this build",
   };
   const reference = {
@@ -60,9 +60,14 @@
       { key: "O", label: "Channel Organizer", desc: "Move clips between channels" },
       { key: "E", label: "Settings", desc: "Open settings" },
     ],
+    // every clip kind Clipjump knows, same shape as the real Help_Reference() -- lets a format's raw
+    // "text,code" kind list resolve to real labels in the mock instead of only ever hitting the id fallback
     rules: {
-      actions: ["channel", "ignore", "transform", "tag"],
-      kinds: [{ kind: "url", label: "URL" }, { kind: "email", label: "Email" }],
+      kinds: [
+        { kind: "url", label: "URL" }, { kind: "email", label: "Email" }, { kind: "path", label: "Path" },
+        { kind: "color", label: "Color" }, { kind: "json", label: "JSON" }, { kind: "number", label: "Number" },
+        { kind: "phone", label: "Phone" }, { kind: "code", label: "Code" }, { kind: "text", label: "Text" },
+      ],
     },
     version: "12.5-mock",
   };

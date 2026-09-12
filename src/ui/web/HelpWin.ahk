@@ -55,7 +55,7 @@ class HelpWin {
 
 	static I18n() {
 		global TXT
-		keys := ["HLP_title", "HLP_search", "HLP_noMatch", "HLP_matches", "HLP_topics", "HLP_key", "HLP_action"
+		keys := ["HLP_title", "HLP_search", "HLP_noMatch", "HLP_everyClip", "HLP_key", "HLP_action"
 			, "HLP_format", "HLP_appliesTo", "HLP_shortcut", "HLP_description", "HLP_notAvailable"]
 		m := Map()
 		for k in keys

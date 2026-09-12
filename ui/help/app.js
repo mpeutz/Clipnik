@@ -151,15 +151,20 @@ function table(name) {
       return { head: head("HLP_key", "HLP_action"), body: (r.pasteMode || []).map((x) => [kbd(x.key), x.caption]) };
     case "actions":
       return { head: head("HLP_key", "HLP_action"), body: (r.actions || []).map((x) => [kbd(x.key), x.label + (x.desc ? " — " + x.desc : "")]) };
-    case "formats":
+    case "formats": {
+      // r.rules.kinds carries {kind, label} for every clip kind; map a format's raw "text,code" id list
+      // through those labels, falling back to the raw id when a kind has no label
+      const kindLabels = new Map((r.rules && r.rules.kinds || []).map((k) => [k.kind, k.label]));
+      const appliesTo = (kinds) => kinds
+        ? kinds.split(",").map((k) => k.trim()).filter(Boolean).map((k) => kindLabels.get(k) || k).join(", ")
+        : (t.HLP_everyClip || "Every clip");
       return {
         head: [t.HLP_key || "Key", t.HLP_format || "Format", t.HLP_appliesTo || "Applies to"],
-        body: (r.formats || []).map((x) => [kbd(x.key), x.label + (x.desc ? " — " + x.desc : ""), x.kinds || "every clip"]),
+        body: (r.formats || []).map((x) => [kbd(x.key), x.label + (x.desc ? " — " + x.desc : ""), appliesTo(x.kinds)]),
       };
+    }
     case "hotkeys":
       return { head: head("HLP_shortcut", "HLP_description"), body: (r.hotkeys || []).map((x) => [kbd(x.keys), x.label]) };
-    case "ruleActions":
-      return { head: head("HLP_action", "HLP_description"), body: (r.rules && r.rules.actions || []).map((a) => [a, ""]) };
     case "kinds":
       return { head: head("HLP_key", "HLP_description"), body: (r.rules && r.rules.kinds || []).map((k) => [k.kind, k.label]) };
     default:
@@ -229,11 +234,15 @@ bridge.on("topic", () => bridge.send("topic", state.current));
 
 const qEl = document.getElementById("q");
 qEl.addEventListener("input", cj.debounce(() => applyFilter(qEl.value), 120));
-qEl.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-  qEl.value = "";
-  applyFilter("");
-  e.stopPropagation();
+
+// the WebView2 child owns the keystroke while it has focus, so a Gui Escape event on the host never fires;
+// catch it here instead, the same way History and Organizer do. A filter's first Escape clears the term
+// (checked on state, not on which element has focus -- Help_Filter() sets it without moving DOM focus, so
+// gating on focus would make the test hook flaky); an inactive filter sends `close` straight away.
+document.addEventListener("keydown", (e) => {
+  if (cj.hotkey(e) !== "Escape") return;
+  if (qEl.value) { qEl.value = ""; applyFilter(""); } else { bridge.send("close"); }
+  e.preventDefault();
 });
 
 bridge.whenReady(async () => {
