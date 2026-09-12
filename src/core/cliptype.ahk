@@ -149,18 +149,20 @@ class ClipType {
 
 	; svg markup: an <svg> root with opening tag at a tag boundary, optionally behind an xml declaration
 	; and/or DOCTYPE (including with internal subset). May end with </svg> or self-closing />.
-	; Uses string scanning for trailing comments to avoid regex engine limits on large input.
+	; Uses string scanning, not regex, for trailing comments and the xml-declaration prologue: both can
+	; be arbitrarily large (a generator's trailing comment block), and a matching-quantifier regex over
+	; unbounded input is the kind of construct that has already produced silent false negatives here.
 	static IsSvg(t) {
 		s := Trim(t, " `t`r`n")
 		sLen := StrLen(s)
 
-		; Strip trailing comments and whitespace using string scanning (not regex, to avoid engine limits).
-		; Loop: trim whitespace and comments from the end until nothing more to strip.
+		; Strip trailing comments and whitespace. Loop: trim whitespace and comments from the end
+		; until nothing more to strip.
 		loop {
 			origLen := sLen
 
-			; First, trim trailing whitespace
-			s := RTrim(s)
+			; Trim trailing whitespace (space, tab, CR, LF)
+			s := RTrim(s, " `t`r`n")
 			sLen := StrLen(s)
 
 			; Then check if ends with --> and remove the complete comment
@@ -205,11 +207,41 @@ class ClipType {
 		if !declEnd
 			return false
 
-		; After XML declaration, allow DOCTYPE (including with internal subset [...]) and comments
-		; before the <svg root element. DOCTYPE: <!DOCTYPE\s+svg\b[^>\[\]]*(?:\[[^\]]*\])?[^>]*>
-		; Fixed character class: [^>\[\]]* means "not > and not [ and not ]"
-		afterDecl := SubStr(s, declEnd + 2)
-		return RegExMatch(afterDecl, "s)^\s*(?:(?:<!DOCTYPE\s+svg\b[^>\[\]]*(?:\[[^\]]*\])?[^>]*>|<!--.*?-->)\s*)*<svg[\s>/]") > 0
+		; Forward-scan past the declaration: skip whitespace, then skip any run of comments and/or
+		; DOCTYPE declarations (in any order), then require the root tag at a boundary.
+		p := declEnd + 2
+		loop {
+			while (p <= sLen) {
+				c := SubStr(s, p, 1)
+				if (c != " " && c != "`t" && c != "`r" && c != "`n")
+					break
+				p++
+			}
+			if (SubStr(s, p, 4) == "<!--") {
+				closeAt := InStr(s, "-->", true, p + 4)
+				if !closeAt
+					return false
+				p := closeAt + 3
+				continue
+			}
+			if (SubStr(s, p, 9) == "<!DOCTYPE") {
+				q := p + 9
+				gtPos := InStr(s, ">", true, q)
+				bracketPos := InStr(s, "[", true, q)
+				if (bracketPos && (!gtPos || bracketPos < gtPos)) {
+					closeBracket := InStr(s, "]", true, bracketPos + 1)
+					if !closeBracket
+						return false
+					gtPos := InStr(s, ">", true, closeBracket + 1)
+				}
+				if !gtPos
+					return false
+				p := gtPos + 1
+				continue
+			}
+			break
+		}
+		return RegExMatch(SubStr(s, p), "s)^<svg[\s>/]") > 0
 	}
 
 	static IsNumber(t) => RegExMatch(t, "^[-+]?[$€£¥]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
