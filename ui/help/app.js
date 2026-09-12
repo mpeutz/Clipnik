@@ -4,7 +4,7 @@ const TOPICS = [
   "start", "tasks", "reference-pastemode", "reference-actionmode", "reference-formats", "reference-rules",
   "reference-settings", "reference-plugins", "reference-shortcuts", "trouble", "about",
 ];
-const state = { topics: [], current: "", i18n: {}, reference: null };
+const state = { topics: [], current: "", i18n: {}, reference: null, filter: "" };
 
 async function loadTopics() {
   const out = [];
@@ -22,14 +22,54 @@ async function loadTopics() {
   return out;
 }
 
+// (t.title + keywords + rendered text), lowercased and cached on the topic so repeated filtering is cheap
+function topicText(t) {
+  if (t._text === undefined) t._text = (t.title + " " + t.keywords + " " + t.node.textContent).toLowerCase();
+  return t._text;
+}
+
+// how many times term occurs in text (plain substring count, no regex)
+function countMatches(text, term) {
+  if (!term) return 0;
+  let n = 0, i = 0;
+  for (;;) {
+    const j = text.indexOf(term, i);
+    if (j < 0) return n;
+    n++;
+    i = j + term.length;
+  }
+}
+
+// topics to list for state.filter: {t, count}, count is null when there is no active filter
+function filteredTopics() {
+  if (!state.filter) return state.topics.map((t) => ({ t, count: null }));
+  return state.topics
+    .map((t) => ({ t, count: countMatches(topicText(t), state.filter) }))
+    .filter((x) => x.count > 0);
+}
+
 function renderList() {
   const list = document.getElementById("list");
   list.textContent = "";
-  for (const t of state.topics) {
+  const rows = filteredTopics();
+  if (state.filter && !rows.length) {
+    const p = document.createElement("div");
+    p.className = "empty";
+    p.textContent = state.i18n.HLP_noMatch || "No topic matches";
+    list.appendChild(p);
+    return;
+  }
+  for (const { t, count } of rows) {
     const b = document.createElement("button");
     b.textContent = t.title;
     b.dataset.id = t.id;
     if (t.id === state.current) b.className = "on";
+    if (count != null) {
+      const span = document.createElement("span");
+      span.className = "count";
+      span.textContent = count;
+      b.appendChild(span);
+    }
     b.addEventListener("click", () => show(t.id));
     list.appendChild(b);
   }
@@ -45,6 +85,44 @@ function show(id) {
   doc.scrollTop = 0;
   fillReference(doc);
   renderList();
+  highlight(state.filter);
+}
+
+// applies a new filter term: recomputes the list, jumps off a topic that dropped out, and re-highlights
+function applyFilter(term) {
+  state.filter = String(term || "").trim().toLowerCase();
+  const rows = filteredTopics();
+  if (rows.length && !rows.some((x) => x.t.id === state.current)) {
+    show(rows[0].t.id);
+    return;
+  }
+  renderList();
+  highlight(state.filter);
+}
+
+// highlights every occurrence of term in the open topic using the CSS Custom Highlight API
+function highlight(term) {
+  if (!window.CSS || !CSS.highlights) return;
+  CSS.highlights.delete("help-hit");
+  if (!term) return;
+  const doc = document.getElementById("doc");
+  const walker = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT);
+  const ranges = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    const text = node.data.toLowerCase();
+    let i = 0;
+    for (;;) {
+      const j = text.indexOf(term, i);
+      if (j < 0) break;
+      const r = new Range();
+      r.setStart(node, j);
+      r.setEnd(node, j + term.length);
+      ranges.push(r);
+      i = j + term.length;
+    }
+  }
+  if (ranges.length) CSS.highlights.set("help-hit", new Highlight(...ranges));
 }
 
 function fillReference(root) {
@@ -127,6 +205,21 @@ bridge.on("i18n", (m) => {
 });
 bridge.on("reference", (d) => { state.reference = d; fillReference(document.getElementById("doc")); });
 bridge.on("opened", (topic) => { if (topic) show(topic); });
+// test hook (see HelpWin_FilterProbe): reports how many topics the current filter lists and how many total hits
+bridge.on("probe", () => {
+  const rows = filteredTopics();
+  const hits = rows.reduce((sum, x) => sum + (x.count || 0), 0);
+  bridge.send("probe", "shown=" + rows.length + " hits=" + hits);
+});
+
+const qEl = document.getElementById("q");
+qEl.addEventListener("input", cj.debounce(() => applyFilter(qEl.value), 120));
+qEl.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  qEl.value = "";
+  applyFilter("");
+  e.stopPropagation();
+});
 
 bridge.whenReady(async () => {
   state.topics = await loadTopics();

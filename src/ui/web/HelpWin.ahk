@@ -9,6 +9,7 @@ class HelpWin {
 	static host := ""
 	static section := "Help_window"
 	static pending := ""
+	static probe := ""
 
 	static Instance() {
 		global PROGNAME, TXT
@@ -72,6 +73,7 @@ HelpWin_OnMessage(cmd, data, host) {
 		case "reference": host.Post("reference", Help_Reference())
 		case "open": BrowserRun(data)
 		case "close": HelpWin.Close()
+		case "probe": HelpWin.probe := data
 	}
 }
 
@@ -141,6 +143,18 @@ Help_FormatKinds(name) {
 Help_Open(topic := "") => HelpWin.Open(topic)
 Help_Close() => HelpWin.Close()
 Help_GeometrySpec() => HelpWin.Geometry()
+
+; test hook: "shown=<topics listed> hits=<total matches>" for the current filter
+HelpWin_FilterProbe() {
+	HelpWin.probe := ""
+	if !HelpWin.host
+		return ""
+	HelpWin.host.Post("probe")
+	t := A_TickCount
+	while (HelpWin.probe = "" && A_TickCount - t < 3000)
+		Sleep 50
+	return HelpWin.probe
+}
 
 ; test hook: how many topic fragments ship in ui\help\topics
 Help_TopicCount() {
