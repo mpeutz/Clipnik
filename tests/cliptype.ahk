@@ -54,6 +54,13 @@ expect("json", '[1, 2, {"a": [3]}]')
 expect("json", '{`n  "a": "b{",`n  "c": "}d"`n}', "braces inside strings")
 expect("text", '{"a": 1', "unbalanced")
 expect("text", "{not json}", "braces around words is still json-shaped: needs a colon or comma")
+; svg
+check(ClipType.Detect('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/></svg>') = "svg", "plain svg markup")
+check(ClipType.Detect('<?xml version="1.0" encoding="UTF-8"?>' . "`n" . '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4"/></svg>') = "svg", "svg behind an xml declaration")
+check(ClipType.Detect('  <svg viewBox="0 0 10 10"><rect width="10" height="10"/></svg>  ') = "svg", "svg with surrounding whitespace")
+check(ClipType.Detect('<div class="icon"><svg viewBox="0 0 10 10"></svg></div>') != "svg", "an html fragment containing svg is not svg")
+check(ClipType.Detect('{"markup": "<svg></svg>"}') = "json", "json that mentions svg stays json")
+check(ClipType.Detect('function f() { return "<svg>"; }') != "svg", "code that mentions svg is not svg")
 ; number
 expect("number", "1299")
 expect("number", "-1,299.00")

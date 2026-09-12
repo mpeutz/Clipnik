@@ -271,7 +271,7 @@ class OrganizerWin {
 
 	static I18n() {
 		global TXT
-		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_number", "KIND_phone", "KIND_code", "KIND_text"]
+		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_svg", "KIND_number", "KIND_phone", "KIND_code", "KIND_text", "KIND_image"]
 		m := Map()
 		for k in keys
 			m[k] := StrReplace(TXT.%k%, "&")

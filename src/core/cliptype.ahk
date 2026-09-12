@@ -9,7 +9,7 @@
 ; only when it is one address, and so on. Anything ambiguous is "text".
 
 class ClipType {
-	static Kinds := ["url", "email", "path", "color", "json", "number", "phone", "code", "text"]
+	static Kinds := ["url", "email", "path", "color", "json", "svg", "number", "phone", "code", "text", "image"]
 	static MaxBytes := 65536
 
 	static IsKind(s) {
@@ -95,6 +95,8 @@ class ClipType {
 		}
 		if ClipType.IsJson(t)
 			return "json"
+		if ClipType.IsSvg(t)
+			return "svg"
 		if oneLine {
 			if ClipType.IsNumber(t)
 				return "number"
@@ -143,6 +145,19 @@ class ClipType {
 			}
 		}
 		return depth = 0 && !inString && punct
+	}
+
+	; svg markup: an <svg> root, optionally behind an xml declaration or comments
+	static IsSvg(t) {
+		s := Trim(t, " `t`r`n")
+		if (SubStr(s, -6) != "</svg>")
+			return false
+		if (SubStr(s, 1, 4) = "<svg")
+			return true
+		if (SubStr(s, 1, 5) != "<?xml")
+			return false
+		p := InStr(s, "?>")
+		return p ? (RegExMatch(SubStr(s, p + 2), "s)^\s*(?:<!--.*?-->\s*)*<svg\b") > 0) : false
 	}
 
 	static IsNumber(t) => RegExMatch(t, "^[-+]?[$€£¥]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
