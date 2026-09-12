@@ -10,10 +10,10 @@ pluginManager_GUI(){
 	global CJGUI, TXT, PROGNAME, PLUGINS, ini_defEditor
 	local wt, ht, g, sb, plMenu, pad, btnW, right, lvTop
 	local searchTerm, pluginMLV, btnRun, btnEdit, btnProps
-	local DidDelete, selected_row, valSelected, dirNum, plugin_displayname
+	local DidDelete, selected_row, valSelected, dirNum, plugin_displayname, selEntry
 	wt := 680, ht := 470, pad := 14, btnW := 84
 	DidDelete := 0
-	selected_row := 0, valSelected := 0, dirNum := "", plugin_displayname := ""
+	selected_row := 0, valSelected := 0, dirNum := "", plugin_displayname := "", selEntry := ""
 
 	GuiDestroy("pluginM")
 	g := Gui("+Resize +MinSize560x360", PROGNAME " " TXT.PLG__name)
@@ -95,7 +95,11 @@ pluginManager_GUI(){
 	plugin_Run(*) {
 		if !plugin_getSelected()
 			return
-		filepath := PLUGINS["<>"][dirNum]["plugin_path"]
+		filepath := plugin_filePath()
+		if (filepath = "") {
+			sb.Value := TXT.PLG_sb_builtin " - " plugin_displayname
+			return
+		}
 		sb.Value := TXT.PLG_sb_running " - " plugin_displayname
 		ret := API.runPlugin(filepath)
 		if (ret != "") && !(InStr(filepath, "external.") == 1)
@@ -107,15 +111,19 @@ pluginManager_GUI(){
 	plugin_edit(*) {
 		if !plugin_getSelected()
 			return
-		Run(ini_defEditor ' "' "plugins\" PLUGINS["<>"][dirNum]["plugin_path"] '"')
+		if (plugin_filePath() = "") {
+			sb.Value := TXT.PLG_sb_builtin " - " plugin_displayname
+			return
+		}
+		Run(ini_defEditor ' "' "plugins\" plugin_filePath() '"')
 	}
 
 	plugin_showprops(*) {
 		if !plugin_getSelected()
 			return
 		tempObj := CJMap()
-		for key, value in PLUGINS["<>"][dirNum]
-			if !InStr("|#|*|silent|previewable|", "|" key "|")
+		for key, value in selEntry
+			if !InStr("|#|*|silent|previewable|builtin|desc|short|key|kinds|", "|" key "|")
 				tempObj[key] := value
 		ObjectEditView( tempObj, [tempObj["Name"], "pluginM", TXT._properties, (A_ScreenWidth/2)>700 ? 620 : 500] , 1  )
 		EmptyMem()
@@ -124,9 +132,13 @@ pluginManager_GUI(){
 	plugin_delete(*) {
 		if !plugin_getSelected()
 			return
+		if (plugin_filePath() = "") {
+			sb.Value := TXT.PLG_sb_builtin " - " plugin_displayname
+			return
+		}
 		if (MsgBox(TXT.PLG_delmsg "`n" plugin_displayname, "Plugin Delete", 52) = "Yes")
 		{
-			plugPath := "plugins\" PLUGINS["<>"][dirNum]["Plugin_path"]
+			plugPath := "plugins\" plugin_filePath()
 			try FileDelete(plugPath)
 			try DirDelete(SubStr(plugPath,1,-4) ".lib", 1) 	;remove .ahk and put .lib
 			pluginMLV.Delete(valSelected)
@@ -142,8 +154,27 @@ pluginManager_GUI(){
 		else valSelected := pluginMLV.GetNext()
 		if !valSelected
 			return 0
-		dirNum := pluginMLV.GetText(valSelected, 4) , plugin_displayname := PLUGINS["<>"][dirNum]["name"]
+		dirNum := pluginMLV.GetText(valSelected, 4)
+		selEntry := (dirNum != "" && PLUGINS["<>"].HasKey(dirNum)) ? PLUGINS["<>"][dirNum] : plugin_entryByName(pluginMLV.GetText(valSelected, 1))
+		if !IsObject(selEntry) {
+			sb.Value := TXT.PLG_sb_unknown
+			return 0
+		}
+		plugin_displayname := selEntry["name"]
 		return 1
+	}
+
+	; a built-in format is registered in PLUGINS.pformat but has no file and no "<>" index
+	plugin_entryByName(name) {
+		for k, v in PLUGINS.pformat
+			if (v["name"] == name)
+				return v
+		return ""
+	}
+
+	; "" for a built-in format: there is nothing on disk to run, edit or delete
+	plugin_filePath() {
+		return selEntry["Plugin_path"]
 	}
 
 	pluginMSearch(*) {

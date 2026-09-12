@@ -26,11 +26,25 @@ class Transforms {
 				continue
 			e := CJMap()
 			e["name"] := ClipType_T(t[2]), e["*"] := t[3], e["Previewable"] := 1, e["kinds"] := t[4], e["key"] := t[5], e["builtin"] := 1, e["desc"] := ClipType_T("TRF_desc_" t[1]), e["short"] := ClipType_T("TRF_short_" t[1])
+			; the Plugin Manager lists these beside the plugin files, so give them the same displayable fields
+			e["Description"] := e["desc"], e["Author"] := "Clipjump", e["Tags"] := "pformat builtin"
+			e["Letter"] := t[5], e["Applies to"] := Transforms.KindLabels(t[4]), e["Wedge label"] := e["short"]
 			PLUGINS.pformat[t[1]] := e
 		}
 	}
 
 	; a format with no kinds fits everything (plugins); "" and "text" kinds are the same thing
+	; the clip kinds a format applies to, by label, for the Plugin Manager properties view ("" = every kind)
+	static KindLabels(kinds) {
+		global TXT
+		if (kinds = "")
+			return TXT.PLG_everyKind
+		labels := ClipType_Labels(), out := ""
+		for k in StrSplit(kinds, ",")
+			out .= (out = "" ? "" : ", ") (labels.Has(k) ? labels[k] : k)
+		return out
+	}
+
 	static AppliesTo(entry, kind) {
 		kinds := ""
 		try kinds := entry["kinds"]
