@@ -34,6 +34,39 @@
     reply("kinds", { kinds: ["url", "email"], labels: kindLabels });
   }
 
+  // ---- help ----
+  const i18n = {
+    HLP_title: "Help", HLP_search: "Search help", HLP_noMatch: "No topic matches", HLP_matches: "matches",
+    HLP_topics: "Topics", HLP_key: "Key", HLP_action: "Action", HLP_format: "Format", HLP_appliesTo: "Applies to",
+    HLP_shortcut: "Shortcut", HLP_description: "Description", HLP_notAvailable: "Not available in this build",
+  };
+  const reference = {
+    pasteMode: [
+      { key: "V", caption: "Paste back one clip" },
+      { key: "C", caption: "Paste forward one clip" },
+      { key: "Z", caption: "Open the format ring" },
+    ],
+    hotkeys: [
+      { label: "Action Mode", keys: "Ctrl + Shift + A" },
+      { label: "Paste mode", keys: "Ctrl + V" },
+    ],
+    formats: [
+      { key: "O", label: "Original", short: "Org", desc: "Paste as copied", kinds: "" },
+      { key: "U", label: "UPPERCASE", short: "Upper", desc: "Convert to upper case", kinds: "text,code" },
+      { key: "P", label: "Pretty JSON", short: "Pretty", desc: "Reformat JSON with indentation", kinds: "json" },
+    ],
+    actions: [
+      { key: "H", label: "Clipboard History", desc: "Open the history window" },
+      { key: "O", label: "Channel Organizer", desc: "Move clips between channels" },
+      { key: "E", label: "Settings", desc: "Open settings" },
+    ],
+    rules: {
+      actions: ["channel", "ignore", "transform", "tag"],
+      kinds: [{ kind: "url", label: "URL" }, { kind: "email", label: "Email" }],
+    },
+    version: "12.5-mock",
+  };
+
   // ---- organizer ----
   let channels = [{ n: 0, name: "Default" }, { n: 1, name: "Work" }, { n: 2, name: "Snippets" }, { n: 3, name: "Addresses" }, { n: 4, name: "Pit" }];
   let clips = {};
@@ -47,7 +80,13 @@
   window.mockBridge = {
     handle(cmd, d) {
       switch (cmd) {
-        case "ready": reply("theme", { vars, dark: light ? 0 : 1 }); if (location.pathname.includes("organizer")) { chList(); clipList(0); } else histList({ partial: 1 }); break;
+        case "ready":
+          reply("theme", { vars, dark: light ? 0 : 1 });
+          if (location.pathname.includes("help")) { reply("i18n", i18n); reply("reference", reference); }
+          else if (location.pathname.includes("organizer")) { chList(); clipList(0); }
+          else histList({ partial: 1 });
+          break;
+        case "reference": reply("reference", reference); break;
         case "list": histList(d); break;
         case "get": { const r = hist.find((h) => h.id === +d); if (r) reply("preview", r); break; }
         case "delete": hist = hist.filter((h) => !d.includes(h.id)); reply("refreshed"); break;

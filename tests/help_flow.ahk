@@ -21,6 +21,11 @@ check("window opens", WinWait(title, , 8) != 0)
 WinActivate(title)
 Sleep 2500
 check("no error dialog", !WinExist("Clipjump.ahk ahk_class #32770"))
+ref := cj.runFunction("Help_ReferenceProbe()")
+check("reference has paste-mode rows", InStr(ref, "pasteMode="))
+check("reference lists a format letter", RegExMatch(ref, "formats=[1-9]"))
+check("reference lists action entries", RegExMatch(ref, "actions=[1-9]"))
+check("reference has the configured hotkeys", InStr(ref, "hotkeys="))
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))

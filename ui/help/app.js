@@ -47,7 +47,69 @@ function show(id) {
   renderList();
 }
 
-function fillReference(root) { /* Task 2 */ }
+function fillReference(root) {
+  if (!root || !state.reference) return;
+  for (const el of root.querySelectorAll("[data-ref]")) {
+    const rows = table(el.dataset.ref);
+    el.textContent = "";
+    if (!rows || !rows.body.length) {
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = state.i18n.HLP_notAvailable || "Not available in this build";
+      el.appendChild(p);
+      continue;
+    }
+    el.appendChild(buildTable(rows.head, rows.body));
+  }
+}
+
+function table(name) {
+  const r = state.reference || {};
+  const t = state.i18n;
+  const head = (a, b) => [t[a] || a, t[b] || b];
+  switch (name) {
+    case "pasteMode":
+      return { head: head("HLP_key", "HLP_action"), body: (r.pasteMode || []).map((x) => [kbd(x.key), x.caption]) };
+    case "actions":
+      return { head: head("HLP_key", "HLP_action"), body: (r.actions || []).map((x) => [kbd(x.key), x.label + (x.desc ? " — " + x.desc : "")]) };
+    case "formats":
+      return {
+        head: [t.HLP_key || "Key", t.HLP_format || "Format", t.HLP_appliesTo || "Applies to"],
+        body: (r.formats || []).map((x) => [kbd(x.key), x.label + (x.desc ? " — " + x.desc : ""), x.kinds || "every clip"]),
+      };
+    case "hotkeys":
+      return { head: head("HLP_shortcut", "HLP_description"), body: (r.hotkeys || []).map((x) => [kbd(x.keys), x.label]) };
+    case "ruleActions":
+      return { head: head("HLP_action", "HLP_description"), body: (r.rules && r.rules.actions || []).map((a) => [a, ""]) };
+    case "kinds":
+      return { head: head("HLP_key", "HLP_description"), body: (r.rules && r.rules.kinds || []).map((k) => [k.kind, k.label]) };
+    default:
+      return null;
+  }
+}
+
+function kbd(s) { const k = document.createElement("kbd"); k.textContent = s; return k; }
+
+function buildTable(head, body) {
+  const tbl = document.createElement("table");
+  const thead = document.createElement("thead");
+  const tr = document.createElement("tr");
+  for (const h of head) { const th = document.createElement("th"); th.textContent = h; tr.appendChild(th); }
+  thead.appendChild(tr);
+  tbl.appendChild(thead);
+  const tb = document.createElement("tbody");
+  for (const row of body) {
+    const r = document.createElement("tr");
+    for (const cell of row) {
+      const td = document.createElement("td");
+      if (cell instanceof Node) td.appendChild(cell); else td.textContent = cell;
+      r.appendChild(td);
+    }
+    tb.appendChild(r);
+  }
+  tbl.appendChild(tb);
+  return tbl;
+}
 
 bridge.on("i18n", (m) => {
   state.i18n = m || {};

@@ -92,12 +92,59 @@ help(*) {
 	HelpWin.Open()
 }
 
-; replaced in Task 2 by the generated reference
+; everything the reference topics show, read from the running app so it cannot drift from the code
 Help_Reference() {
-	return Map()
+	global Actionmode_K, chOrg_K, pluginManager_K, history_k, onetime_K, holdClip_K, Copyfilepath_K
+	global Copyfolderpath_K, Copyfiledata_K, pitswap_K, paste_k, pstIdentifier, pstKeyName
+	global windows_copy_k, windows_cut_k, VERSION, TXT
+	pasteRows := []
+	for it in Hud.HelpItems()
+		pasteRows.Push(Map("key", it.key, "caption", it.caption))
+	keys := [[TXT.SET_actmd, Actionmode_K], [TXT.SET_org, chOrg_K], [TXT.PLG__name, pluginManager_K]
+		, [TXT.HST__name, history_k], [TXT._ot, onetime_K], [TXT.SET_holdclip, holdClip_K]
+		, [TXT._pitswp, pitswap_K], [TXT._cfilep, Copyfilepath_K], [TXT._cfolderp, Copyfolderpath_K]
+		, [TXT._cfiled, Copyfiledata_K], [TXT.SET_winCopyShortcut, windows_copy_k]
+		, [TXT.SET_winCutShortcut, windows_cut_k]]
+	hot := []
+	for k in keys
+		if (k[2] != "")
+			hot.Push(Map("label", k[1], "keys", HParse_Rev(k[2])))
+	hot.Push(Map("label", TXT.SET_pasteMode, "keys", pstKeyName " + " StrUpper(paste_k = "" ? "V" : paste_k)))
+	fmts := []
+	for it in Formatting_Items("").items
+		fmts.Push(Map("key", it.key, "label", it.label, "short", it.HasProp("short") ? it.short : ""
+			, "desc", it.HasProp("desc") ? it.desc : "", "kinds", Help_FormatKinds(it.label)))
+	acts := []
+	for it in ActionRing_Items()
+		acts.Push(Map("key", it.key, "label", it.label, "desc", it.HasProp("desc") ? it.desc : ""))
+	labels := ClipType_Labels(), kinds := []
+	for k in ClipType.Kinds
+		kinds.Push(Map("kind", k, "label", labels.Has(k) ? labels[k] : k))
+	return Map("pasteMode", pasteRows, "hotkeys", hot, "formats", fmts, "actions", acts
+		, "rules", Map("actions", Rules.Actions, "kinds", kinds), "version", VERSION)
+}
+
+; the clip kinds a format applies to, as a display string ("" means every kind)
+Help_FormatKinds(name) {
+	global PLUGINS
+	for k, v in PLUGINS.pformat {
+		if (v["name"] != name)
+			continue
+		kinds := ""
+		try kinds := v["kinds"]
+		return kinds
+	}
+	return ""
 }
 
 ; test and customizer hooks: RunFunc misroutes dotted names to API.*
 Help_Open(topic := "") => HelpWin.Open(topic)
 Help_Close() => HelpWin.Close()
 Help_GeometrySpec() => HelpWin.Geometry()
+
+; test hook: the shape of the reference payload as one line
+Help_ReferenceProbe() {
+	r := Help_Reference()
+	return "pasteMode=" r["pasteMode"].Length " hotkeys=" r["hotkeys"].Length " formats=" r["formats"].Length
+		. " actions=" r["actions"].Length " rules=" r["rules"]["actions"].Length
+}
