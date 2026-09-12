@@ -224,6 +224,8 @@ bridge.on("probe", () => {
   const hits = rows.reduce((sum, x) => sum + (x.count || 0), 0);
   bridge.send("probe", "shown=" + rows.length + " hits=" + hits);
 });
+// test hook (see HelpWin_TopicProbe): reports the topic id currently on screen
+bridge.on("topic", () => bridge.send("topic", state.current));
 
 const qEl = document.getElementById("q");
 qEl.addEventListener("input", cj.debounce(() => applyFilter(qEl.value), 120));

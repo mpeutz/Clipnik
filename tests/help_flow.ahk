@@ -9,6 +9,7 @@ cj := Clipjump()
 title := "Clipjump Help ahk_class AutoHotkeyGUI"
 logFile := A_Temp "\Clipjump\webhost.log"
 fails := 0
+step(s) => FileAppend("     .. " s "`n", "*")
 check(name, cond) {
 	global fails
 	FileAppend((cond ? "PASS " : "FAIL ") name "`n", "*")
@@ -47,6 +48,32 @@ snapText := cj.runFunction("HelpWin_FilterProbe()")
 check("filter finds terms that live only in a generated table", RegExMatch(snapText, "shown=[1-9]"))
 cj.runFunction("Help_Filter()")
 Sleep 300
+
+step("Action Mode F1 opens help")
+cj.runFunction("Help_Close()")
+Sleep 600
+SendEvent("^+a")
+Sleep 800
+check("action ring open", cj.runFunction("Ring_IsOpen()") = 1)
+SendEvent("{F1}")
+check("F1 opened help", WinWait(title, , 8) != 0)
+Sleep 1500
+check("help deep-linked to the action reference", InStr(cj.runFunction("HelpWin_TopicProbe()"), "reference-actionmode"))
+
+step("geometry survives a close and reopen")
+WinMove(180, 160, 820, 560, title)
+Sleep 500
+WinGetPos(&sx, &sy, &sw, &sh, title)
+cj.runFunction("Help_Close()")
+Sleep 800
+g := cj.runFunction("Help_GeometrySpec()")
+check("geometry saved: " g, InStr(g, "w") && InStr(g, "h"))
+cj.runFunction("Help_Open()")
+check("reopens", WinWait(title, , 8) != 0)
+Sleep 500
+WinGetPos(&rx, &ry, &rw, &rh, title)
+check("restored size " rw "x" rh " matches saved " sw "x" sh, Abs(rw - sw) <= 4 && Abs(rh - sh) <= 4)
+
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))

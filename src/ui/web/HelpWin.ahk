@@ -74,6 +74,7 @@ HelpWin_OnMessage(cmd, data, host) {
 		case "open": BrowserRun(data)
 		case "close": HelpWin.Close()
 		case "probe": HelpWin.probe := data
+		case "topic": HelpWin.probe := data
 	}
 }
 
@@ -89,9 +90,10 @@ HelpWin_SaveGeometry() {
 	}
 }
 
-; the ACTIONS entry, so customizer scripts and ACTIONMODE can route to help by name
+; the ACTIONS entry, so customizer scripts and ACTIONMODE can route to help by name: Action Mode's F1
+; deep-links to the action-mode reference
 help(*) {
-	HelpWin.Open()
+	HelpWin.Open("reference-actionmode")
 }
 
 ; everything the reference topics show, read from the running app so it cannot drift from the code
@@ -159,6 +161,18 @@ HelpWin_FilterProbe() {
 	if !HelpWin.host
 		return ""
 	HelpWin.host.Post("probe")
+	t := A_TickCount
+	while (HelpWin.probe = "" && A_TickCount - t < 3000)
+		Sleep 50
+	return HelpWin.probe
+}
+
+; test hook: the topic id currently on screen, through the same probe channel as HelpWin_FilterProbe
+HelpWin_TopicProbe() {
+	HelpWin.probe := ""
+	if !HelpWin.host
+		return ""
+	HelpWin.host.Post("topic")
 	t := A_TickCount
 	while (HelpWin.probe = "" && A_TickCount - t < 3000)
 		Sleep 50

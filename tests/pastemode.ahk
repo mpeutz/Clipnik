@@ -98,6 +98,16 @@ SendEvent("{Ctrl up}")
 Sleep 1000
 check(InStr(ed.Value, stamp " beta"), "pasted clip 2 (beta): [" ed.Value "]")
 
+step("F1 in paste mode shows the card, not the help window")
+SendEvent("{Ctrl down}v")
+Sleep 400
+SendEvent("{F1}")
+Sleep 600
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI") != 0, "F1 shows the paste-mode card")
+check(!WinExist("Clipjump Help ahk_class AutoHotkeyGUI"), "F1 in paste mode does not open the help window")
+SendEvent("{Ctrl up}")
+Sleep 600
+
 step("digit jumps: 2 jumps two forward, - toggles direction")
 ed.Value := ""
 SendEvent("{Ctrl down}v")
