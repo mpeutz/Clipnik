@@ -1,0 +1,44 @@
+<section data-title="When something goes wrong" data-keywords="trouble problem fix broken not working ignored windows password manager keepass 1password exclusion images webview2 runtime reset defaults settings.ini">
+  <h1>When something goes wrong</h1>
+
+  <h2>Ctrl+V does nothing in one app</h2>
+  <p>That window is probably on the ignored list. Clipjump does not record copies made in an ignored window,
+    and paste mode passes <kbd>Ctrl</kbd>+<kbd>V</kbd> straight through to it, so you get the plain Windows
+    paste.</p>
+  <p>To see or change the list, open Settings, go to the Channels page and choose Manage next to Ignored
+    windows. Add Window's Class starts a picker: switch to the window you mean, and press <kbd>Space</kbd> when
+    the card shows the right class, or <kbd>Esc</kbd> to give up. Select a class and choose Delete Class to stop
+    ignoring it. Changes take effect at once.</p>
+  <p>If the window is not on the list, check that the paste-mode key on the Shortcuts page is still what you
+    expect, and that Clipjump has not been disabled from Action Mode (<kbd>D</kbd>).</p>
+
+  <h2>Clips from a password manager never appear</h2>
+  <p>That is deliberate. Password managers mark what they put on the clipboard as private, and Clipjump honors
+    that mark: the clip is not recorded and a short warning appears instead.</p>
+  <p>The switch is "Skip clips that apps mark as private (password managers)" on the General page of Settings.
+    Turning it off makes Clipjump record those clips like any other, which means your passwords end up in the
+    channel files and in history. Leave it on unless you have a reason not to.</p>
+
+  <h2>Images are not stored</h2>
+  <p>Channels always keep images: copy one and it is there in paste mode, with a thumbnail on the card.</p>
+  <p>The Clipboard History window is separate, and it only receives images while "Store images in history" is
+    on, on the Clipboard History page of Settings. Turning it on affects the images you copy afterwards;
+    earlier ones are not added to history later.</p>
+  <p>The same page has the days to keep items, so a low number quietly clears old entries, and the preview
+    quality used for stored images.</p>
+
+  <h2>The help or history window does not open</h2>
+  <p>Clipboard History, the Channel Organizer and this Help window are web pages hosted inside Clipjump, and
+    they need the Microsoft Edge WebView2 runtime. When it is missing, Clipjump says so once and offers a
+    download link; paste mode, Action Mode and everything else keep working without it.</p>
+  <p>If a window does open but a button in it seems to do nothing, the host logs what it tried to
+    <code>%TEMP%\Clipjump\webhost.log</code>.</p>
+
+  <h2>Starting over</h2>
+  <p>Settings live in <code>settings.ini</code> in the Clipjump folder; the Settings footer has a link that
+    opens that folder. Close Clipjump, delete the file and start it again to get the defaults back. Your clips
+    and history are in <code>cache</code> and are left alone.</p>
+  <p>To clear everything instead, open the About window and choose Reset. It deletes the cache,
+    <code>settings.ini</code> and <code>ClipjumpCustom.ini</code>, offers to remove the startup shortcut, and
+    then closes Clipjump.</p>
+</section>

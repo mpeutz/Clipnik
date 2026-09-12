@@ -27,6 +27,8 @@ check("reference lists a format letter", RegExMatch(ref, "formats=[1-9]"))
 check("reference lists action entries", RegExMatch(ref, "actions=[1-9]"))
 check("reference has the configured hotkeys", RegExMatch(ref, "hotkeys=[1-9]"))
 check("reference lists rule actions", RegExMatch(ref, "rules=[1-9]"))
+topics := cj.runFunction("Help_TopicCount()")
+check("every topic fragment is present", Integer(topics) = 11)
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))

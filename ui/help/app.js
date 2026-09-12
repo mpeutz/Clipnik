@@ -50,6 +50,7 @@ function show(id) {
 function fillReference(root) {
   if (!root || !state.reference) return;
   for (const el of root.querySelectorAll("[data-ref]")) {
+    if (el.dataset.ref === "version") { el.textContent = state.reference.version || ""; continue; }
     const rows = table(el.dataset.ref);
     el.textContent = "";
     if (!rows || !rows.body.length) {
@@ -110,6 +111,14 @@ function buildTable(head, body) {
   tbl.appendChild(tb);
   return tbl;
 }
+
+// links in a topic are external: hand them to the host's browser instead of navigating the page away
+document.getElementById("doc").addEventListener("click", (e) => {
+  const a = e.target.closest("a[href]");
+  if (!a || !/^https?:/i.test(a.getAttribute("href"))) return;
+  e.preventDefault();
+  bridge.send("open", a.href);
+});
 
 bridge.on("i18n", (m) => {
   state.i18n = m || {};

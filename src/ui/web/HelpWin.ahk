@@ -142,6 +142,14 @@ Help_Open(topic := "") => HelpWin.Open(topic)
 Help_Close() => HelpWin.Close()
 Help_GeometrySpec() => HelpWin.Geometry()
 
+; test hook: how many topic fragments ship in ui\help\topics
+Help_TopicCount() {
+	n := 0
+	loop files A_WorkingDir "\ui\help\topics\*.html"
+		n++
+	return n
+}
+
 ; test hook: the shape of the reference payload as one line
 Help_ReferenceProbe() {
 	r := Help_Reference()
