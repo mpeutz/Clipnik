@@ -197,7 +197,6 @@ TIP_delallprompt = WARNING
 ;10.6
 ;=======
 
-ABT_seehelp = Do you want to see the Clipjump help ?
 ABT_runadmin = Clipjump is not running as Administrator
              = This (may) cause improper functioning of the program.
              =
@@ -348,8 +347,6 @@ TRY_reloadcustom = Reload ClipjumpCustom.ini
 ;=======
 _language = Language
 _disabled = Disabled
-ABT_chmErr = There was a problem.
-   = Please check that Clipjump.chm exists in the root folder.
 
 ;=======
 ; 11.6
@@ -722,3 +719,16 @@ TRF_desc_base64 = Decode when the clip is valid base64
 CMF_title = Choose Format
 CMF_info = Info
 CMF_input = Input field
+; v15 help window
+HLP_title = Help
+HLP_search = Search help
+HLP_noMatch = No topic matches
+HLP_matches = matches
+HLP_topics = Topics
+HLP_key = Key
+HLP_action = Action
+HLP_format = Format
+HLP_appliesTo = Applies to
+HLP_shortcut = Shortcut
+HLP_description = Description
+HLP_notAvailable = Not available in this build

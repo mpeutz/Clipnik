@@ -143,10 +143,14 @@ class SettingsWin {
 		btnCancel.OnEvent("Click", (*) => SettingsWin.Cancel())
 		apply := Theme.Add(g, "Button", "x0 y" (fy + 12) " w76 h28", TXT.SET_apply)
 		apply.OnEvent("Click", (*) => SettingsWin.Apply())
+		btnHelp := Theme.Add(g, "Button", "x0 y" (fy + 12) " w76 h28", TXT.TRY_help)
+		btnHelp.OnEvent("Click", (*) => HelpWin.Open("reference-settings"))
+		SettingsWin.c["btnHelp"] := btnHelp
 		SettingsWin.c["btnApply"] := apply, SettingsWin.c["btnOk"] := ok
 		SettingsWin.anchored.Push([ok, "footer", {right: 3 * 76 + 2 * 8 + SettingsWin.Pad, dy: 12}])
 		SettingsWin.anchored.Push([btnCancel, "footer", {right: 2 * 76 + 8 + SettingsWin.Pad, dy: 12}])
 		SettingsWin.anchored.Push([apply, "footer", {right: 76 + SettingsWin.Pad, dy: 12}])
+		SettingsWin.anchored.Push([btnHelp, "footer", {x: SettingsWin.NavW + SettingsWin.Pad, dy: 12}])
 	}
 
 	; ---------- page building helpers ----------

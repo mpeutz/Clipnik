@@ -125,7 +125,7 @@ global CALLER := CALLER_STATUS := 1, IN_BACK := 0, MULTIPASTE := 0, PASTEMODE_AC
 global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED := 0, ctrlRef := ""		;specific purpose global vars
 global wasManualClipboard := false
 global LASTIMAGETICK := 0
-global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu(), Help_Tray := Menu()
+global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu()
 
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
@@ -155,12 +155,12 @@ global ACTIONS := CJMap(
 	, "nativeCopy", nativeCopy, "nativeCut", nativeCut, "Formatting", Formatting, "fixate", fixate, "TogglejumpClip", TogglejumpClip, "AddjumpClip", AddjumpClip
 	, "move_to_first", move_to_first, "navigate_to_first", navigate_to_first, "setClipTag", setClipTag, "multiPaste", multiPaste_run, "endPastemode", endPastemode
 	, "Ssuspnd", Ssuspnd, "pstMode_Help", pstMode_Help, "channel_up", channel_up, "channel_down", channel_down, "pitSwap", pitSwap, "holdClip", holdClip
-	, "actionmode", actionmode_run, "copyFile", copyFile, "copyFolder", copyFolder, "CopyFileData", CopyFileData, "hlp", hlp, "strtup", strtup
+	, "actionmode", actionmode_run, "copyFile", copyFile, "copyFolder", copyFolder, "CopyFileData", CopyFileData, "strtup", strtup
 	, "oneTime", oneTime, "incognito", incognito, "export", export, "editclip", editclip_pm, "windows_copy", windows_copy, "windows_cut", windows_cut
 	, "disable_clipjump", disable_clipjump, "run_searchpm", run_searchpm, "settings", settings, "history", history, "classTool", classTool
 	, "plugin_deleteFileFolder", tray_deleteFileFolder, "main", main, "exit", exitClipjump, "reload", reloadClipjump, "reloadCustom", reloadCustom
 	, "emptylabel", emptylabel, "keyblocker", keyblocker, "simplePaste", simplePaste, "searchpm", searchpm, "SPM_dispose", SPM_dispose
-	, "channelOrganizer", channelOrganizer, "pluginManagerGUI", pluginManagerGui, "openFaq", openFaq, "openShortcutsHelp", openShortcutsHelp
+	, "channelOrganizer", channelOrganizer, "pluginManagerGUI", pluginManagerGui, "help", help, "help_pastemode", help_pastemode
 	, "Exit_actmd", emptylabel)
 
 /*
@@ -180,11 +180,6 @@ ini_Version := IniRead(CONFIGURATION_FILE, "System", "Version", "")
 if !FileExist(CONFIGURATION_FILE)
 {
 	save_default(1)
-	if !InStr(VERSION, "b") 		; betas have b
-	{
-		if (MsgBox(TXT.ABT_seehelp, "Recommended", 52) = "Yes")
-			hlp()
-	}
 	if !A_IsAdmin
 		MsgBox(TXT.ABT_runadmin, "WARNING", 16)
 	try TrayTip(TXT.ABT_cjready, "Clipjump", 1)
@@ -1508,6 +1503,11 @@ actionmode_run(*) {
 		EmptyMem()
 }
 
+; Action Mode F2: the help window opened at the paste-mode reference
+help_pastemode(*) {
+	HelpWin.Open("reference-pastemode")
+}
+
 ; Action Mode entries for the ring: the everyday ones first, customizer-added ones last. D, Esc and the channel
 ; digits stay on the keyboard (digits and D come back through extraKeys).
 ActionRing_Items() {
@@ -1544,7 +1544,7 @@ ActionRing_Trigger() {
 init_actionmode() {
 	global
 	ACTIONMODE := CJMap("H", "history", "O", "channelOrganizer", "C", "copyfile", "X", "copyfolder", "F", "CopyFileData", "D", "disable_clipjump"
-		, "P", "pitswap", "T", "onetime", "E", "settings", "F1", "hlp", "Esc", "Exit_actmd", "M", "pluginManager_GUI()", "F2", "OpenShortcutsHelp", "L", "classTool"
+		, "P", "pitswap", "T", "onetime", "E", "settings", "F1", "help", "Esc", "Exit_actmd", "M", "pluginManager_GUI()", "F2", "help_pastemode", "L", "classTool"
 		, "U", "API.runPlugin(updateClipjumpClipboard.ahk)", "B", "holdclip"
 		, "H_caption", TXT.HST__name, "O_caption", TXT.SET_org, "C_caption", TXT._cfilep, "X_caption", TXT._cfolderp, "F_caption", TXT._cfiled
 		, "D_caption", TXT.ACT_disable " " PROGNAME, "P_caption", TXT._pitswp, "T_caption", TXT._ot, "E_caption", TXT.SET__name
@@ -1638,16 +1638,6 @@ CopyFileData(*) {
 }
 
 ;**********       Extra Functions and Labels            *******************************************************
-
-hlp(*) {
-	global
-	try {
-		if A_IsCompiled || H_Compiled
-			Run("Clipjump.chm")
-		else
-			Run(FileExist("Clipjump.chm") ? "Clipjump.chm" : "website\_site\index.html")
-	}
-}
 
 strtup(*) {
 	global
@@ -2000,6 +1990,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\lib\vendor\JSON.ahk
 #Include %A_ScriptDir%\src\ui\web\WebHost.ahk
 #Include %A_ScriptDir%\src\ui\web\HistoryWin.ahk
+#Include %A_ScriptDir%\src\ui\web\HelpWin.ahk
 #Include %A_ScriptDir%\lib\pluginManager.ahk
 #Include %A_ScriptDir%\src\ui\web\OrganizerWin.ahk
 #Include %A_ScriptDir%\lib\SQLiteDB\SQLiteDB.ahk

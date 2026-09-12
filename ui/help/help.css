@@ -1,0 +1,22 @@
+.help { display: grid; grid-template-columns: 240px minmax(0, 1fr); height: 100vh; }
+.help .side { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.help .side .search { padding: 10px; }
+.help .side input { width: 100%; box-sizing: border-box; }
+.help .list { overflow-y: auto; padding: 4px 6px 12px; }
+.help .list button { display: block; width: 100%; text-align: left; background: none; border: 0; color: var(--text);
+  font: inherit; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+.help .list button:hover { background: var(--surfaceAlt); }
+.help .list button.on { background: var(--accent); color: var(--accentText); }
+.help .list .count { float: right; color: var(--muted); font-size: 11px; }
+.help .list button.on .count { color: var(--accentText); }
+.help .doc { overflow-y: auto; padding: 22px 28px 60px; max-width: 760px; }
+.help .doc h1 { font-size: 20px; margin: 0 0 14px; }
+.help .doc h2 { font-size: 15px; margin: 22px 0 8px; }
+.help .doc p, .help .doc li { line-height: 1.55; }
+.help .doc kbd { background: var(--surfaceAlt); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 6px; font: 12px/1.6 Consolas, monospace; }
+.help .doc table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; }
+.help .doc th, .help .doc td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.help .doc th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.help .empty { color: var(--muted); padding: 20px 0; }
+::highlight(help-hit) { background: var(--accent); color: var(--accentText); }
