@@ -205,6 +205,8 @@ bridge.on("i18n", (m) => {
 });
 bridge.on("reference", (d) => { state.reference = d; fillReference(document.getElementById("doc")); });
 bridge.on("opened", (topic) => { if (topic) show(topic); });
+// test hook (see Help_Filter): applies a filter term sent from the host, same effect as typing it
+bridge.on("filter", (term) => { qEl.value = term || ""; applyFilter(term); });
 // test hook (see HelpWin_FilterProbe): reports how many topics the current filter lists and how many total hits
 bridge.on("probe", () => {
   const rows = filteredTopics();

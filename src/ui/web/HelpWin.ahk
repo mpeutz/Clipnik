@@ -144,6 +144,15 @@ Help_Open(topic := "") => HelpWin.Open(topic)
 Help_Close() => HelpWin.Close()
 Help_GeometrySpec() => HelpWin.Geometry()
 
+; test hook: applies a filter term to the page directly. Driving this by simulated typing into the WebView2
+; search box proved unreliable under the test harness (focus does not always land there in time), so the
+; flow test sends this message instead and reads the result back through HelpWin_FilterProbe.
+Help_Filter(term := "") {
+	if !HelpWin.host
+		return
+	HelpWin.host.Post("filter", term)
+}
+
 ; test hook: "shown=<topics listed> hits=<total matches>" for the current filter
 HelpWin_FilterProbe() {
 	HelpWin.probe := ""

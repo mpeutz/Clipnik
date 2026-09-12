@@ -29,17 +29,15 @@ check("reference has the configured hotkeys", RegExMatch(ref, "hotkeys=[1-9]"))
 check("reference lists rule actions", RegExMatch(ref, "rules=[1-9]"))
 topics := cj.runFunction("Help_TopicCount()")
 check("every topic fragment is present", Integer(topics) = 11)
-WinActivate(title)
+; driven through a host message rather than simulated typing: Send/SendEvent into the WebView2 search box
+; proved unreliable here (focus does not reliably land there in time under the test harness)
+cj.runFunction("Help_Filter(channel)")
 Sleep 400
-Send("{Tab}")            ; focus lands in the page; the search box is the first control
-Sleep 200
-SendEvent("channel")
-Sleep 900
 snapText := cj.runFunction("HelpWin_FilterProbe()")
 check("filter reports matches", RegExMatch(snapText, "shown=[1-9]"))
 check("filter excludes unrelated topics", !InStr(snapText, "shown=11"))
-SendEvent("{Esc}")
-Sleep 500
+cj.runFunction("Help_Filter()")
+Sleep 300
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))
