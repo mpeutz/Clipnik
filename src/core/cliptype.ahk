@@ -147,39 +147,45 @@ class ClipType {
 		return depth = 0 && !inString && punct
 	}
 
-	; svg markup: an <svg> root with opening tag, optionally behind an xml declaration and/or DOCTYPE
-	; may end with </svg> closing tag or self-closing /> syntax, with optional trailing comments
+	; svg markup: an <svg> root with opening tag at a tag boundary, optionally behind an xml declaration
+	; and/or DOCTYPE (including with internal subset). May end with </svg> or self-closing />.
+	; Handles trailing comments and whitespace robustly by stripping from the end first.
 	static IsSvg(t) {
 		s := Trim(t, " `t`r`n")
 
-		; Must end with </svg> or self-closing />
-		; Allow trailing whitespace and comments after the closing
+		; Strip trailing comments and whitespace from the end.
+		; This avoids problems where markers like </svg> or /> appear inside trailing comments.
+		loop {
+			origLen := StrLen(s)
+			; Strip trailing whitespace and comments: optional whitespace followed by complete comment
+			if RegExMatch(s, "s)\s*<!--.*-->$") {
+				s := RegExReplace(s, "s)\s*<!--.*-->$", "")
+			} else {
+				s := RTrim(s)
+			}
+
+			if StrLen(s) = origLen
+				break
+		}
+
+		; After stripping, the string must end with </svg> or />
+		sLen := StrLen(s)
 		endsCorrectly := false
-
-		; Check for closing tag </svg>
-		if InStr(s, "</svg>") {
-			closePos := InStr(s, "</svg>", , -1)
-			afterClose := SubStr(s, closePos + 6)
-			if RegExMatch(afterClose, "s)^\s*(?:<!--.*?-->\s*)*$")
-				endsCorrectly := true
-		}
-
-		; Check for self-closing root <svg ... />
-		if !endsCorrectly && InStr(s, "<svg") && InStr(s, "/>") {
-			closePos := InStr(s, "/>", , -1)
-			afterClose := SubStr(s, closePos + 2)
-			if RegExMatch(afterClose, "s)^\s*(?:<!--.*?-->\s*)*$")
-				endsCorrectly := true
-		}
+		if sLen >= 6 && SubStr(s, sLen - 5, 6) = "</svg>"
+			endsCorrectly := true
+		else if sLen >= 2 && SubStr(s, sLen - 1, 2) = "/>"
+			endsCorrectly := true
 
 		if !endsCorrectly
 			return false
 
-		; Must start with <svg or <?xml followed by svg root
-		if (SubStr(s, 1, 4) = "<svg")
+		; Check the opening: must be <svg at a tag boundary (followed by whitespace, >, or /)
+		; This prevents matching <svgfoo ...> or similar malformed tags
+		if RegExMatch(s, "s)^<svg[\s>/]")
 			return true
 
-		if (SubStr(s, 1, 5) != "<?xml")
+		; Or start with <?xml declaration followed by svg root
+		if !RegExMatch(s, "s)^<\?xml")
 			return false
 
 		; Find end of XML declaration
@@ -187,9 +193,11 @@ class ClipType {
 		if !declEnd
 			return false
 
-		; After XML declaration, allow DOCTYPE and comments in any order before <svg
+		; After XML declaration, allow DOCTYPE (including with internal subset [...]) and comments
+		; before the <svg root element. DOCTYPE pattern: <!DOCTYPE\s+svg\b[^>\[]]*(?:\[[^\]]*\])?[^>]*>
+		; This handles DOCTYPE with optional internal subset in brackets.
 		afterDecl := SubStr(s, declEnd + 2)
-		return RegExMatch(afterDecl, "s)^\s*(?:(?:<!DOCTYPE[^>]*>|<!--.*?-->)\s*)*<svg\b") > 0
+		return RegExMatch(afterDecl, "s)^\s*(?:(?:<!DOCTYPE\s+svg\b[^>\[]]*(?:\[[^\]]*\])?[^>]*>|<!--.*?-->)\s*)*<svg[\s>/]") > 0
 	}
 
 	static IsNumber(t) => RegExMatch(t, "^[-+]?[$€£¥]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
