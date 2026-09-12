@@ -124,7 +124,7 @@ global CALLER_STATUS := 1, CLIPJUMP_STATUS := 1
 global CALLER := CALLER_STATUS := 1, IN_BACK := 0, MULTIPASTE := 0, PASTEMODE_ACT := 0
 global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED := 0, ctrlRef := ""		;specific purpose global vars
 global wasManualClipboard := false
-global LASTIMAGETICK := 0
+global LASTIMAGETICK := 0, IMGW := 0, IMGH := 0
 global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu()
 
 ;Global Ini declarations
@@ -299,6 +299,7 @@ if (isnewdb == 1) {
 }
 
 historyAddKindColumn()
+historyAddImageSizeColumns()
 SetTimer(historyBackfillTick, -4000)   ; classify old rows in small batches after startup
 
 /*
@@ -622,7 +623,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 	}
 	else if (CErrorlevel = 2)
 	{
-			LASTKIND := ""
+			LASTKIND := "image"
 			CURSAVE += 1, TEMPSAVE := CURSAVE, LASTCLIP := ""
 
 			clipSaver()
@@ -645,8 +646,9 @@ clipChange(CErrorlevel, clipboard_copy) {
 				Toast.Show(copyMessage, 900, "info", "copy")
 			thumbGenerator()
 
+			ClipType.Store(CN.NG, CURSAVE, "image")
 			if NOINCOGNITO && ini_IsImageStored && (CN.Name != "pit") {
-				addHistoryImage(THUMBS_dir "\" CURSAVE ".jpg", A_Now)
+				addHistoryImage(THUMBS_dir "\" CURSAVE ".jpg", A_Now, "image", IMGW, IMGH)
 			}
 
 			while (CURSAVE >= TOTALCLIPS)
@@ -1420,7 +1422,13 @@ thumbGenerator() {
 	global
 	Critical "On"
 	ClipWait(3, 1) 				;Dont need a Clipwait here , but just for special cases I put a wait of 3 secs
-	Gdip_CaptureClipboard(A_WorkingDir "\" THUMBS_dir "\" CURSAVE ".jpg", ini_Quality)
+	local w := 0, h := 0
+	Gdip_CaptureClipboard(A_WorkingDir "\" THUMBS_dir "\" CURSAVE ".jpg", ini_Quality, &w, &h)
+	IMGW := w, IMGH := h
+	if (w && h) {
+		AddClipPref(CN.NG, CURSAVE, "Dim", w "x" h)
+		Prefs2Ini()
+	}
 }
 
 Prefs2Ini() {
@@ -1436,7 +1444,7 @@ Prefs2Ini() {
 
 ClipPref_makeKeys(Ch, Cl) {
 	global CPS
-	static l := ["fixed", "Tags", "Kind"]
+	static l := ["fixed", "Tags", "Kind", "Dim"]
 	if !IsObject(CPS[Ch])
 		CPS[Ch] := CJMap()
 	if !IsObject(CPS[Ch][Cl])
@@ -1451,6 +1459,10 @@ AddClipPref(Ch, Cl, Pr, val) {
 	ClipPref_makeKeys(Ch, Cl)
 	CPS[Ch][Cl][Pr] := val
 }
+
+; test hooks: RunFunc misroutes dotted names to API.*
+ClipType_KindOf(ch, clip) => ClipType.Of(ch, clip)
+Image_DimOf(ch, clip) => clipPref(ch, clip, "Dim")
 
 ;~ ;**************** GUI Functions ***************************************************************************
 

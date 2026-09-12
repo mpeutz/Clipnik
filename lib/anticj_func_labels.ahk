@@ -562,11 +562,15 @@ Gdip_SetImagetoClipboard(pImage) {
 ;Gdip_CaptureClipboard()
 ;	Captures Clipboard to file
 
-Gdip_CaptureClipboard(file, quality) {
+Gdip_CaptureClipboard(file, quality, &width := 0, &height := 0) {
 	PToken := Gdip_Startup()
 	pBitmap := Gdip_CreateBitmapFromClipboard()
-	Gdip_SaveBitmapToFile(pBitmap, file, quality)
-	Gdip_DisposeImage(pBitmap)
+	width := 0, height := 0
+	if (pBitmap > 0) {
+		width := Gdip_GetImageWidth(pBitmap), height := Gdip_GetImageHeight(pBitmap)
+		Gdip_SaveBitmapToFile(pBitmap, file, quality)
+		Gdip_DisposeImage(pBitmap)
+	}
 	Gdip_Shutdown(PToken)
 }
 

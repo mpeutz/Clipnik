@@ -48,7 +48,10 @@ DB.Exec('insert into history (data, type, time, size) values ("plain words here"
 DB.Exec('insert into history (data, type, time, size, fileid) values ("[IMAGE]", 1, "2026-09-10 10:02:00", 100, "cache\\history\\x.jpg")')
 
 historyAddKindColumn()
+historyAddImageSizeColumns()
 check(DB.GetTable("pragma table_info(history)", &ti) && InStr(ti2str(ti), "kind"), "migration adds the kind column")
+DB.GetTable("pragma table_info(history)", &ti), cols := ti2str(ti)
+check(InStr(cols, "width") && InStr(cols, "height"), "migration adds the width and height columns")
 ti2str(tb) {
     s := ""
     loop tb.RowCount {
@@ -58,6 +61,7 @@ ti2str(tb) {
     return s
 }
 historyAddKindColumn()
+historyAddImageSizeColumns()
 check(true, "migration is idempotent (no error on second run)")
 
 addHistoryText("mike@example.com", A_Now, "email")
@@ -68,7 +72,7 @@ check(historyGet(5)["kind"] = "color", "insert detects the kind when none is giv
 
 check(historyEnsureKind(1) = "url", "lazy classification of an old row")
 check(historyGet(1)["kind"] = "url", "lazy classification is written back")
-check(historyEnsureKind(3) = "", "image rows are never classified")
+check(historyEnsureKind(3) = "image", "image rows classify as image")
 
 n := historyBackfillKinds(10)
 check(n = 1, "backfill classifies the remaining text row (" n ")")
@@ -81,7 +85,7 @@ check(r["matched"] = 1, "matched count honors the kind filter")
 r := historyQuery("", true, "time", false, 0, 50)
 check(r["rows"].Length = 5, "no filter returns all rows")
 kinds := historyKinds()
-check(kinds.Length = 4, "historyKinds lists the distinct kinds present (" kinds.Length ")")
+check(kinds.Length = 5, "historyKinds lists the distinct kinds present (" kinds.Length ")")
 
 ; rewriting a clip's text re-detects its kind (a url row that becomes plain text)
 historySetText(1, "plain words now")
