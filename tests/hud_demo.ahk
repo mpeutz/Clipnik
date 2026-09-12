@@ -94,8 +94,8 @@ for themeMode in ["dark", "light"] {
 	Gdip_DisposeImage(pBitmap), Gdip_Shutdown(pToken)
 	Toast.Hide("a"), Toast.Hide("b"), Toast.Hide("c")
 	Sleep 200
-	Toast.Show("Transferred to Clipjump {Default}", 0, "info", "k1", {label: "URL", swatch: "", action: ""})
-	Toast.Show("Transferred to Clipjump {Default}", 0, "info", "k2", {label: "COLOR", swatch: 0x1DBC55, action: ""})
+	Toast.Show("Copied to {Default}", 0, "info", "k1", {label: "URL", swatch: "", action: ""})
+	Toast.Show("Copied to {Default}", 0, "info", "k2", {label: "COLOR", swatch: 0x1DBC55, action: ""})
 	Sleep 500
 	pToken := Gdip_Startup()
 	MonitorGetWorkArea(MonitorGetPrimary(), &l, &t, &r, &b)

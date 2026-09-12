@@ -223,6 +223,9 @@ _author = Author
 _run = Run
 _properties = Properties
 PLG_properties = Properties (Alt+Enter)
+PLG_sb_builtin = Built-in format, no file to run, edit or delete
+PLG_sb_unknown = That entry could not be resolved
+PLG_everyKind = Every clip
 PLG__name = Plugin Manager
 PLG_fetchparam = parameter for the plugin
 PLG_delmsg = Are you sure you want to proceed with deleting the following plugin?
@@ -370,7 +373,7 @@ TIP_holdclip = Press Ctrl+V to paste
              = Press F2 to open clip in Common Formats GUI
              = Press Esc to exit
 _output = Output
-TIP_copied_2 = Transferred to %PROGNAME%
+TIP_copied_2 = Copied to
 TIP_empty2_2 = %PROGNAME% is empty
 
 ;====
