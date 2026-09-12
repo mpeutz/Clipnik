@@ -22,10 +22,11 @@ WinActivate(title)
 Sleep 2500
 check("no error dialog", !WinExist("Clipjump.ahk ahk_class #32770"))
 ref := cj.runFunction("Help_ReferenceProbe()")
-check("reference has paste-mode rows", InStr(ref, "pasteMode="))
+check("reference has paste-mode rows", RegExMatch(ref, "pasteMode=[1-9]"))
 check("reference lists a format letter", RegExMatch(ref, "formats=[1-9]"))
 check("reference lists action entries", RegExMatch(ref, "actions=[1-9]"))
-check("reference has the configured hotkeys", InStr(ref, "hotkeys="))
+check("reference has the configured hotkeys", RegExMatch(ref, "hotkeys=[1-9]"))
+check("reference lists rule actions", RegExMatch(ref, "rules=[1-9]"))
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))
