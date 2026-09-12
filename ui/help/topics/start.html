@@ -1,11 +1,14 @@
 <section data-title="Start here" data-keywords="basics channels paste mode stack">
   <h1>Start here</h1>
-  <p>Clipjump keeps everything you copy. Each copy goes on top of a stack, and paste mode walks back through
-    that stack instead of pasting only the newest clip.</p>
+  <p>Clipjump keeps everything you copy. Each copy goes on top of a stack, and paste mode walks down that
+    stack instead of pasting only the newest clip.</p>
   <h2>Paste mode</h2>
   <p>Hold <kbd>Ctrl</kbd> and press <kbd>V</kbd>. Keep holding <kbd>Ctrl</kbd>: each further press of
-    <kbd>V</kbd> steps one clip further back, and <kbd>C</kbd> steps forward again. The card near your pointer
-    shows which clip you are on. Release <kbd>Ctrl</kbd> to paste it.</p>
+    <kbd>V</kbd> moves forward one clip and <kbd>C</kbd> moves back one. The card near your pointer shows
+    which clip you are on. Release <kbd>Ctrl</kbd> to paste it.</p>
+  <p>Clipjump counts from the newest clip, so moving <em>forward</em>, or <em>ahead</em>, means going further
+    down the stack into what you copied earlier, and moving <em>back</em> means returning toward the newest.
+    The card and the key lists use those words throughout.</p>
   <h2>Channels</h2>
   <p>Clips live in channels, which are separate stacks. <kbd>Up</kbd> and <kbd>Down</kbd> in paste mode switch
     channels, and the Channel Organizer moves clips between them.</p>
@@ -14,7 +17,7 @@
   <p>Two things open a ring at your pointer: <kbd>Z</kbd> in paste mode opens the format ring, and Action Mode
     opens the action ring. Up to eight wedges sit around a hub that names whichever wedge you point at. When
     there are more entries than that, the eighth wedge is More and turns the page.</p>
-  <svg viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="A ring of eight wedges around a hub, with the pointer flicked out into one wedge">
+  <svg viewBox="0 0 220 220" width="220" height="220" style="max-width:100%;height:auto" role="img" aria-label="A ring of eight wedges around a hub, with the pointer flicked out into one wedge">
     <g>
       <path d="M78.0 19.5 A96 96 0 0 1 142.0 19.5 L123.4 72.3 A40 40 0 0 0 96.6 72.3 Z" fill="currentColor" fill-opacity=".10" stroke="currentColor" stroke-opacity=".22"/>
       <path d="M151.3 23.4 A96 96 0 0 1 196.6 68.7 L146.1 92.8 A40 40 0 0 0 127.2 73.9 Z" fill="var(--accent)" fill-opacity=".28" stroke="var(--accent)" stroke-width="2"/>

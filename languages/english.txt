@@ -607,7 +607,7 @@ HST_copiedToast = Copied to the clipboard
 HST_editTitle = Edit Clip
 HST_editPrompt = Make your changes and then click OK
 WV2_missingTitle = The WebView2 runtime is not installed
-WV2_missingText = Clipboard History and the Channel Organizer need Microsoft Edge WebView2. Paste mode and everything else keep working without it.
+WV2_missingText = Clipboard History, the Channel Organizer and Help need Microsoft Edge WebView2. Paste mode and everything else keep working without it.
 WV2_download = Download the Evergreen runtime from Microsoft
 ; v13 Channel Organizer page
 ORG_newChannel = New channel
