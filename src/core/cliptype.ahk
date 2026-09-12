@@ -1,9 +1,9 @@
 ﻿; cliptype.ahk - what a text clip is. ClipType.Detect classifies text once at copy time; the kind is stored with
 ; the clip (history column "kind", channel clip pref "Kind") and read back everywhere a clip is shown.
 ;
-;   ClipType.Detect(text)   -> "url" | "email" | "path" | "color" | "json" | "number" | "phone" | "code" | "text"
+;   ClipType.Detect(text)   -> "url" | "email" | "path" | "color" | "json" | "svg" | "number" | "phone" | "code" | "text" | "image"
 ;   ClipType.Label(kind)    -> translated upper-case label (TXT.KIND_<kind>, falls back to the kind itself)
-;   ClipType.IsKind(s)      -> true for one of the nine kinds
+;   ClipType.IsKind(s)      -> true for one of the eleven kinds
 ;
 ; Detection is deliberately conservative: a clip is a URL only when the whole trimmed text is one URL, an email
 ; only when it is one address, and so on. Anything ambiguous is "text".
@@ -147,17 +147,49 @@ class ClipType {
 		return depth = 0 && !inString && punct
 	}
 
-	; svg markup: an <svg> root, optionally behind an xml declaration or comments
+	; svg markup: an <svg> root with opening tag, optionally behind an xml declaration and/or DOCTYPE
+	; may end with </svg> closing tag or self-closing /> syntax, with optional trailing comments
 	static IsSvg(t) {
 		s := Trim(t, " `t`r`n")
-		if (SubStr(s, -6) != "</svg>")
+
+		; Must end with </svg> or self-closing />
+		; Allow trailing whitespace and comments after the closing
+		endsCorrectly := false
+
+		; Check for closing tag </svg>
+		if InStr(s, "</svg>") {
+			closePos := InStr(s, "</svg>", , -1)
+			afterClose := SubStr(s, closePos + 6)
+			if RegExMatch(afterClose, "s)^\s*(?:<!--.*?-->\s*)*$")
+				endsCorrectly := true
+		}
+
+		; Check for self-closing root <svg ... />
+		if !endsCorrectly && InStr(s, "<svg") && InStr(s, "/>") {
+			closePos := InStr(s, "/>", , -1)
+			afterClose := SubStr(s, closePos + 2)
+			if RegExMatch(afterClose, "s)^\s*(?:<!--.*?-->\s*)*$")
+				endsCorrectly := true
+		}
+
+		if !endsCorrectly
 			return false
+
+		; Must start with <svg or <?xml followed by svg root
 		if (SubStr(s, 1, 4) = "<svg")
 			return true
+
 		if (SubStr(s, 1, 5) != "<?xml")
 			return false
-		p := InStr(s, "?>")
-		return p ? (RegExMatch(SubStr(s, p + 2), "s)^\s*(?:<!--.*?-->\s*)*<svg\b") > 0) : false
+
+		; Find end of XML declaration
+		declEnd := InStr(s, "?>")
+		if !declEnd
+			return false
+
+		; After XML declaration, allow DOCTYPE and comments in any order before <svg
+		afterDecl := SubStr(s, declEnd + 2)
+		return RegExMatch(afterDecl, "s)^\s*(?:(?:<!DOCTYPE[^>]*>|<!--.*?-->)\s*)*<svg\b") > 0
 	}
 
 	static IsNumber(t) => RegExMatch(t, "^[-+]?[$€£¥]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
