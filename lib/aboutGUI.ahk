@@ -42,20 +42,6 @@ reset(*) {
 	}
 }
 
-openFaq(*) {
-	global
-	try Run("hh.exe mk:@MSITStore:" A_WorkingDir "\Clipjump.chm::/docs/faq.html")
-	catch
-		MsgBox(TXT.ABT_chmErr, PROGNAME, 16)
-}
-
-openShortcutsHelp(*) {
-	global
-	try Run("hh.exe mk:@MSITStore:" A_WorkingDir "\Clipjump.chm::/docs/shortcuts.html#pstmd")
-	catch
-		MsgBox(TXT.ABT_chmErr, PROGNAME, 16)
-}
-
 reloadClipjump(*) {
 	OnExit(onExitHandler, 0)
 	routines_Exit()
@@ -71,7 +57,6 @@ trayMenu(destroy := 0) {
 		Options_Tray.Delete()
 		Tools_Tray.Delete()
 		Maintanence_Tray.Delete()
-		Help_Tray.Delete()
 	}
 
 	;Tray Icon
@@ -94,12 +79,8 @@ trayMenu(destroy := 0) {
 		Tools_Tray.Add(TXT.PLG__name "`t" Hparse_Rev(pluginManager_k), pluginManagerGui)
 		Tools_Tray.Add(TXT.SET__name, settings)
 	A_TrayMenu.Add(TXT.TRY_tools, Tools_Tray)
-		Help_Tray.Add(TXT.TRY_pstmdshorts, openShortcutsHelp)
-		Help_Tray.Add("FAQ", openFaq)
-		Help_Tray.Add()
-		Help_Tray.Add("Clipjump.chm", hlp)
 	A_TrayMenu.Add()
-	A_TrayMenu.Add(TXT.TRY_help, Help_Tray)
+	A_TrayMenu.Add(TXT.TRY_help, (*) => HelpWin.Open())
 	A_TrayMenu.Add()
 	A_TrayMenu.Add(TXT.TRY_reloadcustom, reloadCustom)
 	A_TrayMenu.Add(TXT.TRY_restart, reloadClipjump)

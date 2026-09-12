@@ -1,0 +1,24 @@
+<section data-title="Rules" data-keywords="reference rules automatic channel ignore transform tag regex process window class first match">
+  <h1>Rules</h1>
+  <p>A rule watches new clips and acts on the ones that match. Rules live on the Rules page in Settings. Each
+    rule matches on clip kind, a regular expression, the app it was copied from, or the window class, and then
+    performs one action.</p>
+  <p>Rules are tried when a text clip is copied, in the order they appear on the page, and the first rule whose
+    conditions all hold is the one that runs. Copied images are not matched.</p>
+  <h2>Actions</h2>
+  <p>A rule carries exactly one of these:</p>
+  <ul>
+    <li><strong>channel</strong> sends the clip to the channel you name. It is still recorded in the active
+      channel first and then moved, and the copy notification says where it went.</li>
+    <li><strong>ignore</strong> drops the clip: it is not stored in any channel and not written to history. A
+      short warning names the rule so you can see why nothing was recorded.</li>
+    <li><strong>transform</strong> applies one paste format to the clip as it is stored, so what you later
+      paste is the converted text. Pick the format from the same list as the default paste format.</li>
+    <li><strong>tag</strong> adds the words you give to the clip's tags, exactly as pressing <kbd>T</kbd> in
+      paste mode would.</li>
+  </ul>
+  <h2>Clip kinds</h2>
+  <p>A kind is what Clipjump decided the text is. A rule that lists kinds matches only those; a rule that lists
+    none ignores the kind entirely.</p>
+  <div data-ref="kinds"></div>
+</section>

@@ -1,0 +1,87 @@
+<section data-title="How do I" data-keywords="tasks guide recipes older clip fix pin plain text tracking utm multipaste search tag rule history image">
+  <h1>How do I</h1>
+
+  <h2>Paste something older</h2>
+  <p>Hold <kbd>Ctrl</kbd> and press <kbd>V</kbd>. Keep <kbd>Ctrl</kbd> down: each further <kbd>V</kbd> moves
+    forward one clip, into what you copied earlier, and <kbd>C</kbd> moves back toward the newest. The card
+    near your pointer shows where you are; release <kbd>Ctrl</kbd> to paste that clip.</p>
+  <p>To skip, press a digit <kbd>1</kbd> to <kbd>9</kbd> instead: it jumps that many clips ahead in one step.
+    <kbd>A</kbd> returns to the newest clip.</p>
+
+  <h2>Keep a clip at the top</h2>
+  <p>Step to the clip in paste mode and press <kbd>Space</kbd>. The card marks it FIXED, and it keeps its
+    position as new clips arrive instead of being pushed down. Press <kbd>Space</kbd> again to release it.</p>
+  <p><kbd>Q</kbd> moves the clip you are on to the first position. In the Channel Organizer the same setting is
+    the Fixed box in a clip's properties.</p>
+
+  <h2>Put a clip on the system clipboard without pasting</h2>
+  <p>Step to the clip in paste mode and press <kbd>S</kbd>. Paste mode closes and the clip stays on the Windows
+    clipboard, so a plain <kbd>Ctrl</kbd>+<kbd>V</kbd> pastes it anywhere, including apps Clipjump ignores.</p>
+  <p>In the Clipboard History window, select a row and press <kbd>Ctrl</kbd>+<kbd>C</kbd> for the same result.</p>
+
+  <h2>Paste as plain text or another format</h2>
+  <p>In paste mode press <kbd>Z</kbd>. The format ring opens at your pointer: flick out to a wedge and release
+    <kbd>Z</kbd>, click a wedge, or press its letter. Choose Trim Formatting to drop styling, or a text format
+    such as Upper case or Pretty JSON.</p>
+  <p>The format stays until you change it. The General page of Settings sets a default and can return every
+    paste mode to it. The Formats topic lists the letters this build assigns.</p>
+
+  <h2>Clean tracking parameters off a link</h2>
+  <p>Copy the link, start paste mode, press <kbd>Z</kbd> and pick Strip URL tracking. It drops
+    <code>utm_*</code>, <code>fbclid</code>, <code>gclid</code> and similar parameters and leaves the rest of
+    the address alone.</p>
+  <p>The same thing sits in the Actions menu of a URL clip in the Clipboard History and Channel Organizer
+    windows. A rule can apply it to every link you copy: see Make a rule fire automatically.</p>
+
+  <h2>Paste several clips in a row</h2>
+  <p>Hold <kbd>Ctrl</kbd>, press <kbd>V</kbd> until you reach the first clip, then press <kbd>Enter</kbd>
+    instead of releasing <kbd>Ctrl</kbd>. The clip is pasted and paste mode stays open, still showing that same
+    clip.</p>
+  <p>Press <kbd>V</kbd> or a digit to move to the next one, then <kbd>Enter</kbd> again. Release <kbd>Ctrl</kbd>
+    when you are done.</p>
+
+  <h2>Find a clip by typing</h2>
+  <p>In paste mode press <kbd>F</kbd> and start typing. Clipjump searches every channel, jumps to the first
+    match and shows a counter on the card; tags count as part of a clip's text. Unless you have turned on the
+    separate search window on the Advanced page, your typing never takes focus from the app you are pasting
+    into.</p>
+  <p><kbd>Up</kbd> and <kbd>Down</kbd> step through the matches, <kbd>Enter</kbd> pastes the one you are on,
+    and <kbd>Esc</kbd> cancels. The General page can open every <kbd>Ctrl</kbd>+<kbd>V</kbd> ready for
+    typing.</p>
+
+  <h2>Move clips between channels</h2>
+  <p>Open the Channel Organizer from Action Mode (<kbd>O</kbd>). Select clips, then <kbd>Alt</kbd>+<kbd>X</kbd>
+    to move them or <kbd>Alt</kbd>+<kbd>C</kbd> to copy them, and pick the target channel. Dragging them onto a
+    channel in the left list does the same; hold <kbd>Ctrl</kbd> as you drop to copy.</p>
+  <p>From paste mode: tap <kbd>X</kbd> to step the card through Cancel paste operation, Delete current, Move
+    current Clip, Copy current Clip and Delete all. Stop on Move or Copy, release <kbd>Ctrl</kbd>, and pick the
+    channel.</p>
+
+  <h2>Tag a clip</h2>
+  <p>In paste mode press <kbd>T</kbd>. Paste mode ends and a box opens with the clip's current tags; type
+    words separated by spaces and confirm.</p>
+  <p>Tags appear on the paste-mode card, are matched by paste-mode search, and can be edited in the Channel
+    Organizer's clip properties. A rule can add a tag to every clip that matches it.</p>
+
+  <h2>Make a rule fire automatically</h2>
+  <p>Open Settings, go to the Rules page and choose Add. Pick the conditions the clip must meet: one or more
+    clip kinds, a regular expression the text has to match, the process it was copied from, or the window
+    class. Every condition you fill in has to hold.</p>
+  <p>Then pick one action: send the clip to a channel, ignore it, apply a format to it, or add a tag. Rules run
+    top to bottom and the first match wins, so use Up and Down to order them. The check box in front of a rule
+    turns it off without deleting it.</p>
+
+  <h2>Get something back from history</h2>
+  <p>Open Clipboard History from Action Mode (<kbd>H</kbd>) and type in the search box; the Type list narrows
+    the rows to one kind of clip.</p>
+  <p>With a row selected: <kbd>Space</kbd> pastes it into the window you came from, <kbd>Ctrl</kbd>+<kbd>C</kbd>
+    puts it on the clipboard, <kbd>Ctrl</kbd>+<kbd>H</kbd> opens it in your editor,
+    <kbd>Ctrl</kbd>+<kbd>E</kbd> exports it to a file and <kbd>Delete</kbd> removes it.</p>
+
+  <h2>Work with images</h2>
+  <p>Copy an image and Clipjump stores it like any other clip: the paste-mode card shows a thumbnail instead
+    of text, and paste mode pastes it back. Images reach the Clipboard History window only while "Store images
+    in history" is on, on the Clipboard History page.</p>
+  <p><kbd>H</kbd> hands the image to the editor named on the Advanced page. Paste mode ends while the editor is
+    open, and saving there writes the change back to the clip.</p>
+</section>

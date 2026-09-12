@@ -44,7 +44,7 @@ class TrayCard {
 			{label: TXT.TRY_channels, sub: "channels"},
 			{label: TXT.TRY_tools, sub: "tools"},
 			{label: TXT.TRY_options, sub: "options"},
-			{label: TXT.TRY_help, sub: "help"},
+			{label: TXT.TRY_help, fn: (*) => HelpWin.Open()},
 			{sep: true},
 			{label: TXT.TRY_reloadcustom, fn: reloadCustom},
 			{label: TXT.TRY_restart, fn: reloadClipjump},
@@ -73,8 +73,6 @@ class TrayCard {
 				items.Push({label: StrReplace(TXT.TRY_incognito, "&"), check: !NOINCOGNITO, fn: incognito}
 					, {label: StrReplace(TXT.TRY_disable, "&") " " PROGNAME, check: !CLIPJUMP_STATUS, fn: disable_clipjump}
 					, {label: TXT.TRY_startup, check: FileExist(A_Startup "\Clipjump.lnk") ? true : false, fn: strtup})
-			case "help":
-				items.Push({label: TXT.TRY_pstmdshorts, fn: openShortcutsHelp}, {label: "FAQ", fn: openFaq}, {label: "Clipjump.chm", fn: hlp})
 		}
 		return {items: items}
 	}

@@ -1,0 +1,46 @@
+<section data-title="Plugins" data-keywords="reference plugin manager pformat external include ahk author tags header script">
+  <h1>Plugins</h1>
+  <p>A plugin is an AutoHotkey v2 file in the <code>plugins</code> folder next to Clipjump. Clipjump reads
+    every <code>.ahk</code> file there at startup and takes the plugin's details from the
+    <code>;@Plugin-</code> comment lines at the top of the file.</p>
+
+  <h2>Include plugins and external plugins</h2>
+  <p>An include plugin is loaded into Clipjump itself at startup, so it runs in the same process and can read
+    and change Clipjump's own state. Its file name has no dot in it and it defines a function called
+    <code>plugin_</code> plus that name.</p>
+  <p>An external plugin is named <code>external.something.ahk</code>. It is not included; Clipjump runs it as a
+    separate script when you ask for it, and it talks back over the public API. Use one when the code should
+    not be able to disturb the running app.</p>
+  <p>A paste format plugin is named <code>pformat.something.ahk</code> and defines
+    <code>plugin_pformat_something</code>. It is included like an include plugin, and it joins the format ring
+    alongside the built-in formats.</p>
+
+  <h2>The Plugin Manager</h2>
+  <p>The Plugin Manager lists every plugin it found, with its name, tags and author, and a box that filters the
+    list. Open it from Action Mode (<kbd>M</kbd>), or give it a shortcut on the Shortcuts page.</p>
+  <p>Three buttons act on the selected row. Run starts the plugin, and shows what it returned unless it is an
+    external plugin, which runs on its own. Edit opens the file in the text editor named on the Advanced page.
+    Properties shows the rest of its header.</p>
+  <p>Delete is on the right-click menu and on <kbd>Del</kbd>. It removes the file and its <code>.lib</code>
+    folder, and when you close the Plugin Manager afterwards Clipjump offers to restart, because included
+    plugins are only read at startup.</p>
+
+  <h2>The header of a paste format plugin</h2>
+  <p>Each line starts with <code>;@Plugin-</code> and a field name. Repeat a field and the pieces are joined
+    with a space, so a long description can be written over several lines.</p>
+  <ul>
+    <li><code>;@Plugin-Name</code> is the name shown in the Plugin Manager, in the format ring's hub and in the
+      Default Paste-Format list.</li>
+    <li><code>;@Plugin-Short</code> is the one word written inside the ring wedge. Without it the ring uses the
+      first word of the name.</li>
+    <li><code>;@Plugin-Key</code> is the letter you would like the format to answer to. The built-in formats
+      claim their letters first, and a plugin that asks for a letter already taken gets the first free letter
+      of its own name instead, so the letters you actually press are the ones in the Formats topic.</li>
+    <li><code>;@Plugin-Description</code> is the sentence shown under the name in the ring's hub.</li>
+    <li><code>;@Plugin-Author</code> and <code>;@Plugin-Tags</code> fill the Plugin Manager's columns; with
+      the name, they are what its filter box searches. <code>;@Plugin-Version</code> and anything else you add
+      show up under Properties.</li>
+    <li><code>;@Plugin-Previewable 1</code> lets the paste-mode card show the clip already converted, so you
+      see the result before you paste. Leave it at 0 when converting is slow or changes nothing on screen.</li>
+  </ul>
+</section>
