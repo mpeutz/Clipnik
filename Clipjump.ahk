@@ -160,7 +160,8 @@ global ACTIONS := CJMap(
 	, "disable_clipjump", disable_clipjump, "run_searchpm", run_searchpm, "settings", settings, "history", history, "classTool", classTool
 	, "plugin_deleteFileFolder", tray_deleteFileFolder, "main", main, "exit", exitClipjump, "reload", reloadClipjump, "reloadCustom", reloadCustom
 	, "emptylabel", emptylabel, "keyblocker", keyblocker, "simplePaste", simplePaste, "searchpm", searchpm, "SPM_dispose", SPM_dispose
-	, "channelOrganizer", channelOrganizer, "pluginManagerGUI", pluginManagerGui, "help", help, "help_pastemode", help_pastemode
+	, "channelOrganizer", channelOrganizer, "pluginManagerGUI", pluginManagerGui, "help", help
+	, "help_actionmode", help_actionmode, "help_pastemode", help_pastemode
 	, "Exit_actmd", emptylabel)
 
 /*
@@ -1503,6 +1504,11 @@ actionmode_run(*) {
 		EmptyMem()
 }
 
+; Action Mode F1: the help window opened at the action-mode reference
+help_actionmode(*) {
+	HelpWin.Open("reference-actionmode")
+}
+
 ; Action Mode F2: the help window opened at the paste-mode reference
 help_pastemode(*) {
 	HelpWin.Open("reference-pastemode")
@@ -1544,7 +1550,7 @@ ActionRing_Trigger() {
 init_actionmode() {
 	global
 	ACTIONMODE := CJMap("H", "history", "O", "channelOrganizer", "C", "copyfile", "X", "copyfolder", "F", "CopyFileData", "D", "disable_clipjump"
-		, "P", "pitswap", "T", "onetime", "E", "settings", "F1", "help", "Esc", "Exit_actmd", "M", "pluginManager_GUI()", "F2", "help_pastemode", "L", "classTool"
+		, "P", "pitswap", "T", "onetime", "E", "settings", "F1", "help_actionmode", "Esc", "Exit_actmd", "M", "pluginManager_GUI()", "F2", "help_pastemode", "L", "classTool"
 		, "U", "API.runPlugin(updateClipjumpClipboard.ahk)", "B", "holdclip"
 		, "H_caption", TXT.HST__name, "O_caption", TXT.SET_org, "C_caption", TXT._cfilep, "X_caption", TXT._cfolderp, "F_caption", TXT._cfiled
 		, "D_caption", TXT.ACT_disable " " PROGNAME, "P_caption", TXT._pitswp, "T_caption", TXT._ot, "E_caption", TXT.SET__name

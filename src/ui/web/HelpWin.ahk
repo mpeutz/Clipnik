@@ -90,10 +90,9 @@ HelpWin_SaveGeometry() {
 	}
 }
 
-; the ACTIONS entry, so customizer scripts and ACTIONMODE can route to help by name: Action Mode's F1
-; deep-links to the action-mode reference
+; the ACTIONS entry, so customizer scripts and ACTIONMODE can route to help by name
 help(*) {
-	HelpWin.Open("reference-actionmode")
+	HelpWin.Open()
 }
 
 ; everything the reference topics show, read from the running app so it cannot drift from the code
@@ -192,4 +191,30 @@ Help_ReferenceProbe() {
 	r := Help_Reference()
 	return "pasteMode=" r["pasteMode"].Length " hotkeys=" r["hotkeys"].Length " formats=" r["formats"].Length
 		. " actions=" r["actions"].Length " rules=" r["rules"]["actions"].Length
+}
+
+; test hook: proves the tray card's Help item is wired as a direct action (not a submenu) and that the
+; classic tray menu still carries a Help entry, without clicking either -- the tray card needs real mouse
+; input and the user may be at the desktop, so this reads the live structures instead
+Help_EntryPointsProbe() {
+	global TXT
+	card := 0
+	for it in TrayCard.MainSpec().items {
+		if (it.HasProp("label") && it.label = TXT.TRY_help) {
+			card := (it.HasProp("fn") && it.fn && !it.HasProp("sub")) ? 1 : 0
+			break
+		}
+	}
+	classic := 0
+	hMenu := A_TrayMenu.Handle
+	n := DllCall("GetMenuItemCount", "Ptr", hMenu, "Int")
+	loop n {
+		buf := Buffer(512, 0)
+		len := DllCall("GetMenuStringW", "Ptr", hMenu, "UInt", A_Index - 1, "Ptr", buf, "Int", 256, "UInt", 0x400, "Int")   ; MF_BYPOSITION
+		if (len && StrGet(buf, "UTF-16") = TXT.TRY_help) {
+			classic := 1
+			break
+		}
+	}
+	return "card=" card " classic=" classic
 }

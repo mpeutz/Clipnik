@@ -60,7 +60,43 @@ check("F1 opened help", WinWait(title, , 8) != 0)
 Sleep 1500
 check("help deep-linked to the action reference", InStr(cj.runFunction("HelpWin_TopicProbe()"), "reference-actionmode"))
 
+step("Action Mode F2 opens the paste-mode reference")
+cj.runFunction("Help_Close()")
+Sleep 600
+SendEvent("^+a")
+Sleep 800
+check("action ring open for F2", cj.runFunction("Ring_IsOpen()") = 1)
+SendEvent("{F2}")
+check("F2 opened help", WinWait(title, , 8) != 0)
+Sleep 1500
+check("help deep-linked to the paste-mode reference", InStr(cj.runFunction("HelpWin_TopicProbe()"), "reference-pastemode"))
+
+step("Settings' Help button opens the settings reference")
+cj.runFunction("Help_Close()")
+Sleep 600
+settingsTitle := "Clipjump Settings ahk_class AutoHotkeyGUI"
+cj.runLabel("settings")
+check("settings window opens", WinWait(settingsTitle, , 5) != 0)
+WinActivate(settingsTitle)
+Sleep 500
+ControlClick(cj["TXT.TRY_help"], settingsTitle)
+check("help opened from Settings", WinWait(title, , 8) != 0)
+Sleep 1500
+check("help deep-linked to the settings reference", InStr(cj.runFunction("HelpWin_TopicProbe()"), "reference-settings"))
+cj.runFunction("Help_Close()")
+Sleep 500
+ControlClick(cj["TXT.SET_cancel"], settingsTitle)
+check("settings window closed", WinWaitClose(settingsTitle, , 5) != 0)
+
+step("the tray card and the classic tray menu both still carry a Help entry")
+epr := cj.runFunction("Help_EntryPointsProbe()")
+check("tray card's Help item is a direct action: " epr, InStr(epr, "card=1"))
+check("classic tray menu has a Help entry: " epr, InStr(epr, "classic=1"))
+
 step("geometry survives a close and reopen")
+cj.runFunction("Help_Open()")
+check("help open for the geometry check", WinWait(title, , 8) != 0)
+Sleep 500
 WinMove(180, 160, 820, 560, title)
 Sleep 500
 WinGetPos(&sx, &sy, &sw, &sh, title)
