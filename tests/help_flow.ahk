@@ -38,6 +38,15 @@ check("filter reports matches", RegExMatch(snapText, "shown=[1-9]"))
 check("filter excludes unrelated topics", !InStr(snapText, "shown=11"))
 cj.runFunction("Help_Filter()")
 Sleep 300
+; "slugify" lives only inside the Formats topic's generated table (the Slugify format's label), never in any
+; topic's static prose or keywords, and Formats is never opened by this test: this only matches if generated
+; tables are filled for every topic up front, not only for whichever topic happens to be on screen
+cj.runFunction("Help_Filter(slugify)")
+Sleep 400
+snapText := cj.runFunction("HelpWin_FilterProbe()")
+check("filter finds terms that live only in a generated table", RegExMatch(snapText, "shown=[1-9]"))
+cj.runFunction("Help_Filter()")
+Sleep 300
 cj.runFunction("Help_Close()")
 Sleep 800
 check("window closed", !WinExist(title))

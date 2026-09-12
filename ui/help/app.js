@@ -203,8 +203,19 @@ bridge.on("i18n", (m) => {
   const q = document.getElementById("q");
   if (state.i18n.HLP_search) q.placeholder = state.i18n.HLP_search;
 });
-bridge.on("reference", (d) => { state.reference = d; fillReference(document.getElementById("doc")); });
-bridge.on("opened", (topic) => { if (topic) show(topic); });
+// every topic gets its generated tables filled here, not just the one on screen, so a term that lives only
+// in a table (a hotkey, an action label, a format description) is searchable before its topic is ever opened
+bridge.on("reference", (d) => {
+  state.reference = d;
+  for (const t of state.topics) { fillReference(t.node); t._text = undefined; }
+});
+// a deep link (Action Mode F1, Settings Help, the tray) must not land next to a stale filter or a no-match list
+bridge.on("opened", (topic) => {
+  if (!topic) return;
+  state.filter = "";
+  qEl.value = "";
+  show(topic);
+});
 // test hook (see Help_Filter): applies a filter term sent from the host, same effect as typing it
 bridge.on("filter", (term) => { qEl.value = term || ""; applyFilter(term); });
 // test hook (see HelpWin_FilterProbe): reports how many topics the current filter lists and how many total hits
