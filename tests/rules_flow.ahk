@@ -25,6 +25,23 @@ toastText() {
 			out .= ControlGetText(ctl, t) "|"
 	return out
 }
+; Clipjump coalesces clipboard notifications that arrive inside 200 ms (unchanged from v1), and AHK's own
+; "A_Clipboard :=" clears the clipboard before it writes, so a copy is occasionally swallowed whole. Wait for
+; the clip to actually land where the rule should put it, and copy again if it never did, rather than assuming
+; one write is always seen. A retry only ever happens when nothing landed, so the strength checks still hold.
+copyUntil(text, ch, needle, tries := 4) {
+	global cj
+	loop tries {
+		A_Clipboard := text
+		t := A_TickCount
+		while (A_TickCount - t < 2500) {
+			if InStr(cj.getClipAt(ch, 1), needle)
+				return true
+			Sleep 150
+		}
+	}
+	return false
+}
 old := IniRead(ini, "Rules", , "")
 stamp := A_TickCount
 mdName := cj["TXT.TRF_markdownLink"]
@@ -44,9 +61,9 @@ g.Add("Edit", "w300 h80")
 g.Show()
 WinWaitActive("cj-rules-target", , 5)
 before1 := Integer(cj.runFunction("API.getChStrength(1)")), before0 := Integer(cj.runFunction("API.getChStrength(0)"))
-A_Clipboard := "https://example.com/r" stamp
-Sleep 900
+landed := copyUntil("https://example.com/r" stamp, 1, "example.com/r" stamp)
 toast := toastText()
+check("url copy was recorded at all", landed)
 check("url routed to channel 1", Integer(cj.runFunction("API.getChStrength(1)")) = before1 + 1 && InStr(cj.getClipAt(1, 1), "example.com/r" stamp))
 check("active channel unchanged", cj["CN.NG"] = 0)
 check("channel 0 did not keep it", Integer(cj.runFunction("API.getChStrength(0)")) = before0)
@@ -57,12 +74,14 @@ if (cj["copyMessage"] != "")
 else
 	FileAppend("     .. copy messages are off, toast text not checked`n", "*")
 
-A_Clipboard := "r" stamp "@example.com"
-Sleep 900
+check("email copy was recorded at all", copyUntil("r" stamp "@example.com", 0, "@example.com"))
 check("email tagged", cj.runFunction("clipPref(0," cj["CURSAVE"] ",Tags)") = "contact")
 before0 := Integer(cj.runFunction("API.getChStrength(0)"))
 A_Clipboard := "secret-" stamp
-Sleep 900
+Sleep 1200
+; the toast proves the rule fired: without it, a copy Clipjump never saw would pass this check too
+igToast := toastText()
+check("ignore rule announced itself [" igToast "]", InStr(igToast, "secrets"))
 check("secret ignored", Integer(cj.runFunction("API.getChStrength(0)")) = before0)
 
 ; An image rule: copy-time rules never ran for images before this change. Route the image to channel 1 and
@@ -86,6 +105,8 @@ check("channel 0 did not keep the image", Integer(cj.runFunction("API.getChStren
 ; A transform rule rewrites the clip, so its kind must be detected again afterwards. This goes last: writing the
 ; new text back takes Rules_ApplyTransform up to a second with monitoring blocked, and a copy made in that window
 ; would be lost.
+; deliberately not copyUntil here: polling the app over WM_COPYDATA while Rules_ApplyTransform is rewriting
+; the clip interrupts the copy path mid-transform and the kind is left un-redetected. Wait it out instead.
 A_Clipboard := "https://example.com/mdflip" stamp
 Sleep 4000
 md := cj.getClipAt(0, 1)

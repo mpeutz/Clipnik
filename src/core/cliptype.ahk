@@ -289,7 +289,7 @@ class ClipType {
 		"color", [{id: "copyHex", label: "ACT_copyHex", short: "ACT_copyHexShort"}, {id: "copyRgb", label: "ACT_copyRgb", short: "ACT_copyRgbShort"}],
 		"json", [{id: "pretty", label: "ACT_pretty", short: "ACT_prettyShort"}, {id: "minify", label: "ACT_minify", short: ""}],
 		"number", [{id: "formatNumber", label: "ACT_formatNumber", short: "ACT_formatNumberShort"}],
-		"image", [{id: "openImage", label: "ACT_openImage", short: "ACT_openImageShort"}, {id: "imageDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}],
+		"image", [{id: "squoosh", label: "ACT_squoosh", short: "ACT_squooshShort"}, {id: "openImage", label: "ACT_openImage", short: "ACT_openImageShort"}, {id: "imageDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}],
 		"svg", [{id: "svgomg", label: "ACT_svgomg", short: "ACT_svgomgShort"}, {id: "openVector", label: "ACT_openVector", short: "ACT_openVectorShort"}, {id: "svgDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}])
 
 	static Actions(kind) {
@@ -334,6 +334,14 @@ class ClipType {
 				if ImageClip.PngFrom(ref, png)
 					ClipType.OpenWith(ini_defImgEditor, png)
 				else
+					Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
+			; Squoosh takes no file argument, so the image goes on the clipboard and the page is opened ready
+			; for a paste. Nothing is written when the image is already the live clipboard.
+			case "squoosh":
+				if ImageClip.ToClipboard(ref) {
+					wrote := (ref != "")
+					BrowserRun("https://squoosh.app")
+				} else
 					Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
 			case "imageDataUri":
 				uri := ImageClip.DataUri(ref)

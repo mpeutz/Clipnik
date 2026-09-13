@@ -122,8 +122,16 @@ class OrganizerWin {
 		; thumbnail has since gone missing this still reaches ImageClip as a real, non-empty path and
 		; fails honestly instead of quietly falling back to the live clipboard
 		isImg := (text = "")
+		ref := A_WorkingDir "\cache\thumbs" (ch ? ch : "") "\" real ".jpg"
+		; Squoosh is a compression tool, so hand it the original clipboard bytes while they are still on
+		; disk; the thumbnail beside them is an already re-encoded JPEG and a poor thing to compress
+		if (isImg && d["action"] = "squoosh") {
+			avc := A_WorkingDir "\cache\clips" (ch ? ch : "") "\" real ".avc"
+			if FileExist(avc)
+				ref := avc
+		}
 		wrote := isImg
-			? ClipType.Run(d["action"], "", A_WorkingDir "\cache\thumbs" (ch ? ch : "") "\" real ".jpg")
+			? ClipType.Run(d["action"], "", ref)
 			: ClipType.Run(d["action"], text)
 		if wrote
 			OrganizerWin.host.Post("toast", TXT.HST_copiedToast)

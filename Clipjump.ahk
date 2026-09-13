@@ -551,20 +551,11 @@ clipChange(CErrorlevel, clipboard_copy) {
 	{
 		if (clipboard_copy != LASTCLIP) || (clipboard_copy == "")        ;dont let go if lastclip = clipboard_copy = <empty>
 		{
-			; copy-time rules: evaluated before anything is stored. Skipped for Excel, where clipboard_copy is
-			; still the previous clip's text and every rule would be judged on the wrong content.
+			; the source app is read here, before the clip is saved, because saving can take long enough for
+			; the user to switch windows; the rule itself is judged below, on the clip that was captured
 			rule := "", ruleKind := "", ruleApp := "", ruleCls := ""
-			if !ISACTIVEEXCEL {
-				ruleKind := ClipType.Detect(clipboard_copy)
-				try ruleApp := WinGetProcessName("A")
-				try ruleCls := WinGetClass("A")
-				rule := Rules.Evaluate(Rules.List, ruleKind, clipboard_copy, ruleApp, ruleCls)
-				if IsObject(rule) && (rule["action"] = "ignore") {
-					LASTCLIP := clipboard_copy
-					Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
-					return
-				}
-			}
+			try ruleApp := WinGetProcessName("A")
+			try ruleCls := WinGetClass("A")
 			CURSAVE += 1
 
 			if ISACTIVEEXCEL
@@ -586,6 +577,23 @@ clipChange(CErrorlevel, clipboard_copy) {
 				LASTCLIP := CDS[CN.NG][CURSAVE]
 
 			LASTKIND := ClipType.Detect(LASTCLIP)
+
+			; copy-time rules, judged on the clip that was captured rather than on clipboard_copy: that
+			; snapshot can be the empty clipboard from the moment before the content landed, and a rule
+			; judged on nothing matches nothing, so routing, tagging and ignore would silently do nothing.
+			; Skipped for Excel, where clipsaver owns the text. Ignore has to undo the save, the same
+			; rollback the image arm does; nothing else is written yet, so there is nothing more to undo.
+			if !ISACTIVEEXCEL {
+				ruleKind := LASTKIND
+				rule := Rules.Evaluate(Rules.List, ruleKind, LASTCLIP, ruleApp, ruleCls)
+				if IsObject(rule) && (rule["action"] = "ignore") {
+					try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
+					CURSAVE -= 1, TEMPSAVE := CURSAVE
+					Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
+					return
+				}
+			}
+
 			ClipType.Store(CN.NG, CURSAVE, LASTKIND)
 
 			if IsObject(rule) {

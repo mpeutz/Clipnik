@@ -42,6 +42,32 @@ class ImageClip {
 		return ok
 	}
 
+	; puts the image on the clipboard so a web tool can take a paste. ref = "" means the image is already
+	; there, which is the lossless case; a channel clip's .avc holds the original clipboard bytes, so it is
+	; preferred over any re-encoded copy; anything else is read as an image file.
+	static ToClipboard(ref) {
+		if (ref = "")
+			return 1
+		if !FileExist(ref)
+			return 0
+		if (StrLower(SubStr(ref, -4)) = ".avc") {
+			try A_Clipboard := ClipFileRead(ref)
+			catch
+				return 0
+			return ClipWait(2) ? 1 : 0
+		}
+		t := Gdip_Startup()
+		bm := Gdip_CreateBitmapFromFile(ref)
+		ok := 0
+		if (bm > 0) {
+			Gdip_SetBitmapToClipboard(bm)
+			Gdip_DisposeImage(bm)
+			ok := 1
+		}
+		Gdip_Shutdown(t)
+		return ok
+	}
+
 	static DataUri(ref, maxBytes := 0) {
 		if !maxBytes
 			maxBytes := ImageClip.MaxUriBytes

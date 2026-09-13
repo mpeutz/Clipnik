@@ -137,10 +137,18 @@ check(ClipType.MarkdownLink("https://github.com/aviaryan/Clipjump") = "[github.c
 check(ClipType.Actions("url").Length = 2 && ClipType.Primary("url").id = "open", "url actions")
 check(ClipType.Actions("text").Length = 0 && ClipType.Primary("text") = "", "text has no actions")
 
-check(ClipType.Actions("image").Length = 2, "image has two actions")
+check(ClipType.Actions("image").Length = 3, "image has three actions")
 check(ClipType.Actions("svg").Length = 3, "svg has three actions")
-check(ClipType.Primary("image").id = "openImage", "the image primary action opens the editor")
+check(ClipType.Primary("image").id = "squoosh", "the image primary action is Squoosh")
 check(ClipType.Primary("svg").id = "svgomg", "the svg primary action is SVGOMG")
+ids := ""
+for a in ClipType.Actions("image")
+    ids .= a.id " "
+check(InStr(ids, "openImage") && InStr(ids, "imageDataUri"), "the editor and data URI actions survive: " ids)
+; both web tools take a paste, not a file argument, so the clip goes on the clipboard first; "" means the
+; live clipboard already holds it and nothing needs writing
+check(ImageClip.ToClipboard("") = 1, "an empty ref is the live clipboard and needs no write")
+check(ImageClip.ToClipboard("no-such-image-here.png") = 0, "a missing source fails rather than falling back")
 uri := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect width='4' height='4'/></svg>")
 check(InStr(uri, "data:image/svg+xml,") = 1 && InStr(uri, "%3C") && !InStr(uri, "#"), "svg data uri is url-encoded")
 uriHash := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect fill='#ff0000' width='4' height='4'/></svg>")
