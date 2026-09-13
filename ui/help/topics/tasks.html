@@ -79,20 +79,16 @@
     <kbd>Ctrl</kbd>+<kbd>E</kbd> exports it to a file and <kbd>Delete</kbd> removes it.</p>
 
   <h2>Work with images</h2>
-  <p>Copy an image and Clipjump stores it like any other clip, with the kind Image: the paste-mode card shows
-    a thumbnail instead of text, and paste mode pastes it back. The pixel size is recorded alongside it, and
-    shows on the card, in the Clipboard History preview, and in the Channel Organizer. Images reach the
-    Clipboard History window only while "Store images in history" is on, on the Clipboard History page.</p>
+  <p>Copy an image and Clipjump stores it like any other clip, with the kind Image and its pixel size
+    recorded; both show on the paste card, in the Clipboard History preview, and in the Channel Organizer.
+    Images reach the Clipboard History window only while "Store images in history" is on.</p>
   <p><kbd>H</kbd> hands the image to the editor named on the Advanced page. Paste mode ends while the editor is
     open, and saving there writes the change back to the clip.</p>
-  <p>Open in image editor and Copy as data URI sit on the Actions menu in the Clipboard History and Channel
-    Organizer windows. The chip on the copy notification runs Open in image editor right after you copy. A
-    data URI built right after copying is the lossless image; one built from a stored clip comes from its
-    saved JPEG copy instead, so it is lossy and has no transparency.</p>
-  <p>The image editor is the same setting <kbd>H</kbd> uses, on the Advanced page: it starts out set to Paint,
-    but you can point it at your own program, Affinity Photo for example. A rule can also send a copied image
-    to another channel, tag it, or ignore it before it is recorded; transform, the rule action that rewrites
-    text, never applies to images.</p>
+  <p>Open in image editor and Copy as data URI are also on the Actions menu in Clipboard History and the
+    Channel Organizer, and the copy notification's chip runs the first of the two. A data URI made right
+    after copying is lossless; one made from a stored clip comes from its saved JPEG copy instead, so it is
+    lossy and has no transparency. A rule can also route, tag or ignore a copied image; transform never
+    applies to images.</p>
 
   <h2>Work with SVG</h2>
   <p>Copy SVG markup as text -- not a rendered image -- and Clipjump recognizes it as its own kind, SVG,

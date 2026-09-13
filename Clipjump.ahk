@@ -643,7 +643,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 
 			BeepAt(ini_CopyBeep, beepFrequency)
 			if (copyMessage != "")
-				Toast.Show(copyMessage, 900, "info", "copy")
+				showCopyToast(copyMessage)
 			thumbGenerator()
 
 			ClipType.Store(CN.NG, CURSAVE, "image")
@@ -676,7 +676,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 				; the copy toast already fired above, before the rule was known; replace it in the same "copy"
 				; slot with the transfer message, the same way the text arm builds it
 				if (copyMessage != "")
-					Toast.Show(MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}", 900, "info", "copy")
+					showCopyToast(MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}")
 				API.manageClip(rule["arg"], CN.NG, 1, 0)   ; move the newest clip out of the active channel
 				TEMPSAVE := CURSAVE
 			}

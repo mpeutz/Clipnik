@@ -9,12 +9,13 @@
   const day = (n, hm) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) + " " + hm + ":00"; };
 
   // ---- history ----
-  const kindLabels = { url: "URL", email: "Email", image: "Image" };
+  const kindLabels = { url: "URL", email: "Email", image: "Image", svg: "SVG" };
   // kind -> [{id, label}]; the pages key their Actions button and context menu off a row's own kind,
   // the same table shape HistoryWin/OrganizerWin send via ClipType_ActionTable(true)
   const mockActionTable = {
     url: [{ id: "open", label: "Open in browser" }, { id: "stripTracking", label: "Copy without tracking" }],
     image: [{ id: "openImage", label: "Open in image editor" }, { id: "imageDataUri", label: "Copy as data URI" }],
+    svg: [{ id: "svgomg", label: "Send to SVGOMG" }, { id: "openVector", label: "Open in vector editor" }, { id: "svgDataUri", label: "Copy as data URI" }],
   };
   let hist = [
     { id: 1, data: "Brings the Latest Resources widget in line with the Figma mockup: the shared resource card is restyled, the section header is restructured with the carousel prev/next buttons moved into the header, and the grid now collapses to a single column below 720px.\n\nAlso fixes a regression where the fallback image was never shown.", type: 0, time: day(0, "14:22"), size: 312, kind: "text" },
@@ -37,7 +38,7 @@
     const col = d.sort === "clip" ? "data" : d.sort === "size" ? "size" : "time";
     rows.sort((a, b) => (a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0) * (d.asc ? 1 : -1));
     reply("list", { rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size, kind: r.kind })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
-    reply("kinds", { kinds: ["url", "email", "image"], labels: kindLabels, actions: mockActionTable });
+    reply("kinds", { kinds: ["url", "email", "image", "svg"], labels: kindLabels, actions: mockActionTable });
   }
 
   // ---- help ----
@@ -71,8 +72,9 @@
     rules: {
       kinds: [
         { kind: "url", label: "URL" }, { kind: "email", label: "Email" }, { kind: "path", label: "Path" },
-        { kind: "color", label: "Color" }, { kind: "json", label: "JSON" }, { kind: "number", label: "Number" },
-        { kind: "phone", label: "Phone" }, { kind: "code", label: "Code" }, { kind: "text", label: "Text" },
+        { kind: "color", label: "Color" }, { kind: "json", label: "JSON" }, { kind: "svg", label: "SVG" },
+        { kind: "number", label: "Number" }, { kind: "phone", label: "Phone" }, { kind: "code", label: "Code" },
+        { kind: "text", label: "Text" }, { kind: "image", label: "Image" },
       ],
     },
     version: "12.5-mock",
