@@ -27,7 +27,8 @@ class ClipType {
 		return StrUpper(kind)
 	}
 
-	; stored kind of a channel clip (prefs.ini Kind=), detecting and storing it on first use; "" for images
+	; stored kind of a channel clip (prefs.ini Kind=), detecting and storing it on first use for text;
+	; "image" for images, whose Kind is already written by clipChange, not detected here
 	static Of(ch, clip) {
 		global CDS
 		k := clipPref(ch, clip, "Kind")
@@ -336,9 +337,12 @@ class ClipType {
 					Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
 			case "imageDataUri":
 				uri := ImageClip.DataUri(ref)
-				if (uri = "")
-					Toast.Show(ClipType_T("ACT_imageTooBig"), 1800, "warn")
-				else
+				if (uri = "") {
+					if (ref != "" && !FileExist(ref))
+						Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
+					else
+						Toast.Show(ClipType_T("ACT_imageTooBig"), 1800, "warn")
+				} else
 					wrote := ClipType.ToClipboard(uri)
 			case "svgomg":
 				wrote := ClipType.ToClipboard(text)
@@ -346,7 +350,7 @@ class ClipType {
 			case "openVector":
 				f := ImageClip.Temp("svg")
 				ok := true
-				try FileAppend(text, f, "UTF-8")
+				try FileAppend(text, f, "UTF-8-RAW")
 				catch
 					ok := false
 				if ok
@@ -364,14 +368,17 @@ class ClipType {
 			Toast.Show(ClipType_T("ACT_noEditor"), 2200, "warn")
 			return
 		}
-		try Run('"' exe '" "' file '"')
+		try Run(exe ' "' file '"')
 	}
 
 	static ToClipboard(text) {
 		if (text = "")
 			return false
-		try A_Clipboard := text
-		return true
+		try {
+			A_Clipboard := text
+			return true
+		}
+		return false
 	}
 
 	static StripTracking(url) {

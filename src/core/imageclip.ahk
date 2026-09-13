@@ -74,7 +74,7 @@ class ImageClip {
 		s := StrReplace(s, "`r`n", " "), s := StrReplace(s, "`n", " "), s := StrReplace(s, "`t", " ")
 		s := StrReplace(s, "%", "%25"), s := StrReplace(s, "#", "%23")
 		s := StrReplace(s, "<", "%3C"), s := StrReplace(s, ">", "%3E")
-		s := StrReplace(s, '"', "'")
+		s := StrReplace(s, '"', "%22")
 		return "data:image/svg+xml," s
 	}
 }

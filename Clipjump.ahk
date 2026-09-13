@@ -641,16 +641,9 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 			LASTIMAGETICK := A_TickCount
 
-			BeepAt(ini_CopyBeep, beepFrequency)
-			if (copyMessage != "")
-				showCopyToast(copyMessage)
-			thumbGenerator()
-
-			ClipType.Store(CN.NG, CURSAVE, "image")
-
 			; rules for images: kind is always "image" with no text, so a regex condition never matches, and
-			; transform is skipped (it rewrites clip text). Evaluated after thumbGenerator() so an ignored image
-			; can be deleted -- .avc and thumbnail both -- and before the history insert so it leaves no row.
+			; transform is skipped (it rewrites clip text). Evaluated here, before anything else is written, so
+			; an ignored image never gets a beep or a toast, and there is no thumbnail, pref or history row to undo.
 			; No ISACTIVEEXCEL guard here: that guard protects the text arm's possibly-stale clipboard_copy text,
 			; and the image arm never reads clipboard_copy.
 			rule := "", ruleApp := "", ruleCls := ""
@@ -659,24 +652,31 @@ clipChange(CErrorlevel, clipboard_copy) {
 			rule := Rules.Evaluate(Rules.List, "image", "", ruleApp, ruleCls)
 			if IsObject(rule) && (rule["action"] = "ignore") {
 				try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
-				try FileDelete(THUMBS_dir "/" CURSAVE ".jpg")
-				AddClipPref(CN.NG, CURSAVE, "Kind", ""), AddClipPref(CN.NG, CURSAVE, "Dim", ""), Prefs2Ini()
 				CURSAVE -= 1, TEMPSAVE := CURSAVE
 				Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
 				return
 			}
+
+			BeepAt(ini_CopyBeep, beepFrequency)
+			if (copyMessage != "") {
+				msg := copyMessage
+				if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total)
+					msg := MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}"
+				showCopyToast(msg)
+			}
+
+			ClipType.Store(CN.NG, CURSAVE, "image")
 			if IsObject(rule) && (rule["action"] = "tag")
-				AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"]), Prefs2Ini()
+				AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"])
+			thumbGenerator()   ; also writes the Dim pref and flushes prefs.ini once, catching Kind and Tags too
 
 			if NOINCOGNITO && ini_IsImageStored && (CN.Name != "pit") {
 				addHistoryImage(THUMBS_dir "\" CURSAVE ".jpg", A_Now, "image", IMGW, IMGH)
 			}
 
+			; the move happens after the thumbnail exists and the history row is inserted; the copy toast above
+			; already named the target channel when this is a "channel" rule, so no second toast here
 			if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total) {
-				; the copy toast already fired above, before the rule was known; replace it in the same "copy"
-				; slot with the transfer message, the same way the text arm builds it
-				if (copyMessage != "")
-					showCopyToast(MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}")
 				API.manageClip(rule["arg"], CN.NG, 1, 0)   ; move the newest clip out of the active channel
 				TEMPSAVE := CURSAVE
 			}

@@ -145,6 +145,8 @@ uri := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect width
 check(InStr(uri, "data:image/svg+xml,") = 1 && InStr(uri, "%3C") && !InStr(uri, "#"), "svg data uri is url-encoded")
 uriHash := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect fill='#ff0000' width='4' height='4'/></svg>")
 check(InStr(uriHash, "%23ff0000") > 0, "svg data uri escapes # in a fill color")
+uriApos := ImageClip.SvgDataUri("<svg xmlns=`"http://www.w3.org/2000/svg`"><text font-family=`"'Helvetica Neue'`">A</text></svg>")
+check(InStr(uriApos, "%22") > 0 && InStr(uriApos, "'Helvetica Neue'") > 0, "svg data uri percent-encodes a double quote without corrupting an apostrophe inside it")
 
 ; PngFrom/DataUri: an empty ref means the clipboard; a non-empty ref means exactly that file and nothing
 ; else, so a ref that does not exist is a failure, never a silent clipboard fallback
