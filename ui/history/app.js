@@ -52,7 +52,7 @@
       const text = isImg ? T.HST_viewimage : oneLine(r.clip, 220);
       const html = hlWords(text, words);
       return `<div class="tr${state.sel.has(r.id) ? " sel" : ""}" data-id="${r.id}" tabindex="-1" draggable="false">` +
-        `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${isImg ? "" : cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
+        `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
     }).join("");
     document.querySelectorAll("#hdr span").forEach((s) => {
       s.classList.toggle("sorted", s.dataset.sort === state.sort);

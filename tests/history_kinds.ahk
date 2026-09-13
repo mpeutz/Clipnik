@@ -37,6 +37,21 @@ getFromTable(tbl, cols, condition) {
     return row
 }
 convertTimeSql(t) => FormatTime(t, "yyyy-MM-dd HH:mm:ss")
+; stand-ins for settings.ahk's ini helpers (not included here), same contract: Ini_write only writes
+; when the key is blank unless ifblank is falsy; nothing touches the real settings.ini.
+global SETTINGS := Map()
+Ini_read(section, key) {
+    global SETTINGS
+    k := section "|" key
+    return SETTINGS.Has(k) ? SETTINGS[k] : ""
+}
+Ini_write(section, key, value := "", ifblank := true) {
+    global SETTINGS
+    k := section "|" key
+    if (ifblank && SETTINGS.Has(k))
+        return
+    SETTINGS[k] := value
+}
 
 tmp := A_Temp "\cj_kinds.db"
 try FileDelete(tmp)
@@ -99,6 +114,21 @@ check(historyEnsureKinds(rows) = 1, "historyEnsureKinds classifies the one uncla
 check(rows[1]["kind"] = "url", "historyEnsureKinds fills the kind in the array")
 check(historyGet(rows[1]["id"])["kind"] = "url", "historyEnsureKinds writes the kind back")
 check(historyEnsureKinds(rows) = 0, "nothing to classify: no transaction")
+
+; SVG reclassification: rows classified before SVG detection existed keep "code"/"text" forever;
+; historyReclassifySvg walks them once and promotes only a genuine match.
+svgMarkup := '<svg xmlns="http://www.w3.org/2000/svg"><rect width="4" height="4"/></svg>'
+DB.Exec('insert into history (data, type, time, size, kind) values ("' escapeQuotesSql(svgMarkup) '", 0, "2026-09-12 09:00:00", 60, "code")')
+svgId := DB.LastInsertRowID()
+DB.Exec('insert into history (data, type, time, size, kind) values ("if (x) { return y }", 0, "2026-09-12 09:01:00", 20, "code")')
+codeId := DB.LastInsertRowID()
+n := historyReclassifySvg(10)
+check(n > 0, "svg reclassification examines the old code/text rows (" n ")")
+check(historyGet(svgId)["kind"] = "svg", "an old SVG row copied as code is reclassified as svg")
+check(historyGet(codeId)["kind"] = "code", "a plain code row is left untouched")
+check(Ini_read("System", "SvgReclassified") = "1", "completion is recorded")
+check(historyReclassifySvg(10) = 0, "svg reclassification is idempotent once complete")
+check(historyGet(codeId)["kind"] = "code", "re-running does not touch the plain code row")
 
 DB.CloseDB()
 try FileDelete(tmp)

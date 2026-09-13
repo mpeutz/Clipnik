@@ -1726,7 +1726,11 @@ copyCutShortcuts(status := 1) {
 }
 
 historyBackfillTick() {
-	if historyBackfillKinds(200)
+	; two independent bounded scans share one tick: unclassified rows, then old code/text rows SVG
+	; detection can now promote. Either one still finding work keeps the tick alive.
+	more := historyBackfillKinds(200)
+	more := historyReclassifySvg(200) || more
+	if more
 		SetTimer(historyBackfillTick, -250)
 }
 

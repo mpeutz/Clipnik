@@ -55,7 +55,7 @@
     rowsEl.innerHTML = rows.map((r) => {
       const isImg = +r.type === 1;
       const tags = (r.tags || "").split(/\s+/).filter(Boolean).map((t) => `<span class="badge">${esc(t)}</span>`).join(" ");
-      return `<div class="tr${state.sel.has(r.n) ? " sel" : ""}" data-n="${r.n}" draggable="true"><span class="dim">${r.n}</span><span class="mono${isImg ? " dim" : ""}">${esc(isImg ? T.HST_viewimage : oneLine(r.clip, 220))}</span><span>${isImg ? "" : cj.kindBadge(r.kind, state.labels)} ${tags}${+r.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""}</span></div>`;
+      return `<div class="tr${state.sel.has(r.n) ? " sel" : ""}" data-n="${r.n}" draggable="true"><span class="dim">${r.n}</span><span class="mono${isImg ? " dim" : ""}">${esc(isImg ? T.HST_viewimage : oneLine(r.clip, 220))}</span><span>${cj.kindBadge(r.kind, state.labels)} ${tags}${+r.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""}</span></div>`;
     }).join("");
     el("count").textContent = `${rows.length} ${T.ORG_countStatus}`;
     updateButtons();

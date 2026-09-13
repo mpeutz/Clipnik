@@ -102,6 +102,38 @@ historyBackfillKinds(batch := 200) {
 	return n
 }
 
+; one-time reclassification: old rows kept the "code"/"text" kind SVG detection couldn't yet produce.
+; Walks such rows by id, in bounded batches, and promotes a match to "svg"; never touches any other
+; kind. A [System] flag (written through Ini_write, once every matching row has been seen) makes it
+; idempotent so a later launch does not rescan the table; a cursor lets it resume mid-scan.
+historyReclassifySvg(batch := 200) {
+	global DB
+	if (Ini_read("System", "SvgReclassified") = "1")
+		return 0
+	cursor := Ini_read("System", "SvgReclassifyCursor")
+	cursor := (cursor = "") ? 0 : Integer(cursor)
+	if !DB.GetTable("select id, data from history where id > " cursor " and kind in ('code','text') order by id limit " batch, &tb)
+		return 0
+	if !tb.RowCount {
+		Ini_write("System", "SvgReclassified", "1", 0)
+		return 0
+	}
+	maxId := cursor
+	DB.Exec("begin")
+	loop tb.RowCount {
+		tb.Next(&r)
+		if (r[1] > maxId)
+			maxId := r[1]
+		if (StrLen(r[2]) * 2 <= ClipType.MaxBytes) && ClipType.IsSvg(r[2])
+			execSql('update history set kind="svg" where id=' r[1])
+	}
+	DB.Exec("commit")
+	Ini_write("System", "SvgReclassifyCursor", maxId, 0)
+	if (tb.RowCount < batch)
+		Ini_write("System", "SvgReclassified", "1", 0)
+	return tb.RowCount
+}
+
 ; distinct kinds present, detection order
 historyKinds() {
 	global DB
