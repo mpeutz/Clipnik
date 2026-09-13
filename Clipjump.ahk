@@ -576,6 +576,16 @@ clipChange(CErrorlevel, clipboard_copy) {
 			if !ISACTIVEEXCEL
 				LASTCLIP := CDS[CN.NG][CURSAVE]
 
+			; nothing was on the clipboard when it was captured: this is the clear half of somebody's
+			; clear-then-write landing on its own, not a copy, and recording it produces the empty clips
+			; that fill up the stack and history. A text notification with no text is never a real copy.
+			if (!ISACTIVEEXCEL && LASTCLIP == "")
+			{
+				try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
+				CURSAVE -= 1, TEMPSAVE := CURSAVE
+				return
+			}
+
 			LASTKIND := ClipType.Detect(LASTCLIP)
 
 			; copy-time rules, judged on the clip that was captured rather than on clipboard_copy: that

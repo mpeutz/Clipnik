@@ -43,6 +43,23 @@ copyUntil(text, ch, needle, tries := 4) {
 	return false
 }
 old := IniRead(ini, "Rules", , "")
+; A run killed before its restore block leaves these rules behind in the user's live settings, where they
+; go on routing every image and URL to channel 1 and dropping anything starting with "secret-". Never take
+; this test's own rules for the user's: drop them here so an interrupted run is cleaned up by the next one.
+mine := ["name=mdflip", "name=links", "name=secrets", "name=shots", "action=tag:contact"]
+kept := ""
+loop parse old, "`n", "`r" {
+	line := A_LoopField
+	if (line = "")
+		continue
+	isMine := false
+	for m in mine
+		if InStr(line, m)
+			isMine := true
+	if !isMine
+		kept .= (kept != "" ? "`n" : "") line
+}
+old := kept
 stamp := A_TickCount
 mdName := cj["TXT.TRF_markdownLink"]
 try IniDelete(ini, "Rules")
