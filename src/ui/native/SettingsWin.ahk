@@ -522,7 +522,7 @@ class SettingsWin {
 
 	static BuildAdvanced() {
 		global TXT, ini_is_duplicate_copied, cut_is_delete_windows, ini_winClipjump, windows_copy_k, windows_cut_k, ini_winForPasteMode
-		global ini_searchUsesWindow, ini_defEditor, ini_defImgEditor, ini_priority, ini_ram_flush
+		global ini_searchUsesWindow, ini_defEditor, ini_defImgEditor, ini_defVectorEditor, ini_priority, ini_ram_flush
 		SettingsWin.PageStart("advanced", TXT.SET_advancedPage)
 		SettingsWin.Check("is_duplicate_copied", TXT.SET_duplicateCopies, ini_is_duplicate_copied)
 		SettingsWin.EditRow("cut_equalto_delete", TXT.SET_cutIsDelete, cut_is_delete_windows, 220, TXT.SET_cutIsDeleteHint)
@@ -534,6 +534,7 @@ class SettingsWin {
 		SettingsWin.Section(TXT.SET_sec_editors)
 		SettingsWin.EditRow("default_editor", TXT.SET_textEditor, ini_defEditor)
 		SettingsWin.EditRow("default_image_editor", TXT.SET_imageEditor, ini_defImgEditor)
+		SettingsWin.EditRow("default_vector_editor", TXT.SET_vectorEditor, ini_defVectorEditor, 220, "", TXT.SET_T_vectorEditor)
 		SettingsWin.Section(TXT.SET_sec_system)
 		prios := ["L", "B", "N", "A", "H"]
 		sel := 3
@@ -641,6 +642,7 @@ class SettingsWin {
 		v["SearchUsesWindow"] := c["SearchUsesWindow"].Value
 		v["default_editor"] := c["default_editor"].Value
 		v["default_image_editor"] := c["default_image_editor"].Value
+		v["default_vector_editor"] := c["default_vector_editor"].Value
 		v["Priority"] := ["L", "B", "N", "A", "H"][c["Priority"].Value]
 		v["RAM_Flush"] := c["RAM_Flush"].Value
 		v["Rules"] := SettingsWin.rules

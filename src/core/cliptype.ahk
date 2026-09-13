@@ -287,7 +287,9 @@ class ClipType {
 		"path", [{id: "reveal", label: "ACT_reveal", short: "ACT_revealShort"}, {id: "openPath", label: "ACT_openPath", short: ""}, {id: "copyFolder", label: "ACT_copyFolder", short: ""}],
 		"color", [{id: "copyHex", label: "ACT_copyHex", short: "ACT_copyHexShort"}, {id: "copyRgb", label: "ACT_copyRgb", short: "ACT_copyRgbShort"}],
 		"json", [{id: "pretty", label: "ACT_pretty", short: "ACT_prettyShort"}, {id: "minify", label: "ACT_minify", short: ""}],
-		"number", [{id: "formatNumber", label: "ACT_formatNumber", short: "ACT_formatNumberShort"}])
+		"number", [{id: "formatNumber", label: "ACT_formatNumber", short: "ACT_formatNumberShort"}],
+		"image", [{id: "openImage", label: "ACT_openImage", short: "ACT_openImageShort"}, {id: "imageDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}],
+		"svg", [{id: "svgomg", label: "ACT_svgomg", short: "ACT_svgomgShort"}, {id: "openVector", label: "ACT_openVector", short: "ACT_openVectorShort"}, {id: "svgDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}])
 
 	static Actions(kind) {
 		global TXT
@@ -310,7 +312,8 @@ class ClipType {
 	}
 
 	; runs an action on the clip text; "copy" style actions place the result on the clipboard as a normal copy
-	static Run(id, text) {
+	static Run(id, text, ref := "") {
+		global ini_defImgEditor, ini_defVectorEditor
 		switch id {
 			case "open": BrowserRun(Trim(text))
 			case "stripTracking": ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
@@ -323,7 +326,36 @@ class ClipType {
 			case "pretty": ClipType.ToClipboard(Transforms.PrettyJson(text))
 			case "minify": ClipType.ToClipboard(Transforms.MinifyJson(text))
 			case "formatNumber": ClipType.ToClipboard(ClipType.FormatNumber(text))
+			case "openImage":
+				png := ImageClip.Temp("png")
+				if ImageClip.PngFrom(ref, png)
+					ClipType.OpenWith(ini_defImgEditor, png)
+				else
+					Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
+			case "imageDataUri":
+				uri := ImageClip.DataUri(ref)
+				if (uri = "")
+					Toast.Show(ClipType_T("ACT_imageTooBig"), 1800, "warn")
+				else
+					ClipType.ToClipboard(uri)
+			case "svgomg":
+				ClipType.ToClipboard(text)
+				BrowserRun("https://jakearchibald.github.io/svgomg/")
+			case "openVector":
+				f := ImageClip.Temp("svg")
+				try FileAppend(text, f, "UTF-8")
+				ClipType.OpenWith(ini_defVectorEditor, f)
+			case "svgDataUri": ClipType.ToClipboard(ImageClip.SvgDataUri(text))
 		}
+	}
+
+	; runs a configured editor on a file, or says the editor is not set
+	static OpenWith(exe, file) {
+		if (Trim(exe) = "") {
+			Toast.Show(ClipType_T("ACT_noEditor"), 2200, "warn")
+			return
+		}
+		try Run('"' exe '" "' file '"')
 	}
 
 	static ToClipboard(text) {
@@ -407,9 +439,9 @@ ClipType_T(key) {
 }
 
 ; runs an action outside the click handler's thread so a clipboard write is a normal copy
-ClipType_RunLater(id, text, *) {
-	SetTimer(ClipType_RunNow.Bind(id, text), -10)
+ClipType_RunLater(id, text, ref := "", *) {
+	SetTimer(ClipType_RunNow.Bind(id, text, ref), -10)
 }
-ClipType_RunNow(id, text) {
-	ClipType.Run(id, text)
+ClipType_RunNow(id, text, ref := "") {
+	ClipType.Run(id, text, ref)
 }

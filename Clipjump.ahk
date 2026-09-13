@@ -130,7 +130,7 @@ global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu()
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
 		, Copyfolderpath_K := "", Copyfilepath_K := "", Copyfiledata_K := "", onetime_K := "", paste_k := "", actionmode_k := "", ini_is_duplicate_copied := "", ini_formatting := ""
-		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
+		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_defVectorEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
 		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_respectExclusion := 1, ini_searchUsesWindow := 0
@@ -1708,7 +1708,7 @@ showCopyToast(text) {
 		act := ClipType.Primary(LASTKIND, LASTCLIP)
 		clip := LASTCLIP
 		extra := {label: ClipType.Label(LASTKIND), swatch: LASTKIND = "color" ? ClipType.ColorRgb(LASTCLIP) : ""
-			, action: act != "" ? {label: act.short, fn: ClipType_RunLater.Bind(act.id, clip)} : ""}
+			, action: act != "" ? {label: act.short, fn: ClipType_RunLater.Bind(act.id, clip, "")} : ""}
 	}
 	Toast.Show(text, extra != "" ? 2500 : 900, "info", "copy", extra)
 }
@@ -1997,6 +1997,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\TrayMenuWin.ahk
 #Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\src\core\cliptype.ahk
+#Include %A_ScriptDir%\src\core\imageclip.ahk
 #Include %A_ScriptDir%\src\core\transforms.ahk
 #Include %A_ScriptDir%\src\core\rules.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk

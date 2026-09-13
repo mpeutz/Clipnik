@@ -3,7 +3,9 @@
 #Requires AutoHotkey v2.0
 #Warn All, Off   ; cliptype.ahk's ClipType.Of/Store reference clipPref/AddClipPref/CDS, which only Clipjump.ahk defines
 #Include ..\lib\v2compat.ahk
+#Include ..\lib\vendor\Gdip_All.ahk
 #Include ..\src\core\cliptype.ahk
+#Include ..\src\core\imageclip.ahk
 
 global STORE := Map(), CJGUI := Map(), TXT := CJMap()
 fails := 0
@@ -134,6 +136,14 @@ check(ClipType.FormatNumber("-4500") = "-4,500", "FormatNumber negative")
 check(ClipType.MarkdownLink("https://github.com/aviaryan/Clipjump") = "[github.com](https://github.com/aviaryan/Clipjump)", "MarkdownLink uses the host")
 check(ClipType.Actions("url").Length = 2 && ClipType.Primary("url").id = "open", "url actions")
 check(ClipType.Actions("text").Length = 0 && ClipType.Primary("text") = "", "text has no actions")
+
+check(ClipType.Actions("image").Length = 2, "image has two actions")
+check(ClipType.Actions("svg").Length = 3, "svg has three actions")
+check(ClipType.Primary("image").id = "openImage", "the image primary action opens the editor")
+check(ClipType.Primary("svg").id = "svgomg", "the svg primary action is SVGOMG")
+uri := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect width='4' height='4'/></svg>")
+check(InStr(uri, "data:image/svg+xml,") = 1 && InStr(uri, "%3C") && !InStr(uri, "#"), "svg data uri is url-encoded")
+check(ImageClip.DataUri("no-such-file.png", 10) = "", "a missing source yields no data uri")
 
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails
