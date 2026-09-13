@@ -433,23 +433,20 @@ ClipType_Labels() {
 }
 
 ; Map kind -> Array of {id, label, short}, for every kind that has actions; lets a page build a row's context
-; menu synchronously from the row's own "kind" instead of waiting on an async preview/clip fetch
-ClipType_ActionTable() {
-	out := Map()
-	for kind, _ in ClipType.ActionTable
-		out[kind] := ClipType.Actions(kind)
-	return out
-}
-
-; same table without "short" (only the native Ring/toast chip reads it); the web pages key their Actions
+; menu synchronously from the row's own "kind" instead of waiting on an async preview/clip fetch.
+; forWeb drops "short" (only the native Ring/toast chip reads it): the web pages key their Actions
 ; button and context menu off a row's own kind via this table, so previews never need to repeat it per clip
-ClipType_ActionTableForWeb() {
+ClipType_ActionTable(forWeb := false) {
 	out := Map()
-	for kind, acts in ClipType.ActionTable {
-		stripped := []
-		for a in ClipType.Actions(kind)
-			stripped.Push({id: a.id, label: a.label})
-		out[kind] := stripped
+	for kind, _ in ClipType.ActionTable {
+		acts := ClipType.Actions(kind)
+		if forWeb {
+			stripped := []
+			for a in acts
+				stripped.Push({id: a.id, label: a.label})
+			acts := stripped
+		}
+		out[kind] := acts
 	}
 	return out
 }

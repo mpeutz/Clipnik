@@ -8,7 +8,7 @@
 ;               newClip channel, newChannel name, renameChannel {n, name}, deleteChannel {n, mode, to},
 ;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n},
 ;               action {channel, n, action}, close
-; Host -> page: i18n, actions {kind -> [{id, label, short}]}, channels {channels, active}, clips {channel, rows},
+; Host -> page: i18n, actions {kind -> [{id, label}]}, channels {channels, active}, clips {channel, rows},
 ;               clip {...}, toast, refresh
 
 class OrganizerWin {
@@ -104,24 +104,29 @@ class OrganizerWin {
 		; the page builds its Actions button from the "actions" table keyed by m.kind (same lookup the row
 		; context menu already uses), so the clip record itself only needs to carry the kind
 		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real))
-		if isImg
+		if isImg {
 			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
+			m["dim"] := clipPref(ch, real, "Dim")
+		}
 		OrganizerWin.host.Post("clip", m)
 	}
 
 	static Action(d) {
-		global CDS
+		global CDS, TXT
 		ch := Integer(d["channel"]), n := Integer(d["n"])
 		real := API.getChStrength(ch) - n + 1
 		if (real < 1)
 			return
 		text := CDS[ch][real]
-		thumb := "cache\thumbs" (ch ? ch : "") "\" real ".jpg"
-		isImg := (text = "") && FileExist(thumb)
-		if isImg
-			ClipType.Run(d["action"], "", A_WorkingDir "\" thumb)
-		else
-			ClipType.Run(d["action"], text)
+		; keyed on text alone (not FileExist too): the row's kind was fixed at list time, so if the
+		; thumbnail has since gone missing this still reaches ImageClip as a real, non-empty path and
+		; fails honestly instead of quietly falling back to the live clipboard
+		isImg := (text = "")
+		wrote := isImg
+			? ClipType.Run(d["action"], "", A_WorkingDir "\cache\thumbs" (ch ? ch : "") "\" real ".jpg")
+			: ClipType.Run(d["action"], text)
+		if wrote
+			OrganizerWin.host.Post("toast", TXT.HST_copiedToast)
 	}
 
 	static SetProps(d) {
@@ -290,7 +295,7 @@ OrganizerWin_OnMessage(cmd, data, host) {
 	switch cmd {
 		case "ready":
 			OrganizerWin.I18n()
-			OrganizerWin.host.Post("actions", ClipType_ActionTableForWeb())
+			OrganizerWin.host.Post("actions", ClipType_ActionTable(true))
 			OrganizerWin.SendChannels()
 			OrganizerWin.SendClips(CN.NG)
 		case "channels": OrganizerWin.SendChannels()

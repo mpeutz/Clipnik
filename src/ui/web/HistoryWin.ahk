@@ -70,7 +70,7 @@ class HistoryWin {
 	}
 
 	static SendKinds() {
-		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels(), "actions", ClipType_ActionTableForWeb()))
+		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels(), "actions", ClipType_ActionTable(true)))
 	}
 
 	; the page builds its Actions button from the "kinds" table keyed by rec.kind (same lookup the row
@@ -238,4 +238,12 @@ HistoryWin_SaveGeometry() {
 		s := HistoryWin.section
 		Ini_write(s, "x", x, 0), Ini_write(s, "y", y, 0), Ini_write(s, "w", w, 0), Ini_write(s, "h", hh, 0)
 	}
+}
+
+; test hook: clicks the preview's Actions button then one menu item inside the real page, so a test can
+; exercise the actual click -> bridge.send("action") -> HistoryWin.Action path instead of calling it directly
+History_ClickAction(itemId) {
+	h := HistoryWin.host
+	if (h && h.core)
+		h.core.ExecuteScriptAsync("document.getElementById('actions').click();var mi=document.querySelector('.mi[data-id=" itemId "]');if(mi)mi.click();")
 }

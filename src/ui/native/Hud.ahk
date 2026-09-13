@@ -410,9 +410,11 @@ class Hud {
 		}
 		label := dim != "" ? (tags != "" ? dim " · " tags : dim) : tags
 		if (label != "") {
-			gw := Round(16 * sc), tw := x + w - total - Round(12 * sc) - x - gw
+			; the glyph is a tag icon: skip it when there is no tag to show (dim-only footer)
+			gw := tags != "" ? Round(16 * sc) : 0, tw := x + w - total - Round(12 * sc) - x - gw
 			if (tw > 30 * sc) {
-				Hud.Place("tagGlyph", c["tagGlyph"].Text, x, y, gw, rowH)
+				if (tags != "")
+					Hud.Place("tagGlyph", c["tagGlyph"].Text, x, y, gw, rowH)
 				Hud.Place("tagText", label, x + gw + Round(2 * sc), y, tw, rowH)
 			}
 		}
