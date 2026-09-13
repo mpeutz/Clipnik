@@ -555,6 +555,7 @@ ACT_openVectorShort = Edit
 ACT_noEditor = Set the editor in Settings, Advanced, Editors
 ACT_imageTooBig = That image is too large for a data URI
 ACT_imageUnavailable = That image could not be read
+ACT_svgUnavailable = That SVG could not be saved for editing
 HST_actions = Actions
 TRF_upper = Upper case
 TRF_lower = Lower case

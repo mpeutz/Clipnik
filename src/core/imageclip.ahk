@@ -9,17 +9,30 @@ class ImageClip {
 	static MaxUriBytes := 2097152
 
 	static Temp(ext) {
-		DirCreate(A_Temp "\Clipjump")
+		dir := A_Temp "\Clipjump"
+		DirCreate(dir)
+		ImageClip.Sweep(dir)
 		loop
-			p := A_Temp "\Clipjump\clip-" A_TickCount "-" A_Index "." ext
+			p := dir "\clip-" A_TickCount "-" A_Index "." ext
 		until !FileExist(p)
 		return p
 	}
 
-	; writes the source as a PNG; 1 on success
+	; deletes clip-* temp files older than a day; called from Temp() so the folder does not grow forever
+	static Sweep(dir) {
+		cutoff := DateAdd(A_Now, -1, "Days")
+		loop files, dir "\clip-*", "F"
+			if (A_LoopFileTimeModified < cutoff)
+				try FileDelete(A_LoopFileFullPath)
+	}
+
+	; writes the source as a PNG; 1 on success. ref = "" means the clipboard; a non-empty ref means exactly
+	; that file, and nothing else -- a ref that does not exist is a failure, never a silent clipboard fallback
 	static PngFrom(ref, outPath) {
+		if (ref != "" && !FileExist(ref))
+			return 0
 		t := Gdip_Startup()
-		bm := (ref != "" && FileExist(ref)) ? Gdip_CreateBitmapFromFile(ref) : Gdip_CreateBitmapFromClipboard()
+		bm := (ref = "") ? Gdip_CreateBitmapFromClipboard() : Gdip_CreateBitmapFromFile(ref)
 		ok := 0
 		if (bm > 0) {
 			ok := (Gdip_SaveBitmapToFile(bm, outPath) = 0) ? 1 : 0
@@ -33,8 +46,10 @@ class ImageClip {
 		if !maxBytes
 			maxBytes := ImageClip.MaxUriBytes
 		png := ImageClip.Temp("png")
-		if !ImageClip.PngFrom(ref, png)
+		if !ImageClip.PngFrom(ref, png) {
+			try FileDelete(png)
 			return ""
+		}
 		big := FileGetSize(png) > maxBytes
 		b64 := big ? "" : ImageClip.Base64(png)
 		try FileDelete(png)

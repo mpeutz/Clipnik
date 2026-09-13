@@ -143,7 +143,16 @@ check(ClipType.Primary("image").id = "openImage", "the image primary action open
 check(ClipType.Primary("svg").id = "svgomg", "the svg primary action is SVGOMG")
 uri := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect width='4' height='4'/></svg>")
 check(InStr(uri, "data:image/svg+xml,") = 1 && InStr(uri, "%3C") && !InStr(uri, "#"), "svg data uri is url-encoded")
-check(ImageClip.DataUri("no-such-file.png", 10) = "", "a missing source yields no data uri")
+uriHash := ImageClip.SvgDataUri("<svg xmlns='http://www.w3.org/2000/svg'><rect fill='#ff0000' width='4' height='4'/></svg>")
+check(InStr(uriHash, "%23ff0000") > 0, "svg data uri escapes # in a fill color")
+
+; PngFrom/DataUri: an empty ref means the clipboard; a non-empty ref means exactly that file and nothing
+; else, so a ref that does not exist is a failure, never a silent clipboard fallback
+realImg := A_ScriptDir "\..\icons\icon.ico"
+check(ImageClip.DataUri("no-such-file.png") = "", "a missing source yields no data uri")
+check(ImageClip.DataUri(realImg) != "", "a real file at that ref produces a data uri")
+check(ImageClip.DataUri(realImg "-nope") = "", "a bogus path next to a real one still fails, not the clipboard")
+check(ImageClip.DataUri(realImg, 10) = "", "an oversized image is capped, not silently truncated")
 
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

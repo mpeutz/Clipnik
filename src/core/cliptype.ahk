@@ -343,8 +343,14 @@ class ClipType {
 				BrowserRun("https://jakearchibald.github.io/svgomg/")
 			case "openVector":
 				f := ImageClip.Temp("svg")
+				ok := true
 				try FileAppend(text, f, "UTF-8")
-				ClipType.OpenWith(ini_defVectorEditor, f)
+				catch
+					ok := false
+				if ok
+					ClipType.OpenWith(ini_defVectorEditor, f)
+				else
+					Toast.Show(ClipType_T("ACT_svgUnavailable"), 1600, "warn")
 			case "svgDataUri": ClipType.ToClipboard(ImageClip.SvgDataUri(text))
 		}
 	}
