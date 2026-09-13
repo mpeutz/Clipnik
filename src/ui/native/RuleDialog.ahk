@@ -66,7 +66,9 @@ class RuleDialog {
 		}
 		c["transform"] := Theme.Add(g, "DDL", "x" (x + 160) " y" y " w260 Choose" fsel, fmts)
 		c["tag"] := Theme.Add(g, "Edit", "x" (x + 160) " y" y " w260 h24 -E0x200 +Border", rule["action"] = "tag" ? rule["arg"] : "")
-		y += 36
+		y += 30
+		c["transformNote"] := g.Add("Text", "x" (x + 160) " y" y " w260 h18 +0x200 c" Theme.Hex("muted"), TXT.RUL_transformTextOnly)
+		y += 20
 		g.Add("Text", "x" x " y" y " w150 h24 +0x200", TXT.RUL_name)
 		c["name"] := Theme.Add(g, "Edit", "x" (x + 160) " y" y " w260 h24 -E0x200 +Border", rule["name"])
 		y += 40
@@ -107,6 +109,7 @@ RuleDialog_ActionChanged(*) {
 	c := RuleDialog.c
 	a := Rules.Actions[c["action"].Value]
 	c["channel"].Visible := (a = "channel"), c["transform"].Visible := (a = "transform"), c["tag"].Visible := (a = "tag")
+	c["transformNote"].Visible := (a = "transform")
 	c["argLabel"].Text := a = "channel" ? TXT.RUL_channel : a = "transform" ? TXT.RUL_transform : a = "tag" ? TXT.RUL_tag : ""
 }
 

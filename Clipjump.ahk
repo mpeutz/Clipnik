@@ -587,7 +587,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 						Rules_ApplyTransform(rule["arg"])
 						LASTKIND := ClipType.Detect(LASTCLIP)       ; the transform rewrote the clip
 						ClipType.Store(CN.NG, CURSAVE, LASTKIND)
-					case "tag": AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"])
+					case "tag": AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"]), Prefs2Ini()
 				}
 			}
 
@@ -647,8 +647,31 @@ clipChange(CErrorlevel, clipboard_copy) {
 			thumbGenerator()
 
 			ClipType.Store(CN.NG, CURSAVE, "image")
+
+			; rules for images: kind is always "image" with no text, so a regex condition never matches, and
+			; transform is skipped (it rewrites clip text). Evaluated after thumbGenerator() so an ignored image
+			; can be deleted -- .avc and thumbnail both -- and before the history insert so it leaves no row.
+			rule := "", ruleApp := "", ruleCls := ""
+			try ruleApp := WinGetProcessName("A")
+			try ruleCls := WinGetClass("A")
+			rule := Rules.Evaluate(Rules.List, "image", "", ruleApp, ruleCls)
+			if IsObject(rule) && (rule["action"] = "ignore") {
+				try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
+				try FileDelete(THUMBS_dir "/" CURSAVE ".jpg")
+				CURSAVE -= 1, TEMPSAVE := CURSAVE
+				Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
+				return
+			}
+			if IsObject(rule) && (rule["action"] = "tag")
+				AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"]), Prefs2Ini()
+
 			if NOINCOGNITO && ini_IsImageStored && (CN.Name != "pit") {
 				addHistoryImage(THUMBS_dir "\" CURSAVE ".jpg", A_Now, "image", IMGW, IMGH)
+			}
+
+			if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total) {
+				API.manageClip(rule["arg"], CN.NG, 1, 0)   ; move the newest clip out of the active channel
+				TEMPSAVE := CURSAVE
 			}
 
 			while (CURSAVE >= TOTALCLIPS)

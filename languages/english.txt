@@ -597,6 +597,7 @@ RUL_pick = Pick window...
 RUL_action = Action
 RUL_channel = Channel
 RUL_transform = Format
+RUL_transformTextOnly = Applies to text clips only; images are unaffected
 RUL_tag = Tag
 RUL_name = Name (optional)
 ABT_forkOf = Forked from the original Clipjump by
