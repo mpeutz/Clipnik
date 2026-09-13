@@ -198,12 +198,55 @@ addHistoryImage(imgpath, timestamp, kind := "image", w := 0, h := 0){
 
 deleteHistoryById(id){
 ; deletes a history element by its ID in the table
-	if (HISTORYOBJ[id] == 1){
-		imgpath := (data := getFromTable("history", "fileid", "id=" id)) ? data[1] : ""
-		try FileDelete(imgpath)
-	}
+	; the row's own type decides whether there is a file to remove: HISTORYOBJ only knows rows the history
+	; window has listed, so a prune at startup would otherwise leave every image file behind on disk
+	row := getFromTable("history", "type, fileid", "id=" id)
+	if (row && row[1] = 1 && row[2] != "")
+		try FileDelete(row[2])
 	execSql("delete from history where id=" id)
 	try HISTORYOBJ.Delete(id)
+}
+
+; the ids a query returns, as a plain array: the delete loop must not walk a live result set while the
+; rows under it are being removed
+historyIdList(q) {
+	global DB
+	out := []
+	if !DB.Query(q, &rs)
+		return out
+	row := ""
+	while (rs.Next(&row) > 0)
+		out.Push(row[1])
+	rs.Free()
+	return out
+}
+
+; applies the history retention limits and returns how many rows were deleted:
+;   days       overall age in days; 0 means no age limit
+;   imageDays  age for image rows only; 0 means images follow the overall limit
+;   maxRows    how many clips to keep; 0 means no count limit
+; The three sets are collected first and deleted as one transaction, so a row caught by more than one limit
+; is deleted once. Times are compared in local time because that is how convertTimeSql writes them.
+historyPrune(days, imageDays, maxRows) {
+	global DB
+	doomed := Map()
+	if (days > 0)
+		for id in historyIdList("select id from history where time < datetime('now', 'localtime', '-" days " days')")
+			doomed[id] := 1
+	if (imageDays > 0)
+		for id in historyIdList("select id from history where type = 1 and time < datetime('now', 'localtime', '-" imageDays " days')")
+			doomed[id] := 1
+	; everything past the newest maxRows, so the count limit needs no arithmetic against the age passes
+	if (maxRows > 0)
+		for id in historyIdList("select id from history order by time desc, id desc limit -1 offset " maxRows)
+			doomed[id] := 1
+	if !doomed.Count
+		return 0
+	DB.Exec("BEGIN TRANSACTION")
+	for id in doomed
+		deleteHistoryById(id)
+	DB.Exec("COMMIT TRANSACTION")
+	return doomed.Count
 }
 
 clearHistory() {

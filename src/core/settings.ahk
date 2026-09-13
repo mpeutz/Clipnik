@@ -16,6 +16,8 @@ load_Settings(all := false) {
 	ini_Version := IniRead(CONFIGURATION_FILE, "System", "Version", "ERROR")
 	ini_DaysToStore := IniRead(CONFIGURATION_FILE, "Clipboard_History", "Days_to_store", "ERROR")
 	ini_IsImageStored := IniRead(CONFIGURATION_FILE, "Clipboard_History", "Store_images", "ERROR")
+	ini_MaxHistory := IniRead(CONFIGURATION_FILE, "Clipboard_History", "Max_history_clips", "ERROR")
+	ini_ImageDaysToStore := IniRead(CONFIGURATION_FILE, "Clipboard_History", "Image_days_to_store", "ERROR")
 
 	Copyfilepath_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "Copyfilepath_K", "")
 	Copyfolderpath_K := IniRead(CONFIGURATION_FILE, "Shortcuts", "Copyfolderpath_K", "")
@@ -96,6 +98,8 @@ save_Settings(v) {
 	IniWrite(v["KeepSession"], CONFIGURATION_FILE, "Main", "Keep_Session")
 	IniWrite(v["DaysToStore"], CONFIGURATION_FILE, "Clipboard_History", "Days_To_Store")
 	IniWrite(v["IsImageStored"], CONFIGURATION_FILE, "Clipboard_History", "Store_Images")
+	IniWrite(v["MaxHistory"], CONFIGURATION_FILE, "Clipboard_History", "Max_history_clips")
+	IniWrite(v["ImageDaysToStore"], CONFIGURATION_FILE, "Clipboard_History", "Image_days_to_store")
 
 	IniWrite(v["Cfilep_K"], CONFIGURATION_FILE, "Shortcuts", "Copyfilepath_K")
 	IniWrite(v["Cfolderp_K"], CONFIGURATION_FILE, "Shortcuts", "Copyfolderpath_K")
@@ -218,6 +222,8 @@ save_Default(full := 1){
 
 	IniWrite(30, CONFIGURATION_FILE, "Clipboard_History", "Days_to_store")
 	IniWrite(0, CONFIGURATION_FILE, "Clipboard_History", "Store_Images")
+	IniWrite(1000, CONFIGURATION_FILE, "Clipboard_History", "Max_history_clips")
+	IniWrite(7, CONFIGURATION_FILE, "Clipboard_History", "Image_days_to_store")
 	}
 
 	IniWrite(VERSION, CONFIGURATION_FILE, "System", "Version")
@@ -347,6 +353,11 @@ validate_Settings()
 	; reqd for the chkbox to use Checked0 or Checked1
 	ini_IsImageStored := ini_IsImageStored = 0 ? 0 : 1
 	ini_DaysToStore := (IsNumber(ini_DaysToStore) && ini_DaysToStore < 0) ? 0 : ini_DaysToStore 	; v2 cannot compare "" with a number
+	; 0 is a real setting for both of these (no limit), so only a missing or negative value falls back
+	if !IsInteger(ini_MaxHistory) || (ini_MaxHistory < 0)
+		ini_MaxHistory := 1000
+	if !IsInteger(ini_ImageDaysToStore) || (ini_ImageDaysToStore < 0)
+		ini_ImageDaysToStore := 7
 	ini_PreserveClipPos := ini_PreserveClipPos ? 1 : 0
 	ini_startSearch := ini_startSearch ? 1 : 0
 	ini_revFormat2def := ini_revFormat2def ? 1 : 0

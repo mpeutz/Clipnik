@@ -129,6 +129,7 @@ global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu()
 
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
+global ini_MaxHistory := "", ini_ImageDaysToStore := ""
 		, Copyfolderpath_K := "", Copyfilepath_K := "", Copyfiledata_K := "", onetime_K := "", paste_k := "", actionmode_k := "", ini_is_duplicate_copied := "", ini_formatting := ""
 		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_defVectorEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
@@ -310,6 +311,7 @@ LAST WORDS
 
 fillHISTORYOBJ()
 historyCleanup() ;Clean History
+SetTimer(historyCleanup, 86400000)   ; and daily after that: a machine left running for weeks never restarts into it
 OnMessage(0x4a, Receive_WM_COPYDATA)  ; 0x4a is WM_COPYDATA
 ; Portable Startup
 if FileExist(A_Startup "/Clipjump.lnk")
@@ -1523,24 +1525,9 @@ Image_DimOf(ch, clip) => clipPref(ch, clip, "Dim")
 
 
 historyCleanup() {
-;Cleans history in bunch
-	global ini_DaysToStore, DB
-	if !ini_DaysToStore                    ;Dont delete old data
-		return
-
-	q := "select id from history where (strftime('%s', date('now', '-" ini_DaysToStore " days')) - strftime('%s', time)) > 0"
-	if (!DB.Query(q, &recs)) {
-		MsgBox("Error history cleanup `n " DB.ErrorMsg "`n" DB.ErrorCode "`n" q)
-		return
-	}
-
-	DB.Exec("BEGIN TRANSACTION")
-	while (recs.Next(&Row) > 0)
-	{
-		deleteHistoryById(Row[1])
-	}
-	recs.Free()
-	DB.Exec("COMMIT TRANSACTION")
+; applies the three history retention limits; the work itself lives in historyPrune so it can be tested
+	global ini_DaysToStore, ini_ImageDaysToStore, ini_MaxHistory
+	historyPrune(ini_DaysToStore, ini_ImageDaysToStore, ini_MaxHistory)
 }
 
 

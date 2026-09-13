@@ -344,10 +344,13 @@ class SettingsWin {
 
 	static BuildHistory() {
 		global TXT, ini_DaysToStore, ini_IsImageStored, ini_Quality, history_partial, ini_HisCloseOnInstaPaste, ini_instapasteWritesClipboard
+		global ini_MaxHistory, ini_ImageDaysToStore
 		SettingsWin.PageStart("history", TXT.SET_cb)
 		SettingsWin.Spinner("DaysToStore", TXT.SET_daystostore, ini_DaysToStore, "0-100000", TXT.SET_daysHint, TXT.SET_T_daystostore)
+		SettingsWin.Spinner("MaxHistory", TXT.SET_maxHistory, ini_MaxHistory, "0-1000000", TXT.SET_maxHistoryHint, TXT.SET_T_maxHistory)
 		SettingsWin.Check("IsImageStored", TXT.SET_images, ini_IsImageStored, , TXT.SET_T_images)
 		SettingsWin.Spinner("Quality", TXT.SET_quality, ini_Quality, "1-100", TXT.SET_qualityHint, TXT.SET_T_quality)
+		SettingsWin.Spinner("ImageDaysToStore", TXT.SET_imageDays, ini_ImageDaysToStore, "0-100000", TXT.SET_imageDaysHint, TXT.SET_T_imageDays)
 		SettingsWin.Section(TXT.SET_sec_historyWindow)
 		SettingsWin.Check("history_partial", TXT.SET_partial, history_partial)
 		SettingsWin.Check("HisCloseOnInstaPaste", TXT.SET_closeOnInstaPaste, ini_HisCloseOnInstaPaste)
@@ -616,6 +619,8 @@ class SettingsWin {
 		v["KeepSession"] := c["KeepSession"].Value
 		v["DaysToStore"] := c["DaysToStore"].Value
 		v["IsImageStored"] := c["IsImageStored"].Value
+		v["MaxHistory"] := c["MaxHistory"].Value
+		v["ImageDaysToStore"] := c["ImageDaysToStore"].Value
 		v["startSearch"] := c["startSearch"].Value
 		v["PreserveClipPos"] := c["PreserveClipPos"].Value
 		v["revFormat2def"] := c["revFormat2def"].Value
