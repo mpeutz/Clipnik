@@ -651,6 +651,8 @@ clipChange(CErrorlevel, clipboard_copy) {
 			; rules for images: kind is always "image" with no text, so a regex condition never matches, and
 			; transform is skipped (it rewrites clip text). Evaluated after thumbGenerator() so an ignored image
 			; can be deleted -- .avc and thumbnail both -- and before the history insert so it leaves no row.
+			; No ISACTIVEEXCEL guard here: that guard protects the text arm's possibly-stale clipboard_copy text,
+			; and the image arm never reads clipboard_copy.
 			rule := "", ruleApp := "", ruleCls := ""
 			try ruleApp := WinGetProcessName("A")
 			try ruleCls := WinGetClass("A")
@@ -658,6 +660,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 			if IsObject(rule) && (rule["action"] = "ignore") {
 				try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
 				try FileDelete(THUMBS_dir "/" CURSAVE ".jpg")
+				AddClipPref(CN.NG, CURSAVE, "Kind", ""), AddClipPref(CN.NG, CURSAVE, "Dim", ""), Prefs2Ini()
 				CURSAVE -= 1, TEMPSAVE := CURSAVE
 				Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
 				return
@@ -670,6 +673,10 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 
 			if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total) {
+				; the copy toast already fired above, before the rule was known; replace it in the same "copy"
+				; slot with the transfer message, the same way the text arm builds it
+				if (copyMessage != "")
+					Toast.Show(MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}", 900, "info", "copy")
 				API.manageClip(rule["arg"], CN.NG, 1, 0)   ; move the newest clip out of the active channel
 				TEMPSAVE := CURSAVE
 			}
