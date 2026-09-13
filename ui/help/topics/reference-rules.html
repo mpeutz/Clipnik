@@ -1,10 +1,11 @@
-<section data-title="Rules" data-keywords="reference rules automatic channel ignore transform tag regex process window class first match">
+<section data-title="Rules" data-keywords="reference rules automatic channel ignore transform tag regex process window class first match image svg">
   <h1>Rules</h1>
   <p>A rule watches new clips and acts on the ones that match. Rules live on the Rules page in Settings. Each
     rule matches on clip kind, a regular expression, the app it was copied from, or the window class, and then
     performs one action.</p>
-  <p>Rules are tried when a text clip is copied, in the order they appear on the page, and the first rule whose
-    conditions all hold is the one that runs. Copied images are not matched.</p>
+  <p>Rules are tried whenever you copy something, text or image, in the order they appear on the page; the
+    first rule whose conditions all hold is the one that runs. An image clip carries no text, so match it by
+    kind rather than by regular expression.</p>
   <h2>Actions</h2>
   <p>A rule carries exactly one of these:</p>
   <ul>
@@ -13,7 +14,8 @@
     <li><strong>ignore</strong> drops the clip: it is not stored in any channel and not written to history. A
       short warning names the rule so you can see why nothing was recorded.</li>
     <li><strong>transform</strong> applies one paste format to the clip as it is stored, so what you later
-      paste is the converted text. Pick the format from the same list as the default paste format.</li>
+      paste is the converted text. Pick the format from the same list as the default paste format. It only
+      applies to text clips; a rule that matches an image skips this action.</li>
     <li><strong>tag</strong> adds the words you give to the clip's tags, exactly as pressing <kbd>T</kbd> in
       paste mode would.</li>
   </ul>

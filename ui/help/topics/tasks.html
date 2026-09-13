@@ -1,4 +1,4 @@
-<section data-title="How do I" data-keywords="tasks guide recipes older clip fix pin plain text tracking utm multipaste search tag rule history image">
+<section data-title="How do I" data-keywords="tasks guide recipes older clip fix pin plain text tracking utm multipaste search tag rule history image svg vector svgomg data uri">
   <h1>How do I</h1>
 
   <h2>Paste something older</h2>
@@ -79,9 +79,28 @@
     <kbd>Ctrl</kbd>+<kbd>E</kbd> exports it to a file and <kbd>Delete</kbd> removes it.</p>
 
   <h2>Work with images</h2>
-  <p>Copy an image and Clipjump stores it like any other clip: the paste-mode card shows a thumbnail instead
-    of text, and paste mode pastes it back. Images reach the Clipboard History window only while "Store images
-    in history" is on, on the Clipboard History page.</p>
+  <p>Copy an image and Clipjump stores it like any other clip, with the kind Image: the paste-mode card shows
+    a thumbnail instead of text, and paste mode pastes it back. The pixel size is recorded alongside it, and
+    shows on the card, in the Clipboard History preview, and in the Channel Organizer. Images reach the
+    Clipboard History window only while "Store images in history" is on, on the Clipboard History page.</p>
   <p><kbd>H</kbd> hands the image to the editor named on the Advanced page. Paste mode ends while the editor is
     open, and saving there writes the change back to the clip.</p>
+  <p>Open in image editor and Copy as data URI sit on the Actions menu in the Clipboard History and Channel
+    Organizer windows. The chip on the copy notification runs Open in image editor right after you copy. A
+    data URI built right after copying is the lossless image; one built from a stored clip comes from its
+    saved JPEG copy instead, so it is lossy and has no transparency.</p>
+  <p>The image editor is the same setting <kbd>H</kbd> uses, on the Advanced page: it starts out set to Paint,
+    but you can point it at your own program, Affinity Photo for example. A rule can also send a copied image
+    to another channel, tag it, or ignore it before it is recorded; transform, the rule action that rewrites
+    text, never applies to images.</p>
+
+  <h2>Work with SVG</h2>
+  <p>Copy SVG markup as text -- not a rendered image -- and Clipjump recognizes it as its own kind, SVG,
+    instead of plain text.</p>
+  <p>The Actions menu in the Clipboard History and Channel Organizer windows offers all three SVG actions:
+    Send to SVGOMG copies the markup and opens the SVGOMG optimizer in your browser; Open in vector editor
+    saves it to a temporary file and opens the program you set on the Advanced page (Affinity Designer, for
+    example -- there is no default); and Copy as data URI copies an inline
+    <code>data:image/svg+xml,...</code> version of the markup. The copy notification's chip runs Send to
+    SVGOMG right away.</p>
 </section>
