@@ -16,6 +16,27 @@ check(name, cond) {
 	if !cond
 		fails++
 }
+
+; poll for a condition instead of sleeping a fixed time: the Settings window build and the action
+; ring's first open both vary by hundreds of milliseconds on a loaded desktop
+waitUntil(cond, ms := 6000) {
+	t := A_TickCount
+	loop {
+		if cond()
+			return true
+		if (A_TickCount - t > ms)
+			return false
+		Sleep 100
+	}
+}
+ringOpen() {
+	global cj
+	return cj.runFunction("Ring_IsOpen()") = 1
+}
+ctlReady(winTitle, ctlText) {
+	try return ControlGetHwnd(ctlText, winTitle) != 0
+	return false
+}
 try FileDelete(logFile)
 cj.runFunction("Help_Open()")
 check("window opens", WinWait(title, , 8) != 0)
@@ -53,8 +74,7 @@ step("Action Mode F1 opens help")
 cj.runFunction("Help_Close()")
 Sleep 600
 SendEvent("^+a")
-Sleep 800
-check("action ring open", cj.runFunction("Ring_IsOpen()") = 1)
+check("action ring open", waitUntil(ringOpen))
 SendEvent("{F1}")
 check("F1 opened help", WinWait(title, , 8) != 0)
 Sleep 1500
@@ -64,8 +84,7 @@ step("Action Mode F2 opens the paste-mode reference")
 cj.runFunction("Help_Close()")
 Sleep 600
 SendEvent("^+a")
-Sleep 800
-check("action ring open for F2", cj.runFunction("Ring_IsOpen()") = 1)
+check("action ring open for F2", waitUntil(ringOpen))
 SendEvent("{F2}")
 check("F2 opened help", WinWait(title, , 8) != 0)
 Sleep 1500
@@ -78,7 +97,7 @@ settingsTitle := "Clipjump Settings ahk_class AutoHotkeyGUI"
 cj.runLabel("settings")
 check("settings window opens", WinWait(settingsTitle, , 5) != 0)
 WinActivate(settingsTitle)
-Sleep 500
+check("settings' Help button is built", waitUntil(ctlReady.Bind(settingsTitle, cj["TXT.TRY_help"])))
 ControlClick(cj["TXT.TRY_help"], settingsTitle)
 check("help opened from Settings", WinWait(title, , 8) != 0)
 Sleep 1500
