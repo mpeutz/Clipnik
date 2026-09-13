@@ -243,14 +243,14 @@ historyJoin(parts, sep) {
 	return s
 }
 
-; full record: Map(id, data, type, time, size, fileid) or ""
+; full record: Map(id, data, type, time, size, fileid, kind, width, height) or ""
 historyGet(id) {
 	if !IsInteger(id)
 		return ""
-	data := getFromTable("history", "id, data, type, time, size, fileid, kind", "id=" id)
+	data := getFromTable("history", "id, data, type, time, size, fileid, kind, width, height", "id=" id)
 	if !data
 		return ""
-	return Map("id", data[1], "data", data[2], "type", data[3], "time", data[4], "size", data[5], "fileid", data[6], "kind", data[7])
+	return Map("id", data[1], "data", data[2], "type", data[3], "time", data[4], "size", data[5], "fileid", data[6], "kind", data[7], "width", data[8] != "" ? Integer(data[8]) : "", "height", data[9] != "" ? Integer(data[9]) : "")
 }
 
 ; rewrites a text row; the kind is re-detected so it cannot describe the old text

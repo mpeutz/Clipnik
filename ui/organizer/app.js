@@ -106,9 +106,9 @@
       return;
     }
     const isImg = +c.type === 1;
-    const acts = isImg ? [] : (c.actions || []);
+    const acts = state.actionsByKind[c.kind] || [];
     ph.className = "";
-    ph.innerHTML = `${cj.kindBadge(c.kind, state.labels)}<span class="badge">${isImg ? "IMAGE" : "TEXT"}</span>${+c.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""} <span class="dim" style="font-size: 12px;">${esc(T.ORG_clipOf.replace("%1", c.n).replace("%2", state.rows.length))}</span>` +
+    ph.innerHTML = `${isImg ? '<span class="badge">IMAGE</span>' : cj.kindBadge(c.kind, state.labels) || '<span class="badge">TEXT</span>'}${+c.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""} <span class="dim" style="font-size: 12px;">${esc(T.ORG_clipOf.replace("%1", c.n).replace("%2", state.rows.length))}</span>` +
       (acts.length ? `<button class="btn" id="actions" style="height: 24px; margin-left: 8px;">${esc(T.HST_actions)} ▾</button>` : "");
     if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[c.kind] || c.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { channel: state.channel, n: c.n, action: id })));
     if (isImg) { body.className = "body image"; body.innerHTML = `<img src="${esc(c.url)}" alt="">`; }

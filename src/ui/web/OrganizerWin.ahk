@@ -87,7 +87,7 @@ class OrganizerWin {
 			n := A_Index, real := strength - n + 1
 			text := CDS[ch][real]
 			isImg := (text = "") && FileExist("cache\thumbs" (ch ? ch : "") "\" real ".jpg")
-			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real)))
+			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real)))
 		}
 		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows))
 	}
@@ -101,11 +101,11 @@ class OrganizerWin {
 		text := CDS[ch][real]
 		thumb := "cache\thumbs" (ch ? ch : "") "\" real ".jpg"
 		isImg := (text = "") && FileExist(thumb)
-		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real))
+		; the page builds its Actions button from the "actions" table keyed by m.kind (same lookup the row
+		; context menu already uses), so the clip record itself only needs to carry the kind
+		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real))
 		if isImg
 			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
-		else
-			m["actions"] := ClipType.Actions(m["kind"])
 		OrganizerWin.host.Post("clip", m)
 	}
 
@@ -115,7 +115,13 @@ class OrganizerWin {
 		real := API.getChStrength(ch) - n + 1
 		if (real < 1)
 			return
-		ClipType.Run(d["action"], CDS[ch][real])
+		text := CDS[ch][real]
+		thumb := "cache\thumbs" (ch ? ch : "") "\" real ".jpg"
+		isImg := (text = "") && FileExist(thumb)
+		if isImg
+			ClipType.Run(d["action"], "", A_WorkingDir "\" thumb)
+		else
+			ClipType.Run(d["action"], text)
 	}
 
 	static SetProps(d) {
@@ -284,7 +290,7 @@ OrganizerWin_OnMessage(cmd, data, host) {
 	switch cmd {
 		case "ready":
 			OrganizerWin.I18n()
-			OrganizerWin.host.Post("actions", ClipType_ActionTable())
+			OrganizerWin.host.Post("actions", ClipType_ActionTableForWeb())
 			OrganizerWin.SendChannels()
 			OrganizerWin.SendClips(CN.NG)
 		case "channels": OrganizerWin.SendChannels()

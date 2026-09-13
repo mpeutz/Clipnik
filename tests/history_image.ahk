@@ -44,6 +44,8 @@ Send("{Down}")
 Sleep 900
 txt := FileExist(logFile) ? FileRead(logFile) : ""
 check("preview carries the image url", InStr(txt, '"url":"https://cache.clipjump/history/'))
+check("image preview offers actions", InStr(txt, "openImage"))
+check("image preview reports its size", RegExMatch(txt, '"width":\s*\d+'))
 Sleep 600
 WinGetPos(&x, &y, &w, &h, title)
 b := Gdip_BitmapFromScreen(x "|" y "|" w "|" h)

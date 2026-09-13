@@ -311,21 +311,23 @@ class ClipType {
 		return acts[1]
 	}
 
-	; runs an action on the clip text; "copy" style actions place the result on the clipboard as a normal copy
+	; runs an action on the clip text; "copy" style actions place the result on the clipboard as a normal copy;
+	; returns whether the clipboard was actually written, so a caller can toast just those
 	static Run(id, text, ref := "") {
 		global ini_defImgEditor, ini_defVectorEditor
+		wrote := false
 		switch id {
 			case "open": BrowserRun(Trim(text))
-			case "stripTracking": ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
+			case "stripTracking": wrote := ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
 			case "compose": try Run("mailto:" Trim(text))
 			case "reveal": try Run('explorer.exe /select,"' Trim(text) '"')
 			case "openPath": try Run('"' Trim(text) '"')
-			case "copyFolder": ClipType.ToClipboard(ClipType.FolderOf(Trim(text)))
-			case "copyHex": ClipType.ToClipboard(ClipType.ColorHex(text))
-			case "copyRgb": ClipType.ToClipboard(ClipType.ColorRgbText(text))
-			case "pretty": ClipType.ToClipboard(Transforms.PrettyJson(text))
-			case "minify": ClipType.ToClipboard(Transforms.MinifyJson(text))
-			case "formatNumber": ClipType.ToClipboard(ClipType.FormatNumber(text))
+			case "copyFolder": wrote := ClipType.ToClipboard(ClipType.FolderOf(Trim(text)))
+			case "copyHex": wrote := ClipType.ToClipboard(ClipType.ColorHex(text))
+			case "copyRgb": wrote := ClipType.ToClipboard(ClipType.ColorRgbText(text))
+			case "pretty": wrote := ClipType.ToClipboard(Transforms.PrettyJson(text))
+			case "minify": wrote := ClipType.ToClipboard(Transforms.MinifyJson(text))
+			case "formatNumber": wrote := ClipType.ToClipboard(ClipType.FormatNumber(text))
 			case "openImage":
 				png := ImageClip.Temp("png")
 				if ImageClip.PngFrom(ref, png)
@@ -337,9 +339,9 @@ class ClipType {
 				if (uri = "")
 					Toast.Show(ClipType_T("ACT_imageTooBig"), 1800, "warn")
 				else
-					ClipType.ToClipboard(uri)
+					wrote := ClipType.ToClipboard(uri)
 			case "svgomg":
-				ClipType.ToClipboard(text)
+				wrote := ClipType.ToClipboard(text)
 				BrowserRun("https://jakearchibald.github.io/svgomg/")
 			case "openVector":
 				f := ImageClip.Temp("svg")
@@ -351,8 +353,9 @@ class ClipType {
 					ClipType.OpenWith(ini_defVectorEditor, f)
 				else
 					Toast.Show(ClipType_T("ACT_svgUnavailable"), 1600, "warn")
-			case "svgDataUri": ClipType.ToClipboard(ImageClip.SvgDataUri(text))
+			case "svgDataUri": wrote := ClipType.ToClipboard(ImageClip.SvgDataUri(text))
 		}
+		return wrote
 	}
 
 	; runs a configured editor on a file, or says the editor is not set
@@ -366,8 +369,9 @@ class ClipType {
 
 	static ToClipboard(text) {
 		if (text = "")
-			return
+			return false
 		try A_Clipboard := text
+		return true
 	}
 
 	static StripTracking(url) {
@@ -434,6 +438,19 @@ ClipType_ActionTable() {
 	out := Map()
 	for kind, _ in ClipType.ActionTable
 		out[kind] := ClipType.Actions(kind)
+	return out
+}
+
+; same table without "short" (only the native Ring/toast chip reads it); the web pages key their Actions
+; button and context menu off a row's own kind via this table, so previews never need to repeat it per clip
+ClipType_ActionTableForWeb() {
+	out := Map()
+	for kind, acts in ClipType.ActionTable {
+		stripped := []
+		for a in ClipType.Actions(kind)
+			stripped.Push({id: a.id, label: a.label})
+		out[kind] := stripped
+	}
 	return out
 }
 
