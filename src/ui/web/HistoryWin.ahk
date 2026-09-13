@@ -70,9 +70,11 @@ class HistoryWin {
 	}
 
 	static SendKinds() {
-		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels(), "actions", ClipType_ActionTable()))
+		HistoryWin.host.Post("kinds", Map("kinds", historyKinds(), "labels", ClipType_Labels(), "actions", ClipType_ActionTable(true)))
 	}
 
+	; the page builds its Actions button from the "kinds" table keyed by rec.kind (same lookup the row
+	; context menu already uses), so the preview record itself only needs to carry the kind, not the actions
 	static SendPreview(id) {
 		rec := historyGet(id)
 		if !rec
@@ -80,18 +82,23 @@ class HistoryWin {
 		if (rec["type"] = 0 && rec["kind"] = "")
 			rec["kind"] := historyEnsureKind(id)
 		if (rec["type"] == 1) {
+			; the page never needs the raw fileid or the (already blanked) data field
 			rec["url"] := "https://cache.clipjump/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
-			rec["data"] := ""
-		} else
-			rec["actions"] := ClipType.Actions(rec["kind"])
+			rec.Delete("fileid"), rec.Delete("data")
+		}
 		HistoryWin.host.Post("preview", rec)
 	}
 
 	static Action(d) {
+		global TXT
 		rec := historyGet(d["id"])
-		if !rec || (rec["type"] = 1)
+		if !rec
 			return
-		ClipType.Run(d["action"], rec["data"])
+		wrote := (rec["type"] == 1)
+			? ClipType.Run(d["action"], "", A_WorkingDir "\" rec["fileid"])
+			: ClipType.Run(d["action"], rec["data"])
+		if wrote
+			HistoryWin.host.Post("toast", TXT.HST_copiedToast)
 	}
 
 	static Copy(id) {
@@ -231,4 +238,12 @@ HistoryWin_SaveGeometry() {
 		s := HistoryWin.section
 		Ini_write(s, "x", x, 0), Ini_write(s, "y", y, 0), Ini_write(s, "w", w, 0), Ini_write(s, "h", hh, 0)
 	}
+}
+
+; test hook: clicks the preview's Actions button then one menu item inside the real page, so a test can
+; exercise the actual click -> bridge.send("action") -> HistoryWin.Action path instead of calling it directly
+History_ClickAction(itemId) {
+	h := HistoryWin.host
+	if (h && h.core)
+		h.core.ExecuteScriptAsync("document.getElementById('actions').click();var mi=document.querySelector('.mi[data-id=" itemId "]');if(mi)mi.click();")
 }

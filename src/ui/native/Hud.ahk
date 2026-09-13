@@ -151,7 +151,7 @@ class Hud {
 	static NewState() {
 		s := CJMap()
 		s.mode := "normal", s.channel := "", s.index := "", s.total := "", s.format := "", s.pformat := ""
-		s.tags := "", s.fixed := 0, s.text := "", s.imagePath := "", s.searchTerm := "", s.matchIndex := "", s.matchCount := ""
+		s.tags := "", s.fixed := 0, s.text := "", s.imagePath := "", s.dim := "", s.searchTerm := "", s.matchIndex := "", s.matchCount := ""
 		s.message := "", s.keys := "", s.items := "", s.mono := "", s.searchActive := 0, s.title := "", s.kind := "", s.swatch := ""
 		return s
 	}
@@ -166,6 +166,7 @@ class Hud {
 		if (temp_clipboard = "") {
 			s.format := "IMAGE"
 			s.imagePath := A_WorkingDir "\" THUMBS_dir "\" TEMPSAVE ".jpg"
+			s.dim := clipPref(CN.NG, realActive, "Dim")
 		} else {
 			f := GetClipboardFormat()
 			s.format := InStr(f, TXT.TIP_file_folder) ? "FILE" : "TEXT"
@@ -319,9 +320,10 @@ class Hud {
 		else if (mode = "normal")
 			chips := Hud.Chips(TXT.HUD_keys_normal)
 		tags := (mode = "normal" || info) && state.tags != "" ? StrReplace(Trim(state.tags), " ", " · ") : ""
-		if (chips.Length || tags != "") {
+		dim := (mode = "normal" || info) ? state.dim : ""
+		if (chips.Length || tags != "" || dim != "") {
 			y += Round(2 * sc)
-			y := Hud.Footer(chips, tags, pad, y, bodyW)
+			y := Hud.Footer(chips, tags, dim, pad, y, bodyW)
 		}
 		H := y + pad
 		Hud.Show(W, H, ax, ay, wl, wt, wr, wb)
@@ -386,7 +388,7 @@ class Hud {
 		return out
 	}
 
-	static Footer(chips, tags, x, y, w) {
+	static Footer(chips, tags, dim, x, y, w) {
 		c := Hud.c, sc := Theme.Scale, rowH := Round(20 * sc), gap := Round(4 * sc), gapBetween := Round(10 * sc)
 		; chips right-aligned
 		total := 0, widths := []
@@ -406,11 +408,14 @@ class Hud {
 				Hud.Place("l" i, ch[2], cx + gap, y, wd[2], rowH), cx += gap + wd[2]
 			cx += gapBetween
 		}
-		if (tags != "") {
-			gw := Round(16 * sc), tw := x + w - total - Round(12 * sc) - x - gw
+		label := dim != "" ? (tags != "" ? dim " · " tags : dim) : tags
+		if (label != "") {
+			; the glyph is a tag icon: skip it when there is no tag to show (dim-only footer)
+			gw := tags != "" ? Round(16 * sc) : 0, tw := x + w - total - Round(12 * sc) - x - gw
 			if (tw > 30 * sc) {
-				Hud.Place("tagGlyph", c["tagGlyph"].Text, x, y, gw, rowH)
-				Hud.Place("tagText", tags, x + gw + Round(2 * sc), y, tw, rowH)
+				if (tags != "")
+					Hud.Place("tagGlyph", c["tagGlyph"].Text, x, y, gw, rowH)
+				Hud.Place("tagText", label, x + gw + Round(2 * sc), y, tw, rowH)
 			}
 		}
 		return y + rowH

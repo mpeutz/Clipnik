@@ -44,6 +44,14 @@ Send("{Down}")
 Sleep 900
 txt := FileExist(logFile) ? FileRead(logFile) : ""
 check("preview carries the image url", InStr(txt, '"url":"https://cache.clipjump/history/'))
+check("preview reports the image kind", InStr(txt, '"kind":"image"'))
+check("preview reports its size", InStr(txt, '"width":160'))
+; drives the real page (Actions button -> menu item -> bridge.send) instead of calling the host handler
+; directly, so this exercises HistoryWin.Action's image branch and its toast, not just SendPreview
+cj.runFunction("History_ClickAction(imageDataUri)")
+Sleep 500
+txt := FileExist(logFile) ? FileRead(logFile) : ""
+check("image action copies and toasts", InStr(txt, '"cmd":"toast"') && InStr(txt, "clipboard"))
 Sleep 600
 WinGetPos(&x, &y, &w, &h, title)
 b := Gdip_BitmapFromScreen(x "|" y "|" w "|" h)

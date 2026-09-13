@@ -33,15 +33,34 @@ historyAddKindColumn() {
 		DB.Exec("alter table history add column kind text")
 }
 
-; the stored kind of one row, classifying and writing it back when missing; "" for images
+; width and height of an image row, added after the kind column (2026-09)
+historyAddImageSizeColumns() {
+	global DB
+	if !DB.GetTable("pragma table_info(history)", &tb)
+		return
+	hasW := false, hasH := false
+	loop tb.RowCount {
+		tb.Next(&r)
+		if (r[2] = "width")
+			hasW := true
+		else if (r[2] = "height")
+			hasH := true
+	}
+	if !hasW
+		DB.Exec("alter table history add column width integer")
+	if !hasH
+		DB.Exec("alter table history add column height integer")
+}
+
+; the stored kind of one row, classifying and writing it back when missing; "image" for image rows
 historyEnsureKind(id) {
 	global DB
 	row := getFromTable("history", "type, kind, data", "id=" id)
-	if !row || (row[1] = 1)
+	if !row
 		return ""
 	if (row[2] != "")
 		return row[2]
-	kind := ClipType.Detect(row[3])
+	kind := (row[1] = 1) ? "image" : ClipType.Detect(row[3])
 	execSql('update history set kind="' kind '" where id=' id)
 	return kind
 }
@@ -66,20 +85,53 @@ historyEnsureKinds(rows) {
 	return todo.Length
 }
 
-; classifies up to batch old text rows; returns how many were updated (0 when done)
+; classifies up to batch old rows; returns how many were updated (0 when done)
 historyBackfillKinds(batch := 200) {
 	global DB
-	if !DB.GetTable("select id, data from history where type=0 and (kind is null or kind='') limit " batch, &tb)
+	if !DB.GetTable("select id, data, type from history where kind is null or kind='' limit " batch, &tb)
 		return 0
 	n := 0
 	DB.Exec("begin")
 	loop tb.RowCount {
 		tb.Next(&r)
-		execSql('update history set kind="' ClipType.Detect(r[2]) '" where id=' r[1])
+		kind := (r[3] = 1) ? "image" : ClipType.Detect(r[2])
+		execSql('update history set kind="' kind '" where id=' r[1])
 		n++
 	}
 	DB.Exec("commit")
 	return n
+}
+
+; one-time reclassification: old rows kept the "code"/"text" kind SVG detection couldn't yet produce.
+; Walks such rows by id, in bounded batches, and promotes a match to "svg"; never touches any other
+; kind. A [System] flag (written through Ini_write, once every matching row has been seen) makes it
+; idempotent so a later launch does not rescan the table; a cursor lets it resume mid-scan.
+historyReclassifySvg(batch := 200) {
+	global DB
+	if (Ini_read("System", "SvgReclassified") = "1")
+		return 0
+	cursor := Ini_read("System", "SvgReclassifyCursor")
+	cursor := (cursor = "") ? 0 : Integer(cursor)
+	if !DB.GetTable("select id, data from history where id > " cursor " and kind in ('code','text') order by id limit " batch, &tb)
+		return 0
+	if !tb.RowCount {
+		Ini_write("System", "SvgReclassified", "1", 0)
+		return 0
+	}
+	maxId := cursor
+	DB.Exec("begin")
+	loop tb.RowCount {
+		tb.Next(&r)
+		if (r[1] > maxId)
+			maxId := r[1]
+		if (StrLen(r[2]) * 2 <= ClipType.MaxBytes) && ClipType.IsSvg(r[2])
+			execSql('update history set kind="svg" where id=' r[1])
+	}
+	DB.Exec("commit")
+	Ini_write("System", "SvgReclassifyCursor", maxId, 0)
+	if (tb.RowCount < batch)
+		Ini_write("System", "SvgReclassified", "1", 0)
+	return tb.RowCount
 }
 
 ; distinct kinds present, detection order
@@ -99,6 +151,12 @@ historyKinds() {
 	return out
 }
 
+; test hook: "<kind> <width> <height>" of the newest image row
+Image_LastHistoryDims() {
+	row := getFromTable("history", "kind, width, height", "type=1 order by id desc limit 1")
+	return row ? row[1] " " row[2] " " row[3] : ""
+}
+
 addHistoryText(data, timestamp, kind := ""){
 ; adds some text data to history; the timestamp is in A_Now format; kind is detected when not given
 	timestamp := convertTimeSql( timestamp )
@@ -113,7 +171,7 @@ addHistoryText(data, timestamp, kind := ""){
 		MsgBox(q)
 }
 
-addHistoryImage(imgpath, timestamp){
+addHistoryImage(imgpath, timestamp, kind := "image", w := 0, h := 0){
 ; adds an image (by path) to history; timestamp is in A_Now format
 	timestamp := convertTimeSql(timestamp)
 	fptr := FileOpen(imgpath, "r")
@@ -124,12 +182,15 @@ addHistoryImage(imgpath, timestamp){
 	}
 
 	FileCopy(imgpath, rname)
-	q := "insert into history (data, type, time, size, fileid) values ("
+	q := "insert into history (data, type, time, size, fileid, kind, width, height) values ("
 		. '"[IMAGE]", '
 		. 1 ","
 		. '"' timestamp '", '
 		. size ", "
-		. '"' rname '")'
+		. '"' rname '", '
+		. '"' kind '", '
+		. w ", "
+		. h ")"
 
 	if !DB.Exec(q)
 		MsgBox("Msg:`t" . DB.ErrorMsg . "`nCode:`t" . DB.ErrorCode, "SQLite Error", 16)
@@ -195,13 +256,13 @@ historyQuery(crit := "", partial := true, sort := "time", asc := false, offset :
 	if m.RowCount {
 		m.Next(&r), out["matched"] := r[1]
 	}
-	q := "select id, substr(data, 1, 300), type, time, size, fileid, kind from history" where " order by " col " " dir ", id desc limit " limit " offset " offset
+	q := "select id, substr(data, 1, 300), type, time, size, fileid, kind, width, height from history" where " order by " col " " dir ", id desc limit " limit " offset " offset
 	result := ""
 	if !DB.GetTable(q, &result)
 		return out
 	loop result.RowCount {
 		result.Next(&row)
-		out["rows"].Push(Map("id", row[1], "clip", row[2], "type", row[3], "time", row[4], "size", row[5], "fileid", row[6], "kind", row[7]))
+		out["rows"].Push(Map("id", row[1], "clip", row[2], "type", row[3], "time", row[4], "size", row[5], "fileid", row[6], "kind", row[7], "width", row[8], "height", row[9]))
 		HISTORYOBJ[row[1]] := row[3]
 	}
 	return out
@@ -214,14 +275,14 @@ historyJoin(parts, sep) {
 	return s
 }
 
-; full record: Map(id, data, type, time, size, fileid) or ""
+; full record: Map(id, data, type, time, size, fileid, kind, width, height) or ""
 historyGet(id) {
 	if !IsInteger(id)
 		return ""
-	data := getFromTable("history", "id, data, type, time, size, fileid, kind", "id=" id)
+	data := getFromTable("history", "id, data, type, time, size, fileid, kind, width, height", "id=" id)
 	if !data
 		return ""
-	return Map("id", data[1], "data", data[2], "type", data[3], "time", data[4], "size", data[5], "fileid", data[6], "kind", data[7])
+	return Map("id", Integer(data[1]), "data", data[2], "type", Integer(data[3]), "time", data[4], "size", Integer(data[5]), "fileid", data[6], "kind", data[7], "width", data[8] != "" ? Integer(data[8]) : "", "height", data[9] != "" ? Integer(data[9]) : "")
 }
 
 ; rewrites a text row; the kind is re-detected so it cannot describe the old text

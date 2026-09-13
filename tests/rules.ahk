@@ -72,5 +72,14 @@ Rules.Load()
 check(Rules.List.Length = 0, "saving an empty list clears the section")
 try FileDelete(CONFIGURATION_FILE)
 
+; image clips: kind-only and kind+regex conditions (Match is kind-agnostic, so these already pass; kept as
+; regression cover for the image-arm rule step in Clipjump.ahk)
+ir := Rules.New()
+ir["kinds"] := ["image"], ir["action"] := "tag", ir["arg"] := "shot"
+check(Rules.Match(ir, "image", "", "app.exe", "Cls"), "an image rule matches an image clip")
+check(!Rules.Match(ir, "text", "hello", "app.exe", "Cls"), "an image rule ignores a text clip")
+ir["regex"] := "screenshot"
+check(!Rules.Match(ir, "image", "", "app.exe", "Cls"), "a regex condition cannot match an image")
+
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

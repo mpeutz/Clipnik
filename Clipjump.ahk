@@ -124,13 +124,13 @@ global CALLER_STATUS := 1, CLIPJUMP_STATUS := 1
 global CALLER := CALLER_STATUS := 1, IN_BACK := 0, MULTIPASTE := 0, PASTEMODE_ACT := 0
 global CLIP_ACTION := "", ONCLIPBOARD := 1, ISACTIVEEXCEL := 0, HASCOPYFAILED := 0, ctrlRef := ""		;specific purpose global vars
 global wasManualClipboard := false
-global LASTIMAGETICK := 0
+global LASTIMAGETICK := 0, IMGW := 0, IMGH := 0
 global Options_Tray := Menu(), Tools_Tray := Menu(), Maintanence_Tray := Menu()
 
 ;Global Ini declarations
 global ini_IsImageStored := "", ini_Quality := "", ini_MaxClips := "", ini_Threshold := "", ini_isMessage := "", CopyMessage := "", ini_DaysToStore := ""
 		, Copyfolderpath_K := "", Copyfilepath_K := "", Copyfiledata_K := "", onetime_K := "", paste_k := "", actionmode_k := "", ini_is_duplicate_copied := "", ini_formatting := ""
-		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
+		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_defVectorEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
 		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_respectExclusion := 1, ini_searchUsesWindow := 0
@@ -299,6 +299,7 @@ if (isnewdb == 1) {
 }
 
 historyAddKindColumn()
+historyAddImageSizeColumns()
 SetTimer(historyBackfillTick, -4000)   ; classify old rows in small batches after startup
 
 /*
@@ -577,6 +578,13 @@ clipChange(CErrorlevel, clipboard_copy) {
 				return
 			}
 
+			; clipboard_copy is what OnClipboardChange handed us, which can still be the moment before the new
+			; content landed: writers clear the clipboard first and that empty state is its own notification.
+			; clipSaver captured the clipboard as it actually was, so take the clip from there -- otherwise the
+			; kind, the history row and the toast all describe a clip that is not the one that was stored.
+			if !ISACTIVEEXCEL
+				LASTCLIP := CDS[CN.NG][CURSAVE]
+
 			LASTKIND := ClipType.Detect(LASTCLIP)
 			ClipType.Store(CN.NG, CURSAVE, LASTKIND)
 
@@ -586,7 +594,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 						Rules_ApplyTransform(rule["arg"])
 						LASTKIND := ClipType.Detect(LASTCLIP)       ; the transform rewrote the clip
 						ClipType.Store(CN.NG, CURSAVE, LASTKIND)
-					case "tag": AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"])
+					case "tag": AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"]), Prefs2Ini()
 				}
 			}
 
@@ -622,7 +630,7 @@ clipChange(CErrorlevel, clipboard_copy) {
 	}
 	else if (CErrorlevel = 2)
 	{
-			LASTKIND := ""
+			LASTKIND := "image"
 			CURSAVE += 1, TEMPSAVE := CURSAVE, LASTCLIP := ""
 
 			clipSaver()
@@ -640,13 +648,44 @@ clipChange(CErrorlevel, clipboard_copy) {
 			}
 			LASTIMAGETICK := A_TickCount
 
+			; rules for images: kind is always "image" with no text, so a regex condition never matches, and
+			; transform is skipped (it rewrites clip text). Evaluated here, before anything else is written, so
+			; an ignored image never gets a beep or a toast, and there is no thumbnail, pref or history row to undo.
+			; No ISACTIVEEXCEL guard here: that guard protects the text arm's possibly-stale clipboard_copy text,
+			; and the image arm never reads clipboard_copy.
+			rule := "", ruleApp := "", ruleCls := ""
+			try ruleApp := WinGetProcessName("A")
+			try ruleCls := WinGetClass("A")
+			rule := Rules.Evaluate(Rules.List, "image", "", ruleApp, ruleCls)
+			if IsObject(rule) && (rule["action"] = "ignore") {
+				try FileDelete(CLIPS_dir "/" CURSAVE ".avc")
+				CURSAVE -= 1, TEMPSAVE := CURSAVE
+				Toast.Show(StrReplace(TXT.RUL_ignored, "%rule%", rule["name"] != "" ? rule["name"] : Rules.Describe(rule)[1]), 1500, "warn", "copy")
+				return
+			}
+
 			BeepAt(ini_CopyBeep, beepFrequency)
-			if (copyMessage != "")
-				Toast.Show(copyMessage, 900, "info", "copy")
-			thumbGenerator()
+			if (copyMessage != "") {
+				msg := copyMessage
+				if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total)
+					msg := MSG_TRANSFER_COMPLETE " {" (Rules.ChannelName(rule["arg"]) != "" ? Rules.ChannelName(rule["arg"]) : rule["arg"]) "}"
+				showCopyToast(msg)
+			}
+
+			ClipType.Store(CN.NG, CURSAVE, "image")
+			if IsObject(rule) && (rule["action"] = "tag")
+				AddClipPref(CN.NG, CURSAVE, "Tags", rule["arg"])
+			thumbGenerator()   ; also writes the Dim pref and flushes prefs.ini once, catching Kind and Tags too
 
 			if NOINCOGNITO && ini_IsImageStored && (CN.Name != "pit") {
-				addHistoryImage(THUMBS_dir "\" CURSAVE ".jpg", A_Now)
+				addHistoryImage(THUMBS_dir "\" CURSAVE ".jpg", A_Now, "image", IMGW, IMGH)
+			}
+
+			; the move happens after the thumbnail exists and the history row is inserted; the copy toast above
+			; already named the target channel when this is a "channel" rule, so no second toast here
+			if IsObject(rule) && (rule["action"] = "channel") && IsInteger(rule["arg"]) && (rule["arg"] != CN.NG) && (rule["arg"] < CN.Total) {
+				API.manageClip(rule["arg"], CN.NG, 1, 0)   ; move the newest clip out of the active channel
+				TEMPSAVE := CURSAVE
 			}
 
 			while (CURSAVE >= TOTALCLIPS)
@@ -1420,7 +1459,13 @@ thumbGenerator() {
 	global
 	Critical "On"
 	ClipWait(3, 1) 				;Dont need a Clipwait here , but just for special cases I put a wait of 3 secs
-	Gdip_CaptureClipboard(A_WorkingDir "\" THUMBS_dir "\" CURSAVE ".jpg", ini_Quality)
+	local w := 0, h := 0
+	Gdip_CaptureClipboard(A_WorkingDir "\" THUMBS_dir "\" CURSAVE ".jpg", ini_Quality, &w, &h)
+	IMGW := w, IMGH := h
+	if (w && h) {
+		AddClipPref(CN.NG, CURSAVE, "Dim", w "x" h)
+		Prefs2Ini()
+	}
 }
 
 Prefs2Ini() {
@@ -1436,7 +1481,7 @@ Prefs2Ini() {
 
 ClipPref_makeKeys(Ch, Cl) {
 	global CPS
-	static l := ["fixed", "Tags", "Kind"]
+	static l := ["fixed", "Tags", "Kind", "Dim"]
 	if !IsObject(CPS[Ch])
 		CPS[Ch] := CJMap()
 	if !IsObject(CPS[Ch][Cl])
@@ -1451,6 +1496,10 @@ AddClipPref(Ch, Cl, Pr, val) {
 	ClipPref_makeKeys(Ch, Cl)
 	CPS[Ch][Cl][Pr] := val
 }
+
+; test hooks: RunFunc misroutes dotted names to API.*
+ClipType_KindOf(ch, clip) => ClipType.Of(ch, clip)
+Image_DimOf(ch, clip) => clipPref(ch, clip, "Dim")
 
 ;~ ;**************** GUI Functions ***************************************************************************
 
@@ -1684,7 +1733,11 @@ copyCutShortcuts(status := 1) {
 }
 
 historyBackfillTick() {
-	if historyBackfillKinds(200)
+	; two independent bounded scans share one tick: unclassified rows, then old code/text rows SVG
+	; detection can now promote. Either one still finding work keeps the tick alive.
+	more := historyBackfillKinds(200)
+	more := historyReclassifySvg(200) || more
+	if more
 		SetTimer(historyBackfillTick, -250)
 }
 
@@ -1696,7 +1749,7 @@ showCopyToast(text) {
 		act := ClipType.Primary(LASTKIND, LASTCLIP)
 		clip := LASTCLIP
 		extra := {label: ClipType.Label(LASTKIND), swatch: LASTKIND = "color" ? ClipType.ColorRgb(LASTCLIP) : ""
-			, action: act != "" ? {label: act.short, fn: ClipType_RunLater.Bind(act.id, clip)} : ""}
+			, action: act != "" ? {label: act.short, fn: ClipType_RunLater.Bind(act.id, clip, "")} : ""}
 	}
 	Toast.Show(text, extra != "" ? 2500 : 900, "info", "copy", extra)
 }
@@ -1985,6 +2038,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\ui\native\TrayMenuWin.ahk
 #Include %A_ScriptDir%\src\core\clipboard.ahk
 #Include %A_ScriptDir%\src\core\cliptype.ahk
+#Include %A_ScriptDir%\src\core\imageclip.ahk
 #Include %A_ScriptDir%\src\core\transforms.ahk
 #Include %A_ScriptDir%\src\core\rules.ahk
 #Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk

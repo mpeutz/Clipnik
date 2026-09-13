@@ -60,6 +60,7 @@ load_Settings(all := false) {
 	ini_priority := (t:=ini_read("System", "Priority")) ? t : "N"
 	try ProcessSetPriority(ini_priority)
 	ini_defImgEditor := (t:=ini_read("System", "default_image_editor")) ? t : "mspaint.exe"
+	ini_defVectorEditor := ini_read("System", "default_vector_editor")
 	ini_pstMode_X := ini_read("Advanced", "pstMode_X")
 	ini_pstMode_Y := ini_read("Advanced", "pstMode_Y")
 	ini_HisCloseOnInstaPaste := ini_read("Advanced", "HisCloseOnInstaPaste")
@@ -127,6 +128,7 @@ save_Settings(v) {
 	ini_write("Advanced", "cut_equalto_delete", v["cut_equalto_delete"], 0)
 	ini_write("System", "default_editor", v["default_editor"], 0)
 	ini_write("System", "default_image_editor", v["default_image_editor"], 0)
+	ini_write("System", "default_vector_editor", v["default_vector_editor"], 0)
 	ini_write("System", "Priority", v["Priority"], 0)
 	ini_write("Advanced", "RAM_Flush", v["RAM_Flush"], 0)
 

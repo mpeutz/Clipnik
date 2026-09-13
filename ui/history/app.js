@@ -52,7 +52,7 @@
       const text = isImg ? T.HST_viewimage : oneLine(r.clip, 220);
       const html = hlWords(text, words);
       return `<div class="tr${state.sel.has(r.id) ? " sel" : ""}" data-id="${r.id}" tabindex="-1" draggable="false">` +
-        `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${isImg ? "" : cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
+        `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
     }).join("");
     document.querySelectorAll("#hdr span").forEach((s) => {
       s.classList.toggle("sorted", s.dataset.sort === state.sort);
@@ -113,18 +113,19 @@
       return;
     }
     const isImg = +rec.type === 1;
+    const acts = state.actionsByKind[rec.kind] || [];
+    const actionsBtn = acts.length ? `<button class="btn" id="actions" style="margin-left: auto; height: 24px;">${esc(T.HST_actions)} ▾</button>` : "";
+    const dims = rec.width && rec.height ? ` · ${rec.width}×${rec.height}` : "";
     if (isImg) {
-      ph.innerHTML = `<span class="badge">IMAGE</span><span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>`;
+      ph.innerHTML = `<span class="badge">IMAGE</span><span class="dim" style="font-size: 12px;">${bytes(rec.size)}${dims} · ${esc(fmtDate(rec.time))}</span>` + actionsBtn;
       body.className = "body image";
       body.innerHTML = `<img src="${esc(rec.url)}" alt="">`;
     } else {
-      const acts = (rec.actions || []);
-      ph.innerHTML = `${cj.kindBadge(rec.kind, state.labels) || '<span class="badge">TEXT</span>'}<span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>` +
-        (acts.length ? `<button class="btn" id="actions" style="margin-left: auto; height: 24px;">${esc(T.HST_actions)} ▾</button>` : "");
-      if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[rec.kind] || rec.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { id: rec.id, action: id })));
+      ph.innerHTML = `${cj.kindBadge(rec.kind, state.labels) || '<span class="badge">TEXT</span>'}<span class="dim" style="font-size: 12px;">${bytes(rec.size)} · ${esc(fmtDate(rec.time))}</span>` + actionsBtn;
       body.className = "body mono";
       body.innerHTML = hlWords(rec.data, searchWords());
     }
+    if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[rec.kind] || rec.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { id: rec.id, action: id })));
     updateButtons();
   }
 

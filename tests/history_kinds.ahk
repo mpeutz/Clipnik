@@ -37,6 +37,21 @@ getFromTable(tbl, cols, condition) {
     return row
 }
 convertTimeSql(t) => FormatTime(t, "yyyy-MM-dd HH:mm:ss")
+; stand-ins for settings.ahk's ini helpers (not included here), same contract: Ini_write only writes
+; when the key is blank unless ifblank is falsy; nothing touches the real settings.ini.
+global SETTINGS := Map()
+Ini_read(section, key) {
+    global SETTINGS
+    k := section "|" key
+    return SETTINGS.Has(k) ? SETTINGS[k] : ""
+}
+Ini_write(section, key, value := "", ifblank := true) {
+    global SETTINGS
+    k := section "|" key
+    if (ifblank && SETTINGS.Has(k))
+        return
+    SETTINGS[k] := value
+}
 
 tmp := A_Temp "\cj_kinds.db"
 try FileDelete(tmp)
@@ -48,7 +63,10 @@ DB.Exec('insert into history (data, type, time, size) values ("plain words here"
 DB.Exec('insert into history (data, type, time, size, fileid) values ("[IMAGE]", 1, "2026-09-10 10:02:00", 100, "cache\\history\\x.jpg")')
 
 historyAddKindColumn()
+historyAddImageSizeColumns()
 check(DB.GetTable("pragma table_info(history)", &ti) && InStr(ti2str(ti), "kind"), "migration adds the kind column")
+DB.GetTable("pragma table_info(history)", &ti), cols := ti2str(ti)
+check(InStr(cols, "width") && InStr(cols, "height"), "migration adds the width and height columns")
 ti2str(tb) {
     s := ""
     loop tb.RowCount {
@@ -58,6 +76,7 @@ ti2str(tb) {
     return s
 }
 historyAddKindColumn()
+historyAddImageSizeColumns()
 check(true, "migration is idempotent (no error on second run)")
 
 addHistoryText("mike@example.com", A_Now, "email")
@@ -68,7 +87,7 @@ check(historyGet(5)["kind"] = "color", "insert detects the kind when none is giv
 
 check(historyEnsureKind(1) = "url", "lazy classification of an old row")
 check(historyGet(1)["kind"] = "url", "lazy classification is written back")
-check(historyEnsureKind(3) = "", "image rows are never classified")
+check(historyEnsureKind(3) = "image", "image rows classify as image")
 
 n := historyBackfillKinds(10)
 check(n = 1, "backfill classifies the remaining text row (" n ")")
@@ -81,7 +100,7 @@ check(r["matched"] = 1, "matched count honors the kind filter")
 r := historyQuery("", true, "time", false, 0, 50)
 check(r["rows"].Length = 5, "no filter returns all rows")
 kinds := historyKinds()
-check(kinds.Length = 4, "historyKinds lists the distinct kinds present (" kinds.Length ")")
+check(kinds.Length = 5, "historyKinds lists the distinct kinds present (" kinds.Length ")")
 
 ; rewriting a clip's text re-detects its kind (a url row that becomes plain text)
 historySetText(1, "plain words now")
@@ -95,6 +114,21 @@ check(historyEnsureKinds(rows) = 1, "historyEnsureKinds classifies the one uncla
 check(rows[1]["kind"] = "url", "historyEnsureKinds fills the kind in the array")
 check(historyGet(rows[1]["id"])["kind"] = "url", "historyEnsureKinds writes the kind back")
 check(historyEnsureKinds(rows) = 0, "nothing to classify: no transaction")
+
+; SVG reclassification: rows classified before SVG detection existed keep "code"/"text" forever;
+; historyReclassifySvg walks them once and promotes only a genuine match.
+svgMarkup := '<svg xmlns="http://www.w3.org/2000/svg"><rect width="4" height="4"/></svg>'
+DB.Exec('insert into history (data, type, time, size, kind) values ("' escapeQuotesSql(svgMarkup) '", 0, "2026-09-12 09:00:00", 60, "code")')
+svgId := DB.LastInsertRowID()
+DB.Exec('insert into history (data, type, time, size, kind) values ("if (x) { return y }", 0, "2026-09-12 09:01:00", 20, "code")')
+codeId := DB.LastInsertRowID()
+n := historyReclassifySvg(10)
+check(n > 0, "svg reclassification examines the old code/text rows (" n ")")
+check(historyGet(svgId)["kind"] = "svg", "an old SVG row copied as code is reclassified as svg")
+check(historyGet(codeId)["kind"] = "code", "a plain code row is left untouched")
+check(Ini_read("System", "SvgReclassified") = "1", "completion is recorded")
+check(historyReclassifySvg(10) = 0, "svg reclassification is idempotent once complete")
+check(historyGet(codeId)["kind"] = "code", "re-running does not touch the plain code row")
 
 DB.CloseDB()
 try FileDelete(tmp)

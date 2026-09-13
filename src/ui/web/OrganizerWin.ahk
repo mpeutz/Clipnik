@@ -8,7 +8,7 @@
 ;               newClip channel, newChannel name, renameChannel {n, name}, deleteChannel {n, mode, to},
 ;               moveChannel {n, delta}, paste {channel, ns}, pasteMode {channel, n}, edit {channel, n},
 ;               action {channel, n, action}, close
-; Host -> page: i18n, actions {kind -> [{id, label, short}]}, channels {channels, active}, clips {channel, rows},
+; Host -> page: i18n, actions {kind -> [{id, label}]}, channels {channels, active}, clips {channel, rows},
 ;               clip {...}, toast, refresh
 
 class OrganizerWin {
@@ -87,7 +87,7 @@ class OrganizerWin {
 			n := A_Index, real := strength - n + 1
 			text := CDS[ch][real]
 			isImg := (text = "") && FileExist("cache\thumbs" (ch ? ch : "") "\" real ".jpg")
-			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real)))
+			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real)))
 		}
 		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows))
 	}
@@ -101,21 +101,32 @@ class OrganizerWin {
 		text := CDS[ch][real]
 		thumb := "cache\thumbs" (ch ? ch : "") "\" real ".jpg"
 		isImg := (text = "") && FileExist(thumb)
-		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "" : ClipType.Of(ch, real))
-		if isImg
+		; the page builds its Actions button from the "actions" table keyed by m.kind (same lookup the row
+		; context menu already uses), so the clip record itself only needs to carry the kind
+		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real))
+		if isImg {
 			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
-		else
-			m["actions"] := ClipType.Actions(m["kind"])
+			m["dim"] := clipPref(ch, real, "Dim")
+		}
 		OrganizerWin.host.Post("clip", m)
 	}
 
 	static Action(d) {
-		global CDS
+		global CDS, TXT
 		ch := Integer(d["channel"]), n := Integer(d["n"])
 		real := API.getChStrength(ch) - n + 1
 		if (real < 1)
 			return
-		ClipType.Run(d["action"], CDS[ch][real])
+		text := CDS[ch][real]
+		; keyed on text alone (not FileExist too): the row's kind was fixed at list time, so if the
+		; thumbnail has since gone missing this still reaches ImageClip as a real, non-empty path and
+		; fails honestly instead of quietly falling back to the live clipboard
+		isImg := (text = "")
+		wrote := isImg
+			? ClipType.Run(d["action"], "", A_WorkingDir "\cache\thumbs" (ch ? ch : "") "\" real ".jpg")
+			: ClipType.Run(d["action"], text)
+		if wrote
+			OrganizerWin.host.Post("toast", TXT.HST_copiedToast)
 	}
 
 	static SetProps(d) {
@@ -271,7 +282,7 @@ class OrganizerWin {
 
 	static I18n() {
 		global TXT
-		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_number", "KIND_phone", "KIND_code", "KIND_text"]
+		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_svg", "KIND_number", "KIND_phone", "KIND_code", "KIND_text", "KIND_image"]
 		m := Map()
 		for k in keys
 			m[k] := StrReplace(TXT.%k%, "&")
@@ -284,7 +295,7 @@ OrganizerWin_OnMessage(cmd, data, host) {
 	switch cmd {
 		case "ready":
 			OrganizerWin.I18n()
-			OrganizerWin.host.Post("actions", ClipType_ActionTable())
+			OrganizerWin.host.Post("actions", ClipType_ActionTable(true))
 			OrganizerWin.SendChannels()
 			OrganizerWin.SendClips(CN.NG)
 		case "channels": OrganizerWin.SendChannels()

@@ -1,15 +1,15 @@
 ﻿; cliptype.ahk - what a text clip is. ClipType.Detect classifies text once at copy time; the kind is stored with
 ; the clip (history column "kind", channel clip pref "Kind") and read back everywhere a clip is shown.
 ;
-;   ClipType.Detect(text)   -> "url" | "email" | "path" | "color" | "json" | "number" | "phone" | "code" | "text"
+;   ClipType.Detect(text)   -> "url" | "email" | "path" | "color" | "json" | "svg" | "number" | "phone" | "code" | "text" | "image"
 ;   ClipType.Label(kind)    -> translated upper-case label (TXT.KIND_<kind>, falls back to the kind itself)
-;   ClipType.IsKind(s)      -> true for one of the nine kinds
+;   ClipType.IsKind(s)      -> true for one of the eleven kinds
 ;
 ; Detection is deliberately conservative: a clip is a URL only when the whole trimmed text is one URL, an email
 ; only when it is one address, and so on. Anything ambiguous is "text".
 
 class ClipType {
-	static Kinds := ["url", "email", "path", "color", "json", "number", "phone", "code", "text"]
+	static Kinds := ["url", "email", "path", "color", "json", "svg", "number", "phone", "code", "text", "image"]
 	static MaxBytes := 65536
 
 	static IsKind(s) {
@@ -27,7 +27,8 @@ class ClipType {
 		return StrUpper(kind)
 	}
 
-	; stored kind of a channel clip (prefs.ini Kind=), detecting and storing it on first use; "" for images
+	; stored kind of a channel clip (prefs.ini Kind=), detecting and storing it on first use for text;
+	; "image" for images, whose Kind is already written by clipChange, not detected here
 	static Of(ch, clip) {
 		global CDS
 		k := clipPref(ch, clip, "Kind")
@@ -95,6 +96,8 @@ class ClipType {
 		}
 		if ClipType.IsJson(t)
 			return "json"
+		if ClipType.IsSvg(t)
+			return "svg"
 		if oneLine {
 			if ClipType.IsNumber(t)
 				return "number"
@@ -145,6 +148,103 @@ class ClipType {
 		return depth = 0 && !inString && punct
 	}
 
+	; svg markup: an <svg> root with opening tag at a tag boundary, optionally behind an xml declaration
+	; and/or DOCTYPE (including with internal subset). May end with </svg> or self-closing />.
+	; Uses string scanning, not regex, for trailing comments and the xml-declaration prologue: both can
+	; be arbitrarily large (a generator's trailing comment block), and a matching-quantifier regex over
+	; unbounded input is the kind of construct that has already produced silent false negatives here.
+	static IsSvg(t) {
+		s := Trim(t, " `t`r`n")
+		sLen := StrLen(s)
+
+		; Strip trailing comments and whitespace. Loop: trim whitespace and comments from the end
+		; until nothing more to strip.
+		loop {
+			origLen := sLen
+
+			; Trim trailing whitespace (space, tab, CR, LF)
+			s := RTrim(s, " `t`r`n")
+			sLen := StrLen(s)
+
+			; Then check if ends with --> and remove the complete comment
+			if sLen >= 3 && SubStr(s, sLen - 2, 3) = "-->" {
+				; Find the last <!-- (comments don't contain -->, so this is exact)
+				commentStart := InStr(s, "<!--", , -1)
+				if commentStart {
+					; Remove the comment
+					s := SubStr(s, 1, commentStart - 1)
+					sLen := StrLen(s)
+				} else {
+					; Malformed: ends with --> but no comment start
+					break
+				}
+			}
+
+			; If nothing changed, we're done
+			if sLen = origLen
+				break
+		}
+
+		; After stripping, the string must end with </svg> or />
+		if sLen >= 6 && SubStr(s, sLen - 5, 6) = "</svg>" {
+			; Has closing tag
+		} else if sLen >= 2 && SubStr(s, sLen - 1, 2) = "/>" {
+			; Has self-closing
+		} else {
+			return false
+		}
+
+		; Check the opening: must be <svg at a tag boundary (followed by whitespace, >, or /)
+		; This prevents matching <svgfoo ...> or similar malformed tags
+		if RegExMatch(s, "s)^<svg[\s>/]")
+			return true
+
+		; Or start with <?xml declaration followed by svg root
+		if !RegExMatch(s, "s)^<\?xml")
+			return false
+
+		; Find end of XML declaration
+		declEnd := InStr(s, "?>")
+		if !declEnd
+			return false
+
+		; Forward-scan past the declaration: skip whitespace, then skip any run of comments and/or
+		; DOCTYPE declarations (in any order), then require the root tag at a boundary.
+		p := declEnd + 2
+		loop {
+			while (p <= sLen) {
+				c := SubStr(s, p, 1)
+				if (c != " " && c != "`t" && c != "`r" && c != "`n")
+					break
+				p++
+			}
+			if (SubStr(s, p, 4) == "<!--") {
+				closeAt := InStr(s, "-->", true, p + 4)
+				if !closeAt
+					return false
+				p := closeAt + 3
+				continue
+			}
+			if (SubStr(s, p, 9) == "<!DOCTYPE") {
+				q := p + 9
+				gtPos := InStr(s, ">", true, q)
+				bracketPos := InStr(s, "[", true, q)
+				if (bracketPos && (!gtPos || bracketPos < gtPos)) {
+					closeBracket := InStr(s, "]", true, bracketPos + 1)
+					if !closeBracket
+						return false
+					gtPos := InStr(s, ">", true, closeBracket + 1)
+				}
+				if !gtPos
+					return false
+				p := gtPos + 1
+				continue
+			}
+			break
+		}
+		return RegExMatch(SubStr(s, p), "s)^<svg[\s>/]") > 0
+	}
+
 	static IsNumber(t) => RegExMatch(t, "^[-+]?[$€£¥]?\s?(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?%?$")
 
 	static IsPhone(t) {
@@ -188,7 +288,9 @@ class ClipType {
 		"path", [{id: "reveal", label: "ACT_reveal", short: "ACT_revealShort"}, {id: "openPath", label: "ACT_openPath", short: ""}, {id: "copyFolder", label: "ACT_copyFolder", short: ""}],
 		"color", [{id: "copyHex", label: "ACT_copyHex", short: "ACT_copyHexShort"}, {id: "copyRgb", label: "ACT_copyRgb", short: "ACT_copyRgbShort"}],
 		"json", [{id: "pretty", label: "ACT_pretty", short: "ACT_prettyShort"}, {id: "minify", label: "ACT_minify", short: ""}],
-		"number", [{id: "formatNumber", label: "ACT_formatNumber", short: "ACT_formatNumberShort"}])
+		"number", [{id: "formatNumber", label: "ACT_formatNumber", short: "ACT_formatNumberShort"}],
+		"image", [{id: "openImage", label: "ACT_openImage", short: "ACT_openImageShort"}, {id: "imageDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}],
+		"svg", [{id: "svgomg", label: "ACT_svgomg", short: "ACT_svgomgShort"}, {id: "openVector", label: "ACT_openVector", short: "ACT_openVectorShort"}, {id: "svgDataUri", label: "ACT_dataUri", short: "ACT_dataUriShort"}])
 
 	static Actions(kind) {
 		global TXT
@@ -210,27 +312,73 @@ class ClipType {
 		return acts[1]
 	}
 
-	; runs an action on the clip text; "copy" style actions place the result on the clipboard as a normal copy
-	static Run(id, text) {
+	; runs an action on the clip text; "copy" style actions place the result on the clipboard as a normal copy;
+	; returns whether the clipboard was actually written, so a caller can toast just those
+	static Run(id, text, ref := "") {
+		global ini_defImgEditor, ini_defVectorEditor
+		wrote := false
 		switch id {
 			case "open": BrowserRun(Trim(text))
-			case "stripTracking": ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
+			case "stripTracking": wrote := ClipType.ToClipboard(ClipType.StripTracking(Trim(text)))
 			case "compose": try Run("mailto:" Trim(text))
 			case "reveal": try Run('explorer.exe /select,"' Trim(text) '"')
 			case "openPath": try Run('"' Trim(text) '"')
-			case "copyFolder": ClipType.ToClipboard(ClipType.FolderOf(Trim(text)))
-			case "copyHex": ClipType.ToClipboard(ClipType.ColorHex(text))
-			case "copyRgb": ClipType.ToClipboard(ClipType.ColorRgbText(text))
-			case "pretty": ClipType.ToClipboard(Transforms.PrettyJson(text))
-			case "minify": ClipType.ToClipboard(Transforms.MinifyJson(text))
-			case "formatNumber": ClipType.ToClipboard(ClipType.FormatNumber(text))
+			case "copyFolder": wrote := ClipType.ToClipboard(ClipType.FolderOf(Trim(text)))
+			case "copyHex": wrote := ClipType.ToClipboard(ClipType.ColorHex(text))
+			case "copyRgb": wrote := ClipType.ToClipboard(ClipType.ColorRgbText(text))
+			case "pretty": wrote := ClipType.ToClipboard(Transforms.PrettyJson(text))
+			case "minify": wrote := ClipType.ToClipboard(Transforms.MinifyJson(text))
+			case "formatNumber": wrote := ClipType.ToClipboard(ClipType.FormatNumber(text))
+			case "openImage":
+				png := ImageClip.Temp("png")
+				if ImageClip.PngFrom(ref, png)
+					ClipType.OpenWith(ini_defImgEditor, png)
+				else
+					Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
+			case "imageDataUri":
+				uri := ImageClip.DataUri(ref)
+				if (uri = "") {
+					if (ref != "" && !FileExist(ref))
+						Toast.Show(ClipType_T("ACT_imageUnavailable"), 1600, "warn")
+					else
+						Toast.Show(ClipType_T("ACT_imageTooBig"), 1800, "warn")
+				} else
+					wrote := ClipType.ToClipboard(uri)
+			case "svgomg":
+				wrote := ClipType.ToClipboard(text)
+				BrowserRun("https://jakearchibald.github.io/svgomg/")
+			case "openVector":
+				f := ImageClip.Temp("svg")
+				ok := true
+				try FileAppend(text, f, "UTF-8-RAW")
+				catch
+					ok := false
+				if ok
+					ClipType.OpenWith(ini_defVectorEditor, f)
+				else
+					Toast.Show(ClipType_T("ACT_svgUnavailable"), 1600, "warn")
+			case "svgDataUri": wrote := ClipType.ToClipboard(ImageClip.SvgDataUri(text))
 		}
+		return wrote
+	}
+
+	; runs a configured editor on a file, or says the editor is not set
+	static OpenWith(exe, file) {
+		if (Trim(exe) = "") {
+			Toast.Show(ClipType_T("ACT_noEditor"), 2200, "warn")
+			return
+		}
+		try Run(exe ' "' file '"')
 	}
 
 	static ToClipboard(text) {
 		if (text = "")
-			return
-		try A_Clipboard := text
+			return false
+		try {
+			A_Clipboard := text
+			return true
+		}
+		return false
 	}
 
 	static StripTracking(url) {
@@ -292,11 +440,21 @@ ClipType_Labels() {
 }
 
 ; Map kind -> Array of {id, label, short}, for every kind that has actions; lets a page build a row's context
-; menu synchronously from the row's own "kind" instead of waiting on an async preview/clip fetch
-ClipType_ActionTable() {
+; menu synchronously from the row's own "kind" instead of waiting on an async preview/clip fetch.
+; forWeb drops "short" (only the native Ring/toast chip reads it): the web pages key their Actions
+; button and context menu off a row's own kind via this table, so previews never need to repeat it per clip
+ClipType_ActionTable(forWeb := false) {
 	out := Map()
-	for kind, _ in ClipType.ActionTable
-		out[kind] := ClipType.Actions(kind)
+	for kind, _ in ClipType.ActionTable {
+		acts := ClipType.Actions(kind)
+		if forWeb {
+			stripped := []
+			for a in acts
+				stripped.Push({id: a.id, label: a.label})
+			acts := stripped
+		}
+		out[kind] := acts
+	}
 	return out
 }
 
@@ -308,9 +466,9 @@ ClipType_T(key) {
 }
 
 ; runs an action outside the click handler's thread so a clipboard write is a normal copy
-ClipType_RunLater(id, text, *) {
-	SetTimer(ClipType_RunNow.Bind(id, text), -10)
+ClipType_RunLater(id, text, ref := "", *) {
+	SetTimer(ClipType_RunNow.Bind(id, text, ref), -10)
 }
-ClipType_RunNow(id, text) {
-	ClipType.Run(id, text)
+ClipType_RunNow(id, text, ref := "") {
+	ClipType.Run(id, text, ref)
 }

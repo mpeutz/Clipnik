@@ -13,6 +13,9 @@ check(cond, msg) {
 }
 errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
 cj := Clipjump()
+; the history-row check below needs image storage on for the run, the same as tests/history_image.ahk
+oldImageStored := cj["ini_IsImageStored"]
+cj.setVar("ini_IsImageStored", 1)
 ; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
 if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
     cj.runFunction("compacter()")
@@ -52,8 +55,17 @@ SendEvent("{Ctrl up}")
 Sleep 1000
 check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "HUD card hidden after cancel")
 check(!errorDialog(), "no error dialogs")
+
+n := Integer(cj["CURSAVE"]), ch := Integer(cj["CN.NG"])
+check(cj.runFunction("ClipType_KindOf(" ch "," n ")") = "image", "image clip kind is image")
+dim := cj.runFunction("Image_DimOf(" ch "," n ")")
+check(RegExMatch(dim, "^\d+x\d+$"), "image clip records its size: [" dim "]")
+row := cj.runFunction("Image_LastHistoryDims()")
+check(RegExMatch(row, "^image \d+ \d+$"), "history row carries the kind and size: [" row "]")
+
 Gdip_Shutdown(pToken)
 g.Destroy()
+cj.setVar("ini_IsImageStored", oldImageStored)
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails
 

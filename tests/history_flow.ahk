@@ -21,11 +21,27 @@ snap(name) {
 	p := Gdip_Startup(), b := Gdip_BitmapFromScreen(x "|" y "|" w "|" h)
 	Gdip_SaveBitmapToFile(b, A_ScriptDir "\out\history-" name ".png"), Gdip_DisposeImage(b), Gdip_Shutdown(p)
 }
+; wait for Clipjump to record each seed clip instead of sleeping: a copy that is replaced before the copy
+; path finishes never reaches history, and the row the test then selects is somebody else's clip
+waitClip(needle) {
+	global cj
+	t := A_TickCount
+	loop {
+		if InStr(cj.getClipAt(0, 1), needle)
+			return true
+		if (A_TickCount - t > 8000)
+			return false
+		Sleep 150
+	}
+}
 marker := "history-flow-" A_TickCount
 A_Clipboard := marker
-Sleep 600
-A_Clipboard := "second-" A_TickCount
-Sleep 600
+check("marker clip recorded", waitClip(marker))
+Sleep 400
+second := "second-" A_TickCount
+A_Clipboard := second
+check("second clip recorded", waitClip(second))
+Sleep 400
 try FileDelete(logFile)
 cj.runLabel("history")
 check("window opens", WinWait(title, , 8) != 0)
@@ -38,12 +54,36 @@ readLog() {
 check("list sent to the page", InStr(readLog(), '"cmd":"list"'))
 check("kinds sent to the page", InStr(readLog(), '"cmd":"kinds"'))
 check("rows carry a kind", InStr(readLog(), '"kind":"text"') || InStr(readLog(), '"kind":"'))
-Send("{Down}")
-Sleep 300
-Send("{Down}")
-Sleep 600
-txt := readLog()
-check("preview requested", InStr(txt, '"cmd":"preview"'))
+; Which row the marker lands on depends on how quickly Clipjump commits each copy to history, so the list is
+; narrowed to the marker with the search box rather than walking a fixed number of rows. The retry covers a
+; history insert that has not committed yet when the first search runs; ArrowDown moves focus out of the
+; search box (select() focuses the table), so Ctrl+C afterwards still reaches the list.
+lastPreview() {
+	last := ""
+	for line in StrSplit(readLog(), "`n", "`r")
+		if InStr(line, '"cmd":"preview"')
+			last := line
+	return last
+}
+reached := false
+loop 3 {
+	Send("^f")
+	Sleep 300
+	Send("^a")
+	Send(marker)
+	Sleep 900
+	Send("{Down}")
+	t := A_TickCount			; the preview is a round trip through the page and the log is written after it lands
+	while (!InStr(lastPreview(), marker) && A_TickCount - t < 4000)
+		Sleep 150
+	if InStr(lastPreview(), marker) {
+		reached := true
+		break
+	}
+}
+check("search sent to host", InStr(readLog(), '"q":"' marker '"'))
+check("preview requested", InStr(readLog(), '"cmd":"preview"'))
+check("keyboard selection reached the marker clip", reached)
 snap("selected")
 A_Clipboard := ""
 SendEvent("{Ctrl down}c")
@@ -51,15 +91,12 @@ Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 800
 check("Ctrl+C copied the selected clip", InStr(A_Clipboard, marker))
-Send("^f")
-Sleep 200
-Send("history-flow")
-Sleep 800
-txt := readLog()
-check("search sent to host", InStr(txt, '"q":"history-flow"'))
 snap("search")
+Send("^f")					; back in the search box, where the first Esc clears the filter and the second closes
+Sleep 300
 Send("{Esc}")
-Sleep 200
+Sleep 400
+check("first Esc left the window open", WinExist(title) != 0)
 Send("{Esc}")
 Sleep 800
 check("Esc closes the window", !WinExist(title))
