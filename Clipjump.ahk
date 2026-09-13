@@ -578,6 +578,13 @@ clipChange(CErrorlevel, clipboard_copy) {
 				return
 			}
 
+			; clipboard_copy is what OnClipboardChange handed us, which can still be the moment before the new
+			; content landed: writers clear the clipboard first and that empty state is its own notification.
+			; clipSaver captured the clipboard as it actually was, so take the clip from there -- otherwise the
+			; kind, the history row and the toast all describe a clip that is not the one that was stored.
+			if !ISACTIVEEXCEL
+				LASTCLIP := CDS[CN.NG][CURSAVE]
+
 			LASTKIND := ClipType.Detect(LASTCLIP)
 			ClipType.Store(CN.NG, CURSAVE, LASTKIND)
 
