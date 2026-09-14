@@ -54,9 +54,13 @@
       return `<div class="tr${state.sel.has(r.id) ? " sel" : ""}" data-id="${r.id}" tabindex="-1" draggable="false">` +
         `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
     }).join("");
+    // the Vault has one order and it is the user's, so no header carries a sort arrow there: the caret and
+    // the pointer cursor would both promise a sort that does not happen
+    const sortable = state.view !== "vault";
+    el("hdr").classList.toggle("nosort", !sortable);
     document.querySelectorAll("#hdr span").forEach((s) => {
-      s.classList.toggle("sorted", s.dataset.sort === state.sort);
-      s.classList.toggle("asc", s.dataset.sort === state.sort && state.asc);
+      s.classList.toggle("sorted", sortable && s.dataset.sort === state.sort);
+      s.classList.toggle("asc", sortable && s.dataset.sort === state.sort && state.asc);
     });
   }
 
