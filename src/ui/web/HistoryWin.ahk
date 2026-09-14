@@ -230,13 +230,71 @@ class HistoryWin {
 	}
 
 	static Delete(d) {
+		global TXT
 		ids := (d is Map && d.Has("ids")) ? d["ids"] : d
 		vault := HistoryWin.View(d) = "vault"
 		if !(ids is Array)
 			return
+		if vault {
+			HistoryWin.host.g.Opt("+OwnDialogs")
+			if (MsgBox(TXT.VLT_deleteMsg, TXT.VLT__name, 257) != "OK")
+				return
+		}
 		for id in ids
 			if IsInteger(id)
 				vault ? vaultDelete(id) : deleteHistoryById(id)
+		HistoryWin.host.Post("refreshed")
+	}
+
+	static Rename(d) {
+		global STORE, TXT
+		HistoryWin.View(d)
+		rec := vaultGet(d["id"])
+		if !rec
+			return
+		STORE.ErrorLevel := 0
+		out := multInputBox(TXT.VLT_nameTitle, TXT.VLT_namePrompt, 1, rec["name"], "History")
+		if (STORE.ErrorLevel == 1)
+			vaultSetName(d["id"], out)
+		HistoryWin.host.Post("refreshed")
+	}
+
+	static MoveEntry(d) {
+		HistoryWin.View(d)
+		if vaultMove(d["id"], Integer(d["delta"]))
+			HistoryWin.host.Post("refreshed")
+	}
+
+	; saves whatever is on the clipboard right now: an image when Gdip finds one there, otherwise the text
+	static AddFromClipboard() {
+		global TXT
+		HistoryWin.curView := "vault"
+		t := Gdip_Startup()
+		bm := Gdip_CreateBitmapFromClipboard()
+		if (bm > 0) {
+			png := ImageClip.Temp("png")
+			ok := (Gdip_SaveBitmapToFile(bm, png) = 0)
+			w := Gdip_GetImageWidth(bm), h := Gdip_GetImageHeight(bm)
+			Gdip_DisposeImage(bm), Gdip_Shutdown(t)
+			rel := ok ? vaultImageFile(png) : ""
+			try FileDelete(png)
+			if (rel != "") {
+				vaultAdd("[IMAGE]", 1, rel, "image", w, h)
+				HistoryWin.host.Post("toast", TXT.VLT_added)
+				HistoryWin.host.Post("refreshed")
+			} else
+				HistoryWin.host.Post("toast", TXT.VLT_nothingToAdd)
+			return
+		}
+		Gdip_Shutdown(t)
+		text := ""
+		try text := A_Clipboard
+		if (Trim(text) = "") {
+			HistoryWin.host.Post("toast", TXT.VLT_nothingToAdd)
+			return
+		}
+		vaultAdd(text, 0)
+		HistoryWin.host.Post("toast", TXT.VLT_added)
 		HistoryWin.host.Post("refreshed")
 	}
 
@@ -251,7 +309,7 @@ class HistoryWin {
 
 	static I18n() {
 		global TXT
-		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes", "HST_actions", "HST_viewHistory", "VLT__name", "VLT_yourOrder"]
+		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes", "HST_actions", "HST_viewHistory", "VLT__name", "VLT_yourOrder", "VLT_add", "VLT_rename", "VLT_moveUp", "VLT_moveDown"]
 		m := Map()
 		for k in keys
 			m[k] := TXT.%k%
@@ -267,6 +325,7 @@ History_SetView(v) {
 	return v
 }
 History_Close() => HistoryWin.Close()
+History_AddFromClipboard() => HistoryWin.AddFromClipboard()
 
 HistoryWin_OnMessage(cmd, data, host) {
 	global history_partial
@@ -283,6 +342,9 @@ HistoryWin_OnMessage(cmd, data, host) {
 		case "export": HistoryWin.Export(data)
 		case "delete": HistoryWin.Delete(data)
 		case "action": HistoryWin.Action(data)
+		case "rename": HistoryWin.Rename(data)
+		case "move": HistoryWin.MoveEntry(data)
+		case "addClipboard": HistoryWin.AddFromClipboard()
 		case "clear": HistoryWin.Clear()
 		case "setPartial": history_partial := data ? 1 : 0
 		case "close": HistoryWin.Close()

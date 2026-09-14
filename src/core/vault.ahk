@@ -188,3 +188,19 @@ Vault_KindOf(id) {
 	r := vaultGet(id)
 	return r ? r["kind"] : ""
 }
+Vault_NameOf(id) {
+	r := vaultGet(id)
+	return r ? r["name"] : ""
+}
+Vault_FileOf(id) {
+	r := vaultGet(id)
+	return r ? r["fileid"] : ""
+}
+; the ids in the user's order, comma separated: a flow test reads the order from the store rather than from
+; the page's log line, which the host truncates at 200 characters
+Vault_Order() {
+	out := ""
+	for r in vaultList()["rows"]
+		out .= (out != "" ? "," : "") r["id"]
+	return out
+}

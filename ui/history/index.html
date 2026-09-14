@@ -8,6 +8,8 @@
   <script src="../common/bridge.js"></script>
   <style>
     #hdr, #rows .tr { grid-template-columns: minmax(0, 1fr) 84px 150px 70px; }
+    /* .edit is width:100% for dialog fields; in the toolbar it would crowd the buttons off the end */
+    .toolbar .edit { width: auto; min-width: 110px; max-width: 200px; }
   </style>
 </head>
 <body>
@@ -23,6 +25,7 @@
     <select class="edit" id="kind" title="Type"><option value="" data-i18n="HST_allTypes">All types</option></select>
     <button class="btn" id="refresh" data-i18n="HST_refresh">Refresh</button>
     <button class="btn" id="clear" data-i18n="HST_clear">Clear history…</button>
+    <button class="btn" id="addClip" data-i18n="VLT_add" hidden>Add from clipboard</button>
   </div>
   <div class="split">
     <div class="pane">
