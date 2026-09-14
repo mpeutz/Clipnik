@@ -7,9 +7,9 @@
     HST_export: "Export", HST_delete: "Delete", HST_empty: "Nothing copied yet", HST_noMatch: "No clips match", HST_items: "items",
     HST_match: "of %2 items match", HST_onDisk: "on disk", HST_sortedBy: "sorted by", HST_selectHint: "Select a clip to preview it",
     HST_viewimage: "[IMAGE]", HST_today: "Today", HST_yesterday: "Yesterday", HST_type: "Type", HST_allTypes: "All types",
-    HST_actions: "Actions",
+    HST_actions: "Actions", HST_viewHistory: "History", VLT__name: "Vault", VLT_yourOrder: "in your order",
   };
-  const state = { q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {}, actionsByKind: {} };
+  const state = { view: "history", q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {}, actionsByKind: {} };
   const rowsEl = el("rows"), tableEl = el("table"), qEl = el("q");
 
   function applyI18n() {
@@ -37,7 +37,7 @@
   const searchWords = () => { const q = state.q.trim(); return state.partial ? q.split(/\s+/).filter(Boolean) : (q ? [q] : []); };
 
   function requestList() {
-    bridge.send("list", { q: state.q, partial: state.partial ? 1 : 0, sort: state.sort, asc: state.asc ? 1 : 0, kind: state.kind });
+    bridge.send("list", { view: state.view, q: state.q, partial: state.partial ? 1 : 0, sort: state.sort, asc: state.asc ? 1 : 0, kind: state.kind });
   }
 
   function render() {
@@ -49,7 +49,7 @@
     }
     rowsEl.innerHTML = state.rows.map((r) => {
       const isImg = +r.type === 1;
-      const text = isImg ? T.HST_viewimage : oneLine(r.clip, 220);
+      const text = r.name ? r.name : (isImg ? T.HST_viewimage : oneLine(r.clip, 220));
       const html = hlWords(text, words);
       return `<div class="tr${state.sel.has(r.id) ? " sel" : ""}" data-id="${r.id}" tabindex="-1" draggable="false">` +
         `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
@@ -63,8 +63,10 @@
   function renderStatus(d) {
     const q = state.q.trim();
     el("count").textContent = q ? `${d.matched} ${T.HST_match.replace("%2", d.total)}` : `${d.total} ${T.HST_items}`;
+    // the vault has one order and it is the user's, so there is no sort to name
     const sortName = { clip: T.HST_clip, time: T.HST_date, size: T.HST_size }[state.sort];
-    el("disk").textContent = `${bytes(d.bytes)} ${T.HST_onDisk} · ${T.HST_sortedBy} ${sortName.toLowerCase()}`;
+    const sorted = state.view === "vault" ? T.VLT_yourOrder : `${T.HST_sortedBy} ${sortName.toLowerCase()}`;
+    el("disk").textContent = `${bytes(d.bytes)} ${T.HST_onDisk} · ${sorted}`;
   }
 
   function select(id, { add = false, range = false, focus = true } = {}) {
@@ -86,7 +88,7 @@
     const n = rowsEl.querySelector(`.tr[data-id="${id}"]`);
     if (n) n.scrollIntoView({ block: "nearest" });
     if (focus) tableEl.focus({ preventScroll: true });
-    if (state.sel.size === 1) bridge.send("get", id);
+    if (state.sel.size === 1) bridge.send("get", { view: state.view, id });
     else showPreview(null);
     updateButtons();
   }
@@ -125,15 +127,15 @@
       body.className = "body mono";
       body.innerHTML = hlWords(rec.data, searchWords());
     }
-    if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[rec.kind] || rec.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { id: rec.id, action: id })));
+    if (acts.length) el("actions").addEventListener("click", () => cj.menu(el("actions"), [{ head: state.labels[rec.kind] || rec.kind }, ...acts.map((a) => ({ id: a.id, label: a.label }))], (id) => bridge.send("action", { view: state.view, id: rec.id, action: id })));
     updateButtons();
   }
 
   function act(name) {
     const ids = [...state.sel];
     if (!ids.length) return;
-    if (name === "instaPaste" || name === "delete") bridge.send(name, ids);
-    else if (ids.length === 1) bridge.send(name, ids[0]);
+    if (name === "instaPaste" || name === "delete") bridge.send(name, { view: state.view, ids });
+    else if (ids.length === 1) bridge.send(name, { view: state.view, id: ids[0] });
   }
 
   // ---------- events ----------
@@ -145,12 +147,13 @@
     state.sel = new Set([...state.sel].filter((id) => ids.has(id)));
     render();
     renderStatus(d);
-    if (state.sel.size === 1) bridge.send("get", [...state.sel][0]);
+    if (state.sel.size === 1) bridge.send("get", { view: state.view, id: [...state.sel][0] });
     else showPreview(null);
   });
   bridge.on("preview", (rec) => { rec.id = +rec.id; if (state.sel.size === 1 && state.sel.has(rec.id)) showPreview(rec); });
   bridge.on("toast", (t) => cj.toast(t));
   bridge.on("refreshed", requestList);
+  bridge.on("setView", (v) => setView(v === "vault" ? "vault" : "history"));
   bridge.on("kinds", (d) => {
     state.kinds = d.kinds || [], state.labels = d.labels || {}, state.actionsByKind = d.actions || {};
     const sel = el("kind");
@@ -171,9 +174,23 @@
   qEl.addEventListener("input", debounce(() => { state.q = qEl.value; requestList(); }, 120));
   el("partial").addEventListener("click", () => { state.partial = true; el("partial").classList.add("on"); el("exact").classList.remove("on"); bridge.send("setPartial", 1); requestList(); });
   el("exact").addEventListener("click", () => { state.partial = false; el("exact").classList.add("on"); el("partial").classList.remove("on"); bridge.send("setPartial", 0); requestList(); });
+  function setView(v) {
+    if (state.view === v) return;
+    state.view = v;
+    el("viewHistory").classList.toggle("on", v === "history");
+    el("viewVault").classList.toggle("on", v === "vault");
+    el("clear").hidden = v === "vault";
+    state.sel.clear();
+    state.focusId = null;
+    showPreview(null);
+    requestList();
+  }
+  el("viewHistory").addEventListener("click", () => setView("history"));
+  el("viewVault").addEventListener("click", () => setView("vault"));
   el("refresh").addEventListener("click", requestList);
   el("clear").addEventListener("click", () => bridge.send("clear"));
   el("hdr").addEventListener("click", (e) => {
+    if (state.view === "vault") return;
     const s = e.target.closest("[data-sort]");
     if (!s) return;
     if (state.sort === s.dataset.sort) state.asc = !state.asc; else { state.sort = s.dataset.sort; state.asc = s.dataset.sort === "clip"; }
@@ -195,7 +212,7 @@
     const acts = row ? (state.actionsByKind[row.kind] || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
     const items = [...(acts.length ? [{ head: state.labels[row.kind] || row.kind }, ...acts, { sep: true }] : []),
       { id: "copy", label: T.HST_copy, key: "Ctrl+C" }, { id: "instaPaste", label: T.HST_insta, key: "Space" }, { id: "edit", label: T.HST_edit, key: "Ctrl+H" }, { id: "delete", label: T.HST_delete, key: "Del" }];
-    cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { id, action: pick.slice(4) }) : act(pick));
+    cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { view: state.view, id, action: pick.slice(4) }) : act(pick));
   });
   document.querySelector(".actions").addEventListener("click", (e) => {
     const b = e.target.closest("[data-act]");
