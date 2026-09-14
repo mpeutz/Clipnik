@@ -578,6 +578,7 @@ VLT_namePrompt = A short label, or leave it blank to show the clip text
 VLT_deleteMsg = Delete permanently? The Vault is the only copy.
 VLT_nothingToAdd = Nothing on the clipboard to save
 VLT_added = Saved to the Vault
+VLT_saveToVault = Save to Vault
 TRF_upper = Upper case
 TRF_lower = Lower case
 TRF_title = Title case

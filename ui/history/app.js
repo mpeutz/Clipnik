@@ -7,7 +7,7 @@
     HST_export: "Export", HST_delete: "Delete", HST_empty: "Nothing copied yet", HST_noMatch: "No clips match", HST_items: "items",
     HST_match: "of %2 items match", HST_onDisk: "on disk", HST_sortedBy: "sorted by", HST_selectHint: "Select a clip to preview it",
     HST_viewimage: "[IMAGE]", HST_today: "Today", HST_yesterday: "Yesterday", HST_type: "Type", HST_allTypes: "All types",
-    HST_actions: "Actions", HST_viewHistory: "History", VLT__name: "Vault", VLT_yourOrder: "in your order", VLT_add: "Add from clipboard", VLT_rename: "Rename...", VLT_moveUp: "Move up", VLT_moveDown: "Move down",
+    HST_actions: "Actions", HST_viewHistory: "History", VLT__name: "Vault", VLT_yourOrder: "in your order", VLT_add: "Add from clipboard", VLT_rename: "Rename...", VLT_moveUp: "Move up", VLT_moveDown: "Move down", VLT_saveToVault: "Save to Vault",
   };
   const state = { view: "history", q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {}, actionsByKind: {} };
   const rowsEl = el("rows"), tableEl = el("table"), qEl = el("q");
@@ -135,6 +135,10 @@
     const ids = [...state.sel];
     if (!ids.length) return;
     // the vault-only actions work on one entry and are meaningless in the history view
+    if (name === "saveToVault") {
+      if (state.view !== "vault" && ids.length === 1) bridge.send("saveToVault", { view: state.view, id: ids[0] });
+      return;
+    }
     if (name === "rename" || name === "moveUp" || name === "moveDown") {
       if (state.view !== "vault" || ids.length !== 1) return;
       if (name === "rename") bridge.send("rename", { view: state.view, id: ids[0] });
@@ -224,6 +228,7 @@
       { id: "moveDown", label: T.VLT_moveDown, key: "Alt+Down" }, { sep: true }];
     const items = [...(acts.length ? [{ head: state.labels[row.kind] || row.kind }, ...acts, { sep: true }] : []),
       ...vaultItems,
+      ...(state.view === "vault" ? [] : [{ id: "saveToVault", label: T.VLT_saveToVault }, { sep: true }]),
       { id: "copy", label: T.HST_copy, key: "Ctrl+C" }, { id: "instaPaste", label: T.HST_insta, key: "Space" }, { id: "edit", label: T.HST_edit, key: "Ctrl+H" }, { id: "delete", label: T.HST_delete, key: "Del" }];
     cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { view: state.view, id, action: pick.slice(4) }) : act(pick));
   });

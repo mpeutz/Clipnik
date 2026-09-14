@@ -246,6 +246,31 @@ class HistoryWin {
 		HistoryWin.host.Post("refreshed")
 	}
 
+	; copies a history row into the Vault. An image row only ever held the preview copy, so that is what the
+	; Vault gets: by the time a clip reaches history its original pixels are long gone.
+	static Toast(t) {
+		if HistoryWin.host
+			HistoryWin.host.Post("toast", t)
+	}
+
+	static SaveToVault(d) {
+		global TXT
+		HistoryWin.View(d)
+		rec := historyGet(d["id"])
+		if !rec
+			return
+		if (rec["type"] = 1) {
+			rel := vaultImageFile(A_WorkingDir "\" rec["fileid"])
+			if (rel = "") {
+				HistoryWin.Toast(TXT.ACT_imageUnavailable)
+				return
+			}
+			vaultAdd("[IMAGE]", 1, rel, "image", rec["width"] ? rec["width"] : 0, rec["height"] ? rec["height"] : 0)
+		} else
+			vaultAdd(rec["data"], 0, "", rec["kind"])
+		HistoryWin.Toast(TXT.VLT_added)
+	}
+
 	static Rename(d) {
 		global STORE, TXT
 		HistoryWin.View(d)
@@ -326,6 +351,12 @@ History_SetView(v) {
 }
 History_Close() => HistoryWin.Close()
 History_AddFromClipboard() => HistoryWin.AddFromClipboard()
+History_SaveToVault(id) => HistoryWin.SaveToVault(Map("id", id))
+; test hook: the id of the newest history row
+History_NewestId() {
+	r := getFromTable("history", "max(id)", "id>-1")
+	return (r && r[1] != "") ? r[1] : 0
+}
 
 HistoryWin_OnMessage(cmd, data, host) {
 	global history_partial
@@ -342,6 +373,7 @@ HistoryWin_OnMessage(cmd, data, host) {
 		case "export": HistoryWin.Export(data)
 		case "delete": HistoryWin.Delete(data)
 		case "action": HistoryWin.Action(data)
+		case "saveToVault": HistoryWin.SaveToVault(data)
 		case "rename": HistoryWin.Rename(data)
 		case "move": HistoryWin.MoveEntry(data)
 		case "addClipboard": HistoryWin.AddFromClipboard()

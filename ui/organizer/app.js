@@ -4,7 +4,7 @@
   const T = {
     ORG_search: "Search clips", ORG_NewClip: "New clip", ORG_newChannel: "New channel", ORG_chooseCh: "Active channel", ORG_channels: "Channels",
     ORG_clip: "Clip", ORG_tags: "Tags", ORG_fixed: "Fixed", ORG_insta: "Insta-Paste", ORG_openPst: "Paste mode", ORG_editBtn: "Edit",
-    ORG_moveTo: "Move to…", ORG_copyTo: "Copy to…", ORG_delete: "Delete", ORG_moveUp: "Move up", ORG_moveDown: "Move down",
+    ORG_moveTo: "Move to…", ORG_copyTo: "Copy to…", VLT_saveToVault: "Save to Vault", ORG_delete: "Delete", ORG_moveUp: "Move up", ORG_moveDown: "Move down",
     ORG_countStatus: "items listed", ORG_selectHint: "Select a clip", ORG_moveTitle: "Move %1 to", ORG_copyTitle: "Copy %1 to",
     ORG_moveBtn: "Move", ORG_copyBtn: "Copy", ORG_delChTitle: "Delete channel %1", ORG_delChText: "%1 clips are in this channel. What should happen to them?",
     ORG_delChMove: "Move them to another channel", ORG_delChDelete: "Delete the clips too", ORG_delChEmpty: "Keep the channel, delete the clips",
@@ -220,6 +220,7 @@
       case "copyTo": pickChannel(true); break;
       case "pasteMode": if (ns.length === 1) bridge.send("pasteMode", { channel: state.channel, n: ns[0] }); break;
       case "edit": if (ns.length === 1) bridge.send("edit", { channel: state.channel, n: ns[0] }); break;
+      case "saveToVault": if (ns.length === 1) bridge.send("saveToVault", { channel: state.channel, n: ns[0] }); break;
     }
   }
 
@@ -277,7 +278,8 @@
     const row = state.rows.find((r) => r.n === n);
     const acts = row ? (state.actionsByKind[row.kind] || []).map((a) => ({ id: "act:" + a.id, label: a.label })) : [];
     const items = [...(acts.length ? [{ head: state.labels[row.kind] || row.kind }, ...acts, { sep: true }] : []),
-      { id: "paste", label: T.ORG_insta, key: "Space" }, { id: "edit", label: T.ORG_editBtn, key: "F2" }, { id: "delete", label: T.ORG_delete, key: "Del" }];
+      { id: "paste", label: T.ORG_insta, key: "Space" }, { id: "edit", label: T.ORG_editBtn, key: "F2" },
+      { id: "saveToVault", label: T.VLT_saveToVault }, { id: "delete", label: T.ORG_delete, key: "Del" }];
     cj.menu({ x: e.clientX, y: e.clientY }, items, (pick) => pick.startsWith("act:") ? bridge.send("action", { channel: state.channel, n, action: pick.slice(4) }) : act(pick));
   });
   document.querySelector(".actions").addEventListener("click", (e) => { const b = e.target.closest("[data-act]"); if (b) act(b.dataset.act); });
