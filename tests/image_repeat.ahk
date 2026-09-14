@@ -13,6 +13,9 @@ check(name, cond) {
 		fails++
 }
 strength() => Integer(cj.runFunction("API.getChStrength(0)"))
+; the highest history id before this test copies anything, so its cleanup can name the rows it created
+; instead of deleting every small image in the user's history
+histBefore := Integer(cj.runFunction("History_NewestId()"))
 putImage(color) {
 	pBitmap := Gdip_CreateBitmap(140, 70)
 	G := Gdip_GraphicsFromImage(pBitmap)
@@ -39,7 +42,7 @@ cj.runFunction("API.deleteClip(0,1)")
 Sleep 300
 cj.runFunction("API.deleteClip(0,1)")
 Sleep 300
-cj.runFunction("execSql(delete from history where type=1 and size<2000)")
+cj.runFunction("execSql(delete from history where type=1 and id>" histBefore ")")
 loop files A_ScriptDir "\..\cache\history\*.jpg"
 	if (FileGetSize(A_LoopFileFullPath) < 2000)
 		try FileDelete(A_LoopFileFullPath)

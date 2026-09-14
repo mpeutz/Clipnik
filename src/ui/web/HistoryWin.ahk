@@ -353,6 +353,10 @@ History_Close() => HistoryWin.Close()
 History_AddFromClipboard() => HistoryWin.AddFromClipboard()
 History_SaveToVault(id) => HistoryWin.SaveToVault(Map("id", id))
 ; test hook: the id of the newest history row
+History_Count() {
+	r := getFromTable("history", "count(*)", "id>-1")
+	return r ? r[1] : 0
+}
 History_NewestId() {
 	r := getFromTable("history", "max(id)", "id>-1")
 	return (r && r[1] != "") ? r[1] : 0

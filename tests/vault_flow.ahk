@@ -140,9 +140,15 @@ Gdip_Shutdown(p2)
 check("saved at the original size, not the thumbnail's (" w "x" h ")", w = 140 && h = 90)
 
 step("nothing prunes the Vault")
+; historyCleanup, not historyPrune with limits of our own: this runs against the user's real database, and a
+; call like historyPrune(1,1,1) would trim their Clipboard History to a single row every time the suite ran.
+; historyCleanup applies the limits already configured in settings, which is what happens daily anyway.
+; The limits themselves are covered against a temporary database in tests/history_prune.ahk.
 n := Integer(cj.runFunction("vaultCount()"))
-cj.runFunction("historyPrune(1,1,1)")
-check("the tightest possible prune leaves it alone", Integer(cj.runFunction("vaultCount()")) = n)
+hist := Integer(cj.runFunction("History_Count()"))
+cj.runFunction("historyCleanup()")
+check("the cleanup that runs daily leaves the Vault alone", Integer(cj.runFunction("vaultCount()")) = n)
+check("and it did not empty history either (" hist " rows)", Integer(cj.runFunction("History_Count()")) > 0 || hist = 0)
 
 step("delete takes the entry and its file")
 cj.runFunction("vaultDelete(" img ")")
