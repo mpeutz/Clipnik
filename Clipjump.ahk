@@ -143,6 +143,7 @@ global new_limitMaxClips := "", new_MaxClips := "", new_Threshold := "", new_Qua
 
 ;State shared between the paste-mode routines (v1 kept these as globals written by labels)
 global is_pstMode_active := 0, realActive := 0, realclipno := 0, halfClip := "", fixStatus := "", temp_clipboard := ""
+global VAULT := CJMap()   ; ACTIVE, ids (captured when the Vault is entered), i (1-based index into ids)
 		, dopop := 0, oldclip_data := "", oldclip_exist := 0, sleeptime := 300, temp_spmWasActive := 0, firstPasteMode := 0
 		, jumpClip_sign := 0, lastClipboardTime := 0, prefs_changed := 0, onetimeOn := 0, isnewdb := 0, temp21 := ""
 		, editclip_pid := 0, editclip_cancelled := 0, holdclip_continue := 0, matched_pformat := 0
@@ -260,7 +261,7 @@ MORE SETTINGS A/C USER SETTINGS
 ******************************
 */
 
-for pmk in StrSplit("a|c|s|z|space|x|e|up|down|f|h|Enter|t|F1|q", "|")
+for pmk in StrSplit("a|c|s|z|space|x|e|up|down|f|h|Enter|t|F1|q|b", "|")
 	pastemodekey[pmk] := pmk
 
 ;Setting Up shortcuts
@@ -428,6 +429,13 @@ paste(*) {
 
 		if !is_pstMode_active
 			hkZ_pasteMode(1), is_pstMode_active := 1
+
+		if VAULT.ACTIVE 				;walking the Vault: V steps its entries and leaves the clip stack where it is
+		{
+			vaultStep(1)
+			SetTimer(ctrlCheck, 50)
+			return
+		}
 
 		if !IScurCBACTIVE 				;if the current clipboard is not asked for , then only load from file
 			try_ClipboardfromFile(A_WorkingDir "/" CLIPS_dir "/" TEMPSAVE ".avc") 	; gets file onto clipboard trying 100 times
@@ -718,11 +726,71 @@ clipChange(CErrorlevel, clipboard_copy) {
 	return returnV
 }
 
+; ---- the Vault in paste mode -------------------------------------------------------------------------
+; B swaps the walker between the clip stack and the Vault. The id list is captured on entry, so an edit made
+; in the Clipboard History window mid-walk cannot move what the next keypress lands on.
+vaultToggle(*) {
+	global
+	local r
+	Critical "On"
+	if WinActive("ahk_group " IGNORE_GROUP)
+		return
+	if !is_pstMode_active
+		return
+	if VAULT.ACTIVE
+	{
+		VAULT.ACTIVE := 0
+		IScurCBACTIVE := 0
+		try_ClipboardfromFile(CLIPS_dir "/" realActive ".avc")   ; back to the clip the walker was showing
+		temp_clipboard := tryGetClipboard()
+		fixStatus := fixCheck()
+		realclipno := CURSAVE - realActive + 1
+		halfClip := (StrLen(temp_clipboard) > 200) ? SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW : temp_clipboard
+		PasteModeTooltip(temp_clipboard)
+		return
+	}
+	if !vaultCount()
+	{
+		autoTooltip(TXT.VLT_empty, 900, 2)
+		return
+	}
+	VAULT.ids := []
+	for r in vaultList()["rows"]
+		VAULT.ids.Push(r["id"])
+	VAULT.i := 1, VAULT.ACTIVE := 1
+	vaultStep(0)
+}
+
+; loads the entry at the current index after moving by delta, wrapping at both ends the way the clip walker does
+vaultStep(delta) {
+	global
+	local n := VAULT.ids.Length
+	if !n
+	{
+		VAULT.ACTIVE := 0
+		return
+	}
+	VAULT.i := Mod(VAULT.i - 1 + delta + n, n) + 1
+	IScurCBACTIVE := 0
+	vaultToClipboard(VAULT.ids[VAULT.i])
+	temp_clipboard := tryGetClipboard()
+	halfClip := (StrLen(temp_clipboard) > 200) ? SubStr(temp_clipboard, 1, 200) "`n`n" MSG_MORE_PREVIEW : temp_clipboard
+	PasteModeTooltip(temp_clipboard)
+}
+
+; test hook: "1 <i>/<total>" while paste mode is walking the Vault, else "0"
+Vault_IsActive() => VAULT.ACTIVE ? "1 " VAULT.i "/" VAULT.ids.Length : "0"
+
 moveBack(*) {
 	global
 	Critical "On"
 	if WinActive("ahk_group " IGNORE_GROUP)
 		return
+	if VAULT.ACTIVE
+	{
+		vaultStep(-1)
+		return
+	}
 	IN_BACK := true
 	TEMPSAVE := realActive + 1
 	if (realActive = CURSAVE)
@@ -760,6 +828,8 @@ IN_BACK_correction() { 	; corrects TEMPSAVE value when C (backwards) is used in 
 
 multiPaste_run(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	if SPM.ACTIVE && WinExist("Clipjump_SPM ahk_class AutoHotkeyGUI") {
 		WinHide("Clipjump_SPM ahk_class AutoHotkeyGUI")
 		WinWaitNotActive("Clipjump_SPM ahk_class AutoHotkeyGUI")
@@ -778,6 +848,8 @@ multiPaste_run(*) {
 
 cancel(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	ctrlref := "cancel"
 	Hud.SetMode("cancel")
 	if SPM.ACTIVE
@@ -956,6 +1028,8 @@ Formatting_Letter(name, pref, used) {
 
 fixate(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	if clipPref(CN.NG, realActive, FIXATE_txt)
 		fixStatus := "", CPS[CN.NG][realActive].Remove(FIXATE_txt)
 	else
@@ -965,12 +1039,17 @@ fixate(*) {
 }
 
 TogglejumpClip(*) {
+	global VAULT
+	if VAULT.ACTIVE
+		return
 	global jumpClip_sign
 	jumpClip_sign := !jumpClip_sign
 }
 
 AddjumpClip(ThisHotkey := "", *) {
 	global
+	if VAULT.ACTIVE
+		return
 	if IN_BACK
 		IN_BACK_correction()
 	TEMPSAVE += (!jumpClip_sign ? -SubStr(ThisHotkey, 2) + 1 : SubStr(ThisHotkey, 2) + 1)
@@ -986,6 +1065,8 @@ AddjumpClip(ThisHotkey := "", *) {
 
 move_to_first(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	API.manageClip(CN.NG, CN.NG, realClipNo, 0)
 	navigate_to_first()
 }
@@ -1000,6 +1081,8 @@ navigate_to_first(*) {
 
 setClipTag(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	local ib
 	endPastemode()
 	ib := InputBox(TXT.TIP_tagprompt, TXT._tags, , clipPref(CN.NG, realActive, "Tags"))
@@ -1205,7 +1288,7 @@ ctrlCheck(*) {
 			}
 		}
 
-		IN_BACK := is_pstMode_active := oldclip_exist := jumpClip_sign := 0
+		IN_BACK := is_pstMode_active := oldclip_exist := jumpClip_sign := 0, VAULT.ACTIVE := 0
 		hkZ_pasteMode(0)
 		restoreCaller := 1 			; Restore CALLER in the ONC label . This a second line of defence wrt to the last line of this label.
 
@@ -1264,7 +1347,7 @@ endPastemode(*) {
 	if !IScurCBACTIVE
 		try A_Clipboard := oldclip_data
 	API.blockMonitoring(0)
-	ctrlRef := "", restoreCaller := is_pstMode_active := IN_BACK := oldclip_exist := jumpClip_sign := 0
+	ctrlRef := "", restoreCaller := is_pstMode_active := IN_BACK := oldclip_exist := jumpClip_sign := 0, VAULT.ACTIVE := 0
 	hkZ_pasteMode(0), CALLER := CALLER_STATUS
 	if ini_revFormat2def
 		set_pformat(ini_def_Pformat)
@@ -1306,7 +1389,7 @@ hkZ_pasteMode(mode := 0, disableAll := 1) {
 	hkZ_pi(pastemodekey.space, fixate, mode), hkZ_pi(pastemodekey.s, Ssuspnd, mode), hkZ_pi(pastemodekey.e, export, mode)
 	hkZ_pi(pastemodekey.up, channel_up, mode), hkZ_pi(pastemodekey.down, channel_down, mode), hkZ_pi(pastemodekey.a, navigate_to_first, mode)
 	hkZ_pi(pastemodekey.f, searchpm, mode), hkZ_pi(pastemodekey.h, editclip_pm, mode), hkZ_pi(pastemodekey.enter, multiPaste_run, mode)
-	hkZ_pi(pastemodekey.t, setClipTag, mode), hkZ_pi(pastemodekey.F1, pstMode_Help, mode), hkZ_pi(pastemodekey.q, move_to_first, mode)
+	hkZ_pi(pastemodekey.t, setClipTag, mode), hkZ_pi(pastemodekey.F1, pstMode_Help, mode), hkZ_pi(pastemodekey.q, move_to_first, mode), hkZ_pi(pastemodekey.b, vaultToggle, mode)
 
 	if (!mode) && disableAll        ;init Cj
 	{
@@ -1321,12 +1404,16 @@ hkZ_pasteMode(mode := 0, disableAll := 1) {
 
 channel_up(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	CN.NG += 2
 	channel_down()
 }
 
 channel_down(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	CN.NG -= 1, correctTEMPSAVE()
 	if InStr(CN.NG, "-")
 		CN.NG := CN.Total - 1
@@ -1832,6 +1919,8 @@ incognito(*) {
 
 export(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	local temp
 	endPastemode()
 	loop
@@ -1843,6 +1932,8 @@ export(*) {
 
 editclip_pm(*) {
 	global
+	if VAULT.ACTIVE
+		return
 	correctTEMPSAVE()
 	editClip(CN.NG, CURSAVE - TEMPSAVE + 1, "pstmd")
 }

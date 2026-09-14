@@ -420,6 +420,7 @@ TIP_help =
 = Q            - Move clip to first position
 = Enter        - Start Multiple Pasting Session
 = T            - Tag
+= B            - Browse the Vault
 = Hold Shift   - Delete clip after pasting
 = F1           - Help
 =
@@ -692,6 +693,7 @@ TRY_channels = Channels
 TRY_channelIs = channel
 ; v13 paste-mode card
 HUD_keys_normal = V|next;C|back;X|mode;Space|pin;F1|help
+HUD_keys_vault = V|next;C|back;B|leave;F1|help
 HUD_keys_search = Enter|paste;Up / Down|match;Home|cancel
 HUD_keys_mode = X|next mode;V|next;C|back
 HUD_pinned = pinned

@@ -193,7 +193,7 @@ class HistoryWin {
 	static Edit(d) {
 		global ini_defImgEditor, STORE, TXT
 		id := HistoryWin.IdOf(d)
-		vault := HistoryWin.View(d) = "vault"
+		isVault := HistoryWin.View(d) = "vault"
 		rec := HistoryWin.Rec(d, id)
 		if !rec
 			return
@@ -203,7 +203,7 @@ class HistoryWin {
 			STORE.ErrorLevel := 0
 			out := multInputBox(TXT.HST_editTitle, TXT.HST_editPrompt, 10, rec["data"], "History")
 			if (STORE.ErrorLevel == 1)
-				vault ? vaultSetText(id, out) : historySetText(id, out)
+				isVault ? vaultSetText(id, out) : historySetText(id, out)
 		}
 		HistoryWin.host.Post("refreshed")
 	}
@@ -232,17 +232,17 @@ class HistoryWin {
 	static Delete(d) {
 		global TXT
 		ids := (d is Map && d.Has("ids")) ? d["ids"] : d
-		vault := HistoryWin.View(d) = "vault"
+		isVault := HistoryWin.View(d) = "vault"
 		if !(ids is Array)
 			return
-		if vault {
+		if isVault {
 			HistoryWin.host.g.Opt("+OwnDialogs")
 			if (MsgBox(TXT.VLT_deleteMsg, TXT.VLT__name, 257) != "OK")
 				return
 		}
 		for id in ids
 			if IsInteger(id)
-				vault ? vaultDelete(id) : deleteHistoryById(id)
+				isVault ? vaultDelete(id) : deleteHistoryById(id)
 		HistoryWin.host.Post("refreshed")
 	}
 
