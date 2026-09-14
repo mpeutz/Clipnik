@@ -1,4 +1,4 @@
-<section data-title="How do I" data-keywords="tasks guide recipes older clip fix pin plain text tracking utm multipaste search tag rule history image svg vector svgomg data uri">
+<section data-title="How do I" data-keywords="tasks guide recipes older clip fix pin plain text tracking utm multipaste search tag rule history image svg vector svgomg data uri vault save saved permanent keep snippet">
   <h1>How do I</h1>
 
   <h2>Paste something older</h2>
@@ -102,4 +102,27 @@
     example -- there is no default); and Copy as data URI copies an inline
     <code>data:image/svg+xml,...</code> version of the markup. The copy notification's chip runs Send to
     SVGOMG right away.</p>
+  <h2>Keep a clip for good</h2>
+  <p>Everything else in Clipjump expires. Clips fall off the end of the stack as you copy, and history is
+    pruned by age and by count. The <strong>Vault</strong> is the exception: nothing removes an entry from it
+    but you.</p>
+  <p>There are three ways in. In Clipboard History, right-click a row and choose <em>Save to Vault</em>. In
+    the Channel Organizer, the same entry sits on a clip's menu. Or switch the Clipboard History window to
+    the Vault and press <em>Add from clipboard</em> to save whatever you just copied.</p>
+  <p>Switch between the two with the History and Vault buttons at the top of the Clipboard History window.
+    An entry can be given a short name, which is what the list shows in place of its text, and you set the
+    order yourself with <kbd>Alt</kbd>+<kbd>Up</kbd> and <kbd>Alt</kbd>+<kbd>Down</kbd>. Sorting is off in
+    this view on purpose: the order is yours. <kbd>Ctrl</kbd>+<kbd>H</kbd> edits an entry's text, and its
+    kind is worked out again from whatever you type. Deleting asks first, because the Vault is the only
+    copy.</p>
+  <p>In paste mode, hold <kbd>Ctrl</kbd>, tap <kbd>V</kbd> as usual, then press <kbd>B</kbd>: the card says
+    Vault and <kbd>V</kbd> and <kbd>C</kbd> now walk your saved entries instead of your recent clips.
+    Release <kbd>Ctrl</kbd> to paste one. Press <kbd>B</kbd> again to go back to the clip stack where you
+    left it. Keys that act on a clip's position, like fixing, tagging and the number jumps, do nothing while
+    you are in the Vault.</p>
+  <p>Two things worth knowing. The Vault is <strong>not encrypted</strong>: entries sit in the same database
+    as your history, and the name is about permanence rather than secrecy, so it is not the place for a
+    password. And an image saved to the Vault from a Clipboard History row is that row's stored JPEG copy,
+    which is lossy and has lost any transparency. Saved straight after copying, or from the Channel
+    Organizer, you get the original pixels.</p>
 </section>

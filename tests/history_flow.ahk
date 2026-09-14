@@ -47,12 +47,28 @@ cj.runLabel("history")
 check("window opens", WinWait(title, , 8) != 0)
 WinActivate(title)
 Sleep 2500
+; the host appends to this file constantly; a read that collides with a write must not take the suite down
 readLog() {
 	global logFile
-	return FileExist(logFile) ? FileRead(logFile) : ""
+	try
+		return FileExist(logFile) ? FileRead(logFile) : ""
+	catch
+		return ""
 }
-check("list sent to the page", InStr(readLog(), '"cmd":"list"'))
-check("kinds sent to the page", InStr(readLog(), '"cmd":"kinds"'))
+; the window is only hidden between runs, so showing it again means waiting for the page to answer rather
+; than assuming a fixed sleep covered it
+waitFor(needle, ms := 8000) {
+	t := A_TickCount
+	loop {
+		if InStr(readLog(), needle)
+			return true
+		if (A_TickCount - t > ms)
+			return false
+		Sleep 150
+	}
+}
+check("list sent to the page", waitFor('"cmd":"list"'))
+check("kinds sent to the page", waitFor('"cmd":"kinds"'))
 check("rows carry a kind", InStr(readLog(), '"kind":"text"') || InStr(readLog(), '"kind":"'))
 ; Which row the marker lands on depends on how quickly Clipjump commits each copy to history, so the list is
 ; narrowed to the marker with the search box rather than walking a fixed number of rows. The retry covers a
