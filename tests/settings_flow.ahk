@@ -107,6 +107,23 @@ Sleep 300
 ControlClick(cj["TXT.SET_cancel"], cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI")
 check("rule editor closed", WinWaitClose(cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI", , 3))
 
+; --- Run at startup: Advanced page check box toggles the Startup shortcut, then back
+lnk := A_Startup "\Clipjump.lnk"
+oldStartup := FileExist(lnk) ? true : false
+WinActivate(title)
+ControlClick(cj["TXT.SET_advancedPage"], title)
+Sleep 300
+ControlClick(cj["TXT.TRY_startup"], title)
+Sleep 200
+ControlClick("&Apply", title)
+Sleep 800
+check("startup shortcut toggled", (FileExist(lnk) ? true : false) != oldStartup)
+ControlClick(cj["TXT.TRY_startup"], title)
+Sleep 200
+ControlClick("&Apply", title)
+Sleep 800
+check("startup shortcut restored", (FileExist(lnk) ? true : false) = oldStartup)
+
 ; --- restore the other values through the window and close with OK
 WinActivate(title)
 ControlClick("General", title)

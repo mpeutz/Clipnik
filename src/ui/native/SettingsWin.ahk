@@ -539,6 +539,7 @@ class SettingsWin {
 		SettingsWin.EditRow("default_image_editor", TXT.SET_imageEditor, ini_defImgEditor)
 		SettingsWin.EditRow("default_vector_editor", TXT.SET_vectorEditor, ini_defVectorEditor, 220, "", TXT.SET_T_vectorEditor)
 		SettingsWin.Section(TXT.SET_sec_system)
+		SettingsWin.Check("RunAtStartup", TXT.TRY_startup, isRunAtStartup())
 		prios := ["L", "B", "N", "A", "H"]
 		sel := 3
 		for i, p in prios
@@ -650,6 +651,7 @@ class SettingsWin {
 		v["default_vector_editor"] := c["default_vector_editor"].Value
 		v["Priority"] := ["L", "B", "N", "A", "H"][c["Priority"].Value]
 		v["RAM_Flush"] := c["RAM_Flush"].Value
+		v["RunAtStartup"] := c["RunAtStartup"].Value
 		v["Rules"] := SettingsWin.rules
 		return v
 	}

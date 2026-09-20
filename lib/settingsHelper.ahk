@@ -16,9 +16,11 @@ manageWinPasteMode(flag, write := 0) {
 	if (flag == 1) {
 		pstIdentifier := "#"
 		pstKeyName := "LWin"
+		pastemodekey.l := "k" 	; Win+L is the OS lock screen: it cannot be hooked
 	} else {
 		pstIdentifier := "^"
 		pstKeyName := "Ctrl"
+		pastemodekey.l := "l"
 	}
 	; set the shortcut
 	hkZ((paste_k && CLIPJUMP_STATUS ? "$" pstIdentifier paste_k : ""), paste)

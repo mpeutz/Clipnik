@@ -135,6 +135,7 @@ save_Settings(v) {
 	ini_write("System", "default_vector_editor", v["default_vector_editor"], 0)
 	ini_write("System", "Priority", v["Priority"], 0)
 	ini_write("Advanced", "RAM_Flush", v["RAM_Flush"], 0)
+	setRunAtStartup(v["RunAtStartup"])
 
 	ini_write("Main", "Theme", v["Theme"], 0)
 	ini_write("Main", "Accent", v["Accent"], 0)

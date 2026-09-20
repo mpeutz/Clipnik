@@ -564,7 +564,13 @@ Gdip_SetImagetoClipboard(pImage) {
 
 Gdip_CaptureClipboard(file, quality, &width := 0, &height := 0) {
 	PToken := Gdip_Startup()
-	pBitmap := Gdip_CreateBitmapFromClipboard()
+	; the source app (or another clipboard listener) can still hold the clipboard open (-1); retry briefly
+	loop 10 {
+		pBitmap := Gdip_CreateBitmapFromClipboard()
+		if (pBitmap != -1)
+			break
+		Sleep 50
+	}
 	width := 0, height := 0
 	if (pBitmap > 0) {
 		width := Gdip_GetImageWidth(pBitmap), height := Gdip_GetImageHeight(pBitmap)

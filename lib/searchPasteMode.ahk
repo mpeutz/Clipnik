@@ -125,6 +125,16 @@ SPM_dispose(*) {
 		try SPM.ih.Stop()
 	GuiDestroy("searchpm")
 	SPM.ACTIVE := 0
+	; the lock has to be CLEARED before the wait below: that loop polls ctrlRef, and a live LOCK.ACTIVE
+	; stops ctrlCheck from ever clearing it, which would freeze here for the full ten seconds
+	local resumeLock := 0
+	if LOCK.ACTIVE
+	{
+		if SPM.KEEP
+			pasteLock_clear() 		; the search committed: let ctrlCheck finish the operation
+		else
+			resumeLock := 1 		; dismissed: hand the keyboard back, but not until the reset below
+	}
 	if SPM.KEEP
 	{
 		loop 500 { 	; wait for ctrlCheck to finish the paste (10 s at most)
@@ -135,6 +145,10 @@ SPM_dispose(*) {
 		changeChannel(SPM.CHANNEL, 0), TEMPSAVE := realActive := SPM.TEMPSAVE, SPM.KEEP := 0 ; in paste mode where paste occurs, realactive holds tempsave
 	}
 	SPM := CJMap(), SEARCHOBJ := CJMap()
+	; only now: resuming re-registers the bare search key, and a press landing before that reset
+	; would start a fresh searchpm() whose SPM/SEARCHOBJ this line then wipes mid-flight
+	if resumeLock
+		pasteLock_resume()
 }
 
 searchpm(*) {
@@ -150,7 +164,8 @@ searchpm(*) {
 	SPM.term := "", SPM.matchIndex := "", SPM.matchCount := ""
 	correctTEMPSAVE(), SPM.TEMPSAVE := TEMPSAVE, SPM.CHANNEL := CN.NG
 	CN["CURSAVE" CN.N] := CURSAVE, CN["TEMPSAVE" CN.N] := TEMPSAVE 	; load all values in CN obj
-	if ini_searchUsesWindow {
+	; the legacy window binds ^Enter/^Home/^Up/^Down, which need a Ctrl the locked card does not have
+	if (ini_searchUsesWindow && !LOCK.ACTIVE) {
 		h := getControlInfo("edit", "some", "h") 		; get height of edit box
 		searchPasteMode(px, py - h - 5, h) 		; 5 space betn them
 	} else

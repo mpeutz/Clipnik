@@ -56,6 +56,7 @@ class Hud {
 		font := Theme.FontName, icons := Theme.HasIcons()
 		; header
 		g.SetFont("s9 bold c" Theme.Hex("accentText"), font)
+		c["lock"] := Theme.AddPill(g, "x0 y0 w10 h10", "", "warn", "accentText")
 		c["channel"] := Theme.AddPill(g, "x0 y0 w10 h10", "", "accent", "accentText")
 		g.SetFont("s12 bold c" text, font)
 		c["countN"] := g.Add("Text", "x0 y0 +0x200", "")
@@ -153,12 +154,14 @@ class Hud {
 		s.mode := "normal", s.channel := "", s.index := "", s.total := "", s.format := "", s.pformat := ""
 		s.tags := "", s.fixed := 0, s.text := "", s.imagePath := "", s.dim := "", s.searchTerm := "", s.matchIndex := "", s.matchCount := ""
 		s.message := "", s.keys := "", s.items := "", s.mono := "", s.searchActive := 0, s.title := "", s.kind := "", s.swatch := ""
+		s.locked := 0
 		return s
 	}
 
 	static FromPasteVars() {
-		global CN, realclipno, CURSAVE, curPformat, fixStatus, halfClip, temp_clipboard, THUMBS_dir, TEMPSAVE, realActive, SPM, ctrlRef, VAULT, TXT
+		global CN, realclipno, CURSAVE, curPformat, fixStatus, halfClip, temp_clipboard, THUMBS_dir, TEMPSAVE, realActive, SPM, ctrlRef, VAULT, TXT, LOCK
 		s := Hud.NewState()
+		s.locked := LOCK.ACTIVE ? 1 : 0
 		s.channel := CN.Name, s.index := realclipno, s.total := CURSAVE
 		s.pformat := curPformat, s.fixed := (fixStatus != "")
 		t := clipPref(CN.NG, realActive, "Tags")
@@ -253,6 +256,8 @@ class Hud {
 
 		if (state.channel != "" && mode != "message" && mode != "menu" && mode != "confirm") {
 			x := pad, rowH := Round(22 * sc)
+			if (state.locked && !info)
+				Hud.Pill("lock", TXT.HUD_locked, x, y, rowH), x += c["lock"].w + gap
 			if info {
 				Theme.SetPill(c["channel"], info.fill, info.color)
 				Hud.Pill("channel", info.title, x, y, rowH), x += c["channel"].w + gap
@@ -331,7 +336,8 @@ class Hud {
 		else if info
 			chips := Hud.Chips(TXT.HUD_keys_mode)
 		else if (mode = "normal")
-			chips := Hud.Chips(VAULT.ACTIVE ? TXT.HUD_keys_vault : TXT.HUD_keys_normal)
+			chips := Hud.Chips(state.locked ? (VAULT.ACTIVE ? TXT.HUD_keys_vaultlock : TXT.HUD_keys_lock)
+				: (VAULT.ACTIVE ? TXT.HUD_keys_vault : TXT.HUD_keys_normal))
 		tags := (mode = "normal" || info) && state.tags != "" ? StrReplace(Trim(state.tags), " ", " · ") : ""
 		dim := (mode = "normal" || info) ? state.dim : ""
 		if (chips.Length || tags != "" || dim != "") {

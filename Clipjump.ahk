@@ -116,6 +116,7 @@ global CN := CJMap(), CUSTOMS := CJMap(), CDS := CJMap(), CPS := CJMap(), SEARCH
 global cut_is_delete_windows := "XLMAIN QWidget" 			;excel, kingsoft office
 global CURSAVE := 0, TEMPSAVE := 0, LASTCLIP := "", LASTFORMAT := "", Islastformat_Changed := 1, IScurCBACTIVE := 0, curPformat := "", curPfunction := "", curPisPreviewable := 0, LASTKIND := ""
 global NOINCOGNITO := 1, SPM := CJMap(), protected_DoBeep := 1
+global LOCK := CJMap()   ; ACTIVE, ih (InputHook), keys (vk -> action), target (hwnd at lock time), suspended
 global pastemodekey := CJMap(), spmkey := CJMap()
 global windows_copy_k := "", windows_cut_k := "", ini_OpenAllChbyDef := 0, pstIdentifier := "^", pstKeyName := (pstIdentifier == "^") ? "Ctrl" : "LWin"
 
@@ -261,8 +262,10 @@ MORE SETTINGS A/C USER SETTINGS
 ******************************
 */
 
-for pmk in StrSplit("a|c|s|z|space|x|e|up|down|f|h|Enter|t|F1|q|b", "|")
+for pmk in StrSplit("a|c|s|z|space|x|e|up|down|f|h|Enter|t|F1|q|b|l", "|")
 	pastemodekey[pmk] := pmk
+if (pstIdentifier = "#")
+	pastemodekey.l := "k" 	; Win+L is the OS lock screen: it cannot be hooked
 
 ;Setting Up shortcuts
 hkZ((paste_k ? "$" pstIdentifier paste_k : ""), paste)
@@ -315,12 +318,11 @@ fillHISTORYOBJ()
 historyCleanup() ;Clean History
 SetTimer(historyCleanup, 86400000)   ; and daily after that: a machine left running for weeks never restarts into it
 OnMessage(0x4a, Receive_WM_COPYDATA)  ; 0x4a is WM_COPYDATA
-; Portable Startup
-if FileExist(A_Startup "/Clipjump.lnk")
+; Portable Startup: re-point the shortcut in case the folder moved
+if isRunAtStartup()
 {
-	FileDelete(A_Startup "/Clipjump.lnk")
-	FileCreateShortcut(startupTarget(), A_Startup "/Clipjump.lnk", A_ScriptDir)
-	Options_Tray.Check(TXT.TRY_startup)
+	FileDelete(A_Startup "\Clipjump.lnk")
+	setRunAtStartup(true)
 }
 EmptyMem()
 lastClipboardTime := 0
@@ -830,6 +832,10 @@ multiPaste_run(*) {
 	global
 	if VAULT.ACTIVE
 		return
+	; exactly one mechanism may keep the card alive. Locked, the teardown would drop the lock, paste()
+	; would reopen the card unlocked with Ctrl not held, and the next tick would paste again: a loop.
+	if LOCK.ACTIVE
+		return
 	if SPM.ACTIVE && WinExist("Clipjump_SPM ahk_class AutoHotkeyGUI") {
 		WinHide("Clipjump_SPM ahk_class AutoHotkeyGUI")
 		WinWaitNotActive("Clipjump_SPM ahk_class AutoHotkeyGUI")
@@ -940,14 +946,20 @@ manualClipboardTimer(*) {
 ; closes. Ctrl stays held throughout; releasing it pastes with the current format and closes the ring.
 Formatting(*) {
 	global
-	local kind, m, picked, letter
+	local kind, m, picked, letter, pre, trg
 	if !is_pstMode_active
 		return
 	kind := (temp_clipboard != "") ? ClipType.Of(CN.NG, realActive) : ""
 	m := Formatting_Items(kind)
-	picked := Ring.Pick(m.items, {prefix: pstIdentifier, trigger: pastemodekey.z, triggerHotkey: pstIdentifier pastemodekey.z
+	; locked, Ctrl is up: the ring's letters have to be bare or none of them would ever fire. Its own
+	; hotkeys consume them while it is open, so the suspended lock hook misses nothing.
+	pre := LOCK.ACTIVE ? "" : pstIdentifier
+	trg := LOCK.ACTIVE ? "" : pastemodekey.z
+	pasteLock_suspend()
+	picked := Ring.Pick(m.items, {prefix: pre, trigger: trg, triggerHotkey: pre pastemodekey.z
 		, dim: Hud.g.Hwnd, until: Formatting_Ended, idleTitle: curPformat != "" ? curPformat : TXT.HUD_formatOriginal
 		, idleSub: TXT.RNG_activeFormat})
+	pasteLock_resume()
 	if !is_pstMode_active      ; Ctrl was released while the ring was open: the paste already happened
 		return
 	hkZ_pasteMode(1)           ; the ring replaced ^z and the letters; paste-mode keys come back
@@ -1206,7 +1218,7 @@ PasteModeTooltip(cText, notpaste := 0) {
 ctrlCheck(*) {
 	global
 	local zCb, Coutput
-	if ((!GetKeyState(pstKeyName)) && (!SPM.ACTIVE)) || PASTEMODE_ACT
+	if ((!GetKeyState(pstKeyName)) && (!SPM.ACTIVE) && (!LOCK.ACTIVE)) || PASTEMODE_ACT
 	{
 		Critical "On"
 		SetTimer(ctrlCheck, 0)
@@ -1289,6 +1301,7 @@ ctrlCheck(*) {
 		}
 
 		IN_BACK := is_pstMode_active := oldclip_exist := jumpClip_sign := 0, VAULT.ACTIVE := 0
+		pasteLock_clear() 		; PASTEMODE_ACT can force this branch with the lock still set
 		hkZ_pasteMode(0)
 		restoreCaller := 1 			; Restore CALLER in the ONC label . This a second line of defence wrt to the last line of this label.
 
@@ -1321,6 +1334,10 @@ ctrlCheck(*) {
 			Prefs2Ini() 	; save preferences in memory
 		EmptyMem()
 		dopop := 0
+	} else if LOCK.ACTIVE {
+		; locked: Ctrl is up by definition, so the Shift poll below would only ever read 0. The pop is
+		; taken from Shift+Enter instead (pasteLock_paste), and this tick is the focus watchdog.
+		pasteLock_watch()
 	} else {
 		; record previous shift presses too
 		; is more user convenient
@@ -1337,6 +1354,7 @@ endPastemode(*) {
 	Hud.Hide()
 	Hud.ClearAnchor()
 	SetTimer(ctrlCheck, 0)
+	pasteLock_clear() 		; before SPM_dispose, so it does not hand the keyboard back to a dead lock
 	if SPM.ACTIVE
 		SPM_dispose()
 	if !ini_PreserveClipPos
@@ -1390,6 +1408,7 @@ hkZ_pasteMode(mode := 0, disableAll := 1) {
 	hkZ_pi(pastemodekey.up, channel_up, mode), hkZ_pi(pastemodekey.down, channel_down, mode), hkZ_pi(pastemodekey.a, navigate_to_first, mode)
 	hkZ_pi(pastemodekey.f, searchpm, mode), hkZ_pi(pastemodekey.h, editclip_pm, mode), hkZ_pi(pastemodekey.enter, multiPaste_run, mode)
 	hkZ_pi(pastemodekey.t, setClipTag, mode), hkZ_pi(pastemodekey.F1, pstMode_Help, mode), hkZ_pi(pastemodekey.q, move_to_first, mode), hkZ_pi(pastemodekey.b, vaultToggle, mode)
+	hkZ_pi(pastemodekey.l, pasteLock_toggle, mode)
 
 	if (!mode) && disableAll        ;init Cj
 	{
@@ -1625,8 +1644,13 @@ actionmode_run(*) {
 	global
 	local temp_am, act
 	update_actionmode()
+	; the ring binds its letters bare, and a bare hotkey loses to a suppressing InputHook: the locked
+	; card would swallow E B F H T X and the digits before the ring ever saw them (same reason
+	; Formatting() suspends). Ring.isOpen alone cannot help - that keystroke never arrives.
+	pasteLock_suspend()
 	temp_am := Ring.Pick(ActionRing_Items(), {prefix: "", trigger: ActionRing_Trigger(), idleTitle: TXT.RNG_actionTitle
 		, extraKeys: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "D"]})
+	pasteLock_resume()
 	if (temp_am = "")			; cancelled (Esc or an outside click): route through the same exit path Hud.Menu used
 		temp_am := "Esc"
 	act := ACTIONMODE[temp_am]
@@ -1789,11 +1813,19 @@ CopyFileData(*) {
 
 strtup(*) {
 	global
+	setRunAtStartup(!isRunAtStartup())
 	Options_Tray.ToggleCheck(TXT.TRY_startup)
-	if FileExist(A_Startup "/Clipjump.lnk")
-		FileDelete(A_Startup "/Clipjump.lnk")
-	else
-		FileCreateShortcut(startupTarget(), A_Startup "/Clipjump.lnk", A_ScriptDir)
+}
+
+; the Startup-folder shortcut is the only record of this option: the tray and Settings both read it
+isRunAtStartup() => FileExist(A_Startup "\Clipjump.lnk") ? true : false
+
+setRunAtStartup(on) {
+	lnk := A_Startup "\Clipjump.lnk"
+	if (on && !FileExist(lnk))
+		FileCreateShortcut(startupTarget(), lnk, A_ScriptDir)
+	else if (!on && FileExist(lnk))
+		FileDelete(lnk)
 }
 
 
@@ -2118,6 +2150,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 
 #Include %A_ScriptDir%\lib\v2compat.ahk
 #Include %A_ScriptDir%\lib\Searchpastemode.ahk
+#Include %A_ScriptDir%\lib\pasteLock.ahk
 #Include %A_ScriptDir%\lib\Customizer.ahk
 #Include %A_ScriptDir%\lib\API.ahk
 #Include %A_ScriptDir%\lib\translations.ahk

@@ -72,6 +72,8 @@ trayMenu(destroy := 0) {
 		Options_Tray.Add(TXT.TRY_incognito, incognito)
 		Options_Tray.Add(TXT.TRY_disable " " PROGNAME, disable_clipjump)
 		Options_Tray.Add(TXT.TRY_startup, strtup)
+		if isRunAtStartup()
+			Options_Tray.Check(TXT.TRY_startup)
 	A_TrayMenu.Add(TXT.TRY_options, Options_Tray)
 		Tools_Tray.Add(TXT.SET_org "`t" Hparse_Rev(chOrg_K), channelOrganizer)
 		Tools_Tray.Add(TXT.HST__name "`t" Hparse_Rev(history_K), history)

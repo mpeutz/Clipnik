@@ -318,6 +318,202 @@ cj.runFunction("vaultDelete(" v1 ")")
 cj.runFunction("vaultDelete(" v2 ")")
 check(Integer(cj.runFunction("vaultCount()")) = vaultBefore, "the seeded entries were cleaned up")
 
+
+; ---------------------------------------------------------------- L locks the card open
+; a token no earlier run can have produced: searching for "alpha" would also match clips this
+; suite left in the channel on previous runs, which made the assertion depend on stale state
+token := "lockfind" A_TickCount
+A_Clipboard := token
+Sleep 600
+; Every block here must leave the lock closed: a leaked InputHook swallows the keyboard and makes
+; every later step in this file fail for reasons that look nothing like the real cause.
+lockOpen() {
+    SendEvent("{Ctrl down}v")
+    Sleep 450
+    SendEvent("l")
+    Sleep 500
+    SendEvent("{Ctrl up}")
+    Sleep 700
+}
+locked() => cj.runFunction("PasteLock_IsActive()")
+
+step("L keeps the card open after Ctrl is released")
+ed.Value := ""
+lockOpen()
+check(locked() = 1, "still locked after Ctrl came up")
+check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "the card is still on screen")
+check(cj["ctrlRef"] = "pastemode", "the release mode is untouched: [" cj["ctrlRef"] "]")
+check(ed.Value = "", "nothing was pasted by locking: [" ed.Value "]")
+
+step("unmodified keys drive the card and none of them reach the document")
+SendEvent("a")
+Sleep 500
+check(clipNo() = 1, "A went to clip 1: " clipNo())
+SendEvent("v")
+Sleep 500
+check(clipNo() = 2, "V stepped to clip 2: " clipNo())
+SendEvent("c")
+Sleep 500
+check(clipNo() = 1, "C stepped back to clip 1: " clipNo())
+check(ed.Value = "", "the keys the lock claims never reach the target: [" ed.Value "]")
+; a key the lock does NOT claim is deliberately left alone: binding the bare letters is what keeps
+; every Ctrl combination alive (Ctrl+C, Ctrl+X, Ctrl+Shift+A), and the price is that stray typing
+; lands in the document. Pinned here so the trade-off cannot change silently.
+SendEvent("p")
+Sleep 400
+check(ed.Value = "p", "an unclaimed key still reaches the application: [" ed.Value "]")
+ed.Value := ""
+check(!errorDialog(), "no error while the lock routed keys")
+
+step("Enter pastes and ends the lock")
+SendEvent("{Enter}")
+Sleep 1400
+check(locked() = 0, "Enter cleared the lock")
+check(cj["ctrlRef"] = "", "paste mode ended")
+check(InStr(ed.Value, token), "Enter pasted clip 1: [" ed.Value "] active=" WinGetTitle("A"))
+
+step("Esc cancels the lock and puts the clipboard back")
+before := A_Clipboard
+ed.Value := ""
+lockOpen()
+check(locked() = 1, "locked again")
+SendEvent("{Esc}")
+Sleep 1200
+check(locked() = 0, "Esc cleared the lock")
+check(ed.Value = "", "Esc pasted nothing: [" ed.Value "]")
+check(A_Clipboard = before, "Esc restored the clipboard")
+
+step("Ctrl+V while locked steps a clip and leaves the lock alone")
+ed.Value := ""
+lockOpen()
+n := clipNo()
+SendEvent("{Ctrl down}v")
+Sleep 400
+SendEvent("{Ctrl up}")
+Sleep 700
+check(clipNo() = n + 1, "Ctrl+V stepped from " n " to " clipNo())
+check(locked() = 1, "the lock survived a second Ctrl+V")
+SendEvent("{Esc}")
+Sleep 900
+
+step("the format ring works with bare letters while locked")
+cj.runFunction("set_pformat()")
+ed.Value := ""
+lockOpen()
+SendEvent("z")
+Sleep 800
+check(cj.runFunction("Ring_IsOpen()") = 1, "Z opened the ring with no Ctrl held")
+SendEvent("u")
+Sleep 700
+check(cj.runFunction("Ring_IsOpen()") = 0, "picking closed the ring")
+check(cj["curPformat"] = "Upper case", "U picked Upper case: [" cj["curPformat"] "]")
+check(locked() = 1, "the lock survived the ring")
+SendEvent("{Enter}")
+Sleep 1400
+check(ed.Value != "" && ed.Value = StrUpper(ed.Value), "the locked paste applied the format: [" ed.Value "]")
+cj.runFunction("set_pformat()")
+
+step("F hands the keyboard to search and search still commits")
+ed.Value := ""
+lockOpen()
+SendEvent("f")
+Sleep 800
+check(cj["SPM.ACTIVE"] = 1, "F opened search from the locked card")
+SendEvent(token)
+Sleep 1100
+check(InStr(cj["temp_clipboard"], token), "search filtered to the unique clip: [" cj["temp_clipboard"] "]")
+SendEvent("{Enter}")
+Sleep 1500
+check(cj["SPM.ACTIVE"] = "", "Enter ended the search")
+check(locked() = 0, "the lock was released with the search")
+check(InStr(ed.Value, token), "search + Enter pasted the match: [" ed.Value "]")
+
+step("X cycles the release mode and Enter commits it")
+ed.Value := ""
+lockOpen()
+SendEvent("x")
+Sleep 400
+check(cj["ctrlRef"] = "cancel", "X went to cancel: [" cj["ctrlRef"] "]")
+SendEvent("x")
+Sleep 400
+check(cj["ctrlRef"] = "delete", "X went to delete: [" cj["ctrlRef"] "]")
+loop 4 {
+    SendEvent("x")
+    Sleep 350
+}
+check(cj["ctrlRef"] = "pastemode", "the locked cycle wraps back to pastemode: [" cj["ctrlRef"] "]")
+SendEvent("{Enter}")
+Sleep 1400
+check(locked() = 0, "Enter ended the lock after the cycle")
+check(ed.Value != "", "Enter pasted once the mode was back to pastemode: [" ed.Value "]")
+
+step("multipaste refuses to start while locked")
+ed.Value := ""
+lockOpen()
+SendEvent("{Ctrl down}{Enter}")
+Sleep 500
+SendEvent("{Ctrl up}")
+Sleep 900
+check(cj["MULTIPASTE"] = 0, "MULTIPASTE stayed off: [" cj["MULTIPASTE"] "]")
+check(locked() = 1, "the lock is still held")
+check(ed.Value = "", "no paste loop ran: [" ed.Value "]")
+SendEvent("{Esc}")
+Sleep 900
+check(locked() = 0, "Esc cleaned up")
+
+step("Ctrl combinations still work while the card is locked")
+; an InputHook that suppressed these letters also killed Ctrl+C, Ctrl+X and Ctrl+Shift+A, which is
+; exactly why the lock binds bare hotkeys instead
+ed.Value := ""
+lockOpen()
+; the clipboard is useless as a witness here - paste mode owns it and loads each browsed clip onto
+; it - so watch the Edit instead. "a" is bound bare while locked, so Ctrl+A still selecting proves
+; a modified combination on a claimed letter reaches the application.
+ed.Value := "lock-copy-" stamp
+ed.Focus()
+Sleep 300
+SendEvent("^a")
+Sleep 500
+sel := EditGetSelectedText(ed)
+check(InStr(sel, "lock-copy-" stamp), "Ctrl+A reached the application while locked: [" sel "]")
+SendEvent("{Esc}")
+Sleep 900
+check(locked() = 0, "Esc cleaned up after the Ctrl+C check")
+ed.Value := ""
+
+step("Action Mode still answers its bare keys while the card is locked")
+; regression guard: the lock's InputHook suppresses the paste-mode letters, and a bare hotkey loses to
+; a suppressing hook - so the ring has to be opened with the lock hook suspended or Esc does nothing
+ed.Value := ""
+lockOpen()
+SendEvent("^+a")
+Sleep 900
+check(cj.runFunction("Ring_IsOpen()") = 1, "the action ring opened over the locked card")
+SendEvent("{Esc}")
+Sleep 700
+check(cj.runFunction("Ring_IsOpen()") = 0, "Esc reached the ring and closed it")
+check(locked() = 1, "the lock came back after the ring")
+check(ed.Value = "", "the ring leaked nothing into the target: [" ed.Value "]")
+SendEvent("{Esc}")
+Sleep 900
+check(locked() = 0, "Esc cleaned up the lock")
+
+step("moving to another window cancels the lock")
+ed.Value := ""
+lockOpen()
+check(locked() = 1, "locked before the focus change")
+g2 := Gui("+AlwaysOnTop", "cj-lock-other")
+g2.Add("Edit", "w200 h60")
+g2.Show()
+WinWaitActive("cj-lock-other", , 5)
+Sleep 900
+check(locked() = 0, "the lock released when focus left the target")
+check(cj["ctrlRef"] = "", "paste mode ended with it")
+g2.Destroy()
+WinActivate("cj-pm-target")
+ed.Focus()
+Sleep 400
+check(!errorDialog(), "no error after the lock tests")
 check(!errorDialog(), "no error dialogs at the end")
 g.Destroy()
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")

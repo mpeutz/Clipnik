@@ -17,6 +17,7 @@ global CDS := Map()
 AddClipPref(*) => 0
 global CN := CJMap("Name", "Default", "NG", 0), realclipno := 3, CURSAVE := 40, curPformat := "", fixStatus := "", halfClip := ""
 global temp_clipboard := "", THUMBS_dir := "cache/thumbs", TEMPSAVE := 1, realActive := 1, SPM := CJMap(), ctrlRef := ""
+global VAULT := CJMap(), LOCK := CJMap()
 global TXT := Translations_load("languages/english.txt")
 global PROGNAME := "Clipjump"
 hkZ(key, fn, status := 1) => Hotkey(key, fn, status ? "On" : "Off")
@@ -57,6 +58,8 @@ for themeMode in ["dark", "light"] {
 	Hud.Render(s), snap(themeMode "-normal")
 	s.fixed := 1, s.pformat := "Trim Formatting", s.text := "short clip"
 	Hud.Render(s), snap(themeMode "-badges")
+	s.locked := 1, Hud.Render(s), snap(themeMode "-locked")
+	s.locked := 0
 	k := Hud.NewState()
 	k.channel := "Default", k.index := 3, k.total := 40, k.format := "TEXT", k.kind := "url", k.pformat := "Trim Formatting"
 	k.text := "https://github.com/aviaryan/Clipjump/issues/143?utm_source=newsletter"
