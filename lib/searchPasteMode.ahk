@@ -83,9 +83,18 @@ spm_setCounter(index, count) {
 
 searchpm_edit(*) {
 	global
-	local term := spm_term()
+	local term
+	; this runs on the search hook's thread and searchpm_search() below walks every clip in every
+	; channel, so an Enter arriving mid-scan disposes the search underneath us. SPM and SEARCHOBJ are
+	; CJMaps, so once SPM_dispose has reset them every field reads back "" - check on both sides of
+	; the scan rather than trusting the state we entered with.
+	if !SPM.ACTIVE
+		return
+	term := spm_term()
 	SPM.term := term
 	SPM.cnt := searchpm_search(term)
+	if !SPM.ACTIVE
+		return
 	searchpm_jumptomatch(SPM.CHANNEL, SPM.TEMPSAVE + 1, 1, (term = "") || (SPM.cnt = 0) ? 1 : 0)
 }
 
@@ -174,20 +183,22 @@ searchpm(*) {
 
 searchpm_search(term) {
 	global
-	local c := 0, r, k, v
-	SEARCHOBJ := CJMap()
+	local c := 0, r, k, v, found := CJMap()
+	; build into a local and publish it in one assignment: a dispose landing mid-scan used to reset
+	; SEARCHOBJ between the two halves of SEARCHOBJ[r][k], which then threw on a plain string
 	loop CN.Total
 	{
 		r := A_Index - 1
-		SEARCHOBJ[r] := CJMap()
+		found[r] := CJMap()
 		for k, v in CDS[r]
 		{
 			if SuperInstr(getRealCD(v) " " clipPref(r, k, "Tags"), Trim(term, " "), 1)
-				SEARCHOBJ[r][k] := "|", c++
+				found[r][k] := "|", c++
 		}
 	}
-	SEARCHOBJ.pointer := c ? 1 : 0
-	SEARCHOBJ.rescount := c
+	found.pointer := c ? 1 : 0
+	found.rescount := c
+	SEARCHOBJ := found
 	return c
 }
 
