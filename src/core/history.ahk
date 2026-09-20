@@ -173,6 +173,8 @@ addHistoryText(data, timestamp, kind := ""){
 
 addHistoryImage(imgpath, timestamp, kind := "image", w := 0, h := 0){
 ; adds an image (by path) to history; timestamp is in A_Now format
+	if !FileExist(imgpath)   ; the clipboard capture failed, so there is no thumbnail to record
+		return
 	timestamp := convertTimeSql(timestamp)
 	fptr := FileOpen(imgpath, "r")
 	size := fptr.Length

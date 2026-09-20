@@ -315,12 +315,11 @@ fillHISTORYOBJ()
 historyCleanup() ;Clean History
 SetTimer(historyCleanup, 86400000)   ; and daily after that: a machine left running for weeks never restarts into it
 OnMessage(0x4a, Receive_WM_COPYDATA)  ; 0x4a is WM_COPYDATA
-; Portable Startup
-if FileExist(A_Startup "/Clipjump.lnk")
+; Portable Startup: re-point the shortcut in case the folder moved
+if isRunAtStartup()
 {
-	FileDelete(A_Startup "/Clipjump.lnk")
-	FileCreateShortcut(startupTarget(), A_Startup "/Clipjump.lnk", A_ScriptDir)
-	Options_Tray.Check(TXT.TRY_startup)
+	FileDelete(A_Startup "\Clipjump.lnk")
+	setRunAtStartup(true)
 }
 EmptyMem()
 lastClipboardTime := 0
@@ -1789,11 +1788,19 @@ CopyFileData(*) {
 
 strtup(*) {
 	global
+	setRunAtStartup(!isRunAtStartup())
 	Options_Tray.ToggleCheck(TXT.TRY_startup)
-	if FileExist(A_Startup "/Clipjump.lnk")
-		FileDelete(A_Startup "/Clipjump.lnk")
-	else
-		FileCreateShortcut(startupTarget(), A_Startup "/Clipjump.lnk", A_ScriptDir)
+}
+
+; the Startup-folder shortcut is the only record of this option: the tray and Settings both read it
+isRunAtStartup() => FileExist(A_Startup "\Clipjump.lnk") ? true : false
+
+setRunAtStartup(on) {
+	lnk := A_Startup "\Clipjump.lnk"
+	if (on && !FileExist(lnk))
+		FileCreateShortcut(startupTarget(), lnk, A_ScriptDir)
+	else if (!on && FileExist(lnk))
+		FileDelete(lnk)
 }
 
 
