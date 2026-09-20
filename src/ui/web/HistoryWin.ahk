@@ -10,6 +10,30 @@
 class HistoryWin {
 	static host := ""
 	static section := "Clipboard_History_window"
+	static curView := "history"
+
+	; the page names the table it means on every request that touches a row; the host records it so the
+	; actions that follow do not each have to be told again
+	static View(d) {
+		if (d is Map && d.Has("view"))
+			HistoryWin.curView := (d["view"] = "vault") ? "vault" : "history"
+		return HistoryWin.curView
+	}
+
+	; the record behind an id, from whichever table the page is showing
+	static Rec(d, id) {
+		return (HistoryWin.View(d) = "vault") ? vaultGet(id) : historyGet(id)
+	}
+
+	; puts that record on the clipboard; true when something was written
+	static PutOnClipboard(d, id) {
+		return (HistoryWin.View(d) = "vault") ? vaultToClipboard(id) : historyToClipboard(id)
+	}
+
+	; the id out of a message that may be a bare id (older callers) or a map
+	static IdOf(d) {
+		return (d is Map && d.Has("id")) ? d["id"] : d
+	}
 
 	static Instance() {
 		global PROGNAME, TXT
@@ -62,6 +86,13 @@ class HistoryWin {
 		sortBy := d is Map && d.Has("sort") ? d["sort"] : "time"
 		asc := d is Map && d.Has("asc") ? (d["asc"] ? true : false) : false
 		kind := d is Map && d.Has("kind") ? d["kind"] : ""
+		if (HistoryWin.View(d) = "vault") {
+			r := vaultList(q, partial, kind)
+			r["partial"] := partial ? 1 : 0
+			HistoryWin.host.Post("list", r)
+			HistoryWin.SendKinds()
+			return
+		}
 		r := historyQuery(q, partial, sortBy, asc, 0, 2000, kind)
 		historyEnsureKinds(r["rows"])   ; one transaction for the whole page, not an update per row
 		r["partial"] := partial ? 1 : 0
@@ -75,7 +106,19 @@ class HistoryWin {
 
 	; the page builds its Actions button from the "kinds" table keyed by rec.kind (same lookup the row
 	; context menu already uses), so the preview record itself only needs to carry the kind, not the actions
-	static SendPreview(id) {
+	static SendPreview(d) {
+		id := HistoryWin.IdOf(d)
+		if (HistoryWin.View(d) = "vault") {
+			rec := vaultGet(id)
+			if !rec
+				return
+			if (rec["type"] = 1) {
+				rec["url"] := "https://cache.clipjump/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
+				rec.Delete("fileid"), rec.Delete("data")
+			}
+			HistoryWin.host.Post("preview", rec)
+			return
+		}
 		rec := historyGet(id)
 		if !rec
 			return
@@ -91,7 +134,7 @@ class HistoryWin {
 
 	static Action(d) {
 		global TXT
-		rec := historyGet(d["id"])
+		rec := HistoryWin.Rec(d, d["id"])
 		if !rec
 			return
 		wrote := (rec["type"] == 1)
@@ -101,14 +144,17 @@ class HistoryWin {
 			HistoryWin.host.Post("toast", TXT.HST_copiedToast)
 	}
 
-	static Copy(id) {
+	static Copy(d) {
 		global TXT
-		if historyToClipboard(id)
+		id := HistoryWin.IdOf(d)
+		if HistoryWin.PutOnClipboard(d, id)
 			HistoryWin.host.Post("toast", TXT.HST_copiedToast)
 	}
 
-	static InstaPaste(ids) {
+	static InstaPaste(d) {
 		global ini_instapasteWritesClipboard, ini_HisCloseOnInstaPaste, IScurCBACTIVE
+		ids := (d is Map && d.Has("ids")) ? d["ids"] : d
+		HistoryWin.View(d)
 		if !(ids is Array) || !ids.Length
 			return
 		h := HistoryWin.host
@@ -116,11 +162,11 @@ class HistoryWin {
 		Sleep 150
 		for i, id in ids {
 			if ini_instapasteWritesClipboard
-				ok := historyToClipboard(id)
+				ok := HistoryWin.PutOnClipboard(d, id)
 			else {
 				API.blockMonitoring(1)
 				IScurCBACTIVE := 0
-				ok := historyToClipboard(id)
+				ok := HistoryWin.PutOnClipboard(d, id)
 			}
 			if !ok
 				continue
@@ -134,18 +180,21 @@ class HistoryWin {
 		}
 	}
 
-	static Hold(id) {
+	static Hold(d) {
 		global STORE
-		rec := historyGet(id)
+		id := HistoryWin.IdOf(d)
+		rec := HistoryWin.Rec(d, id)
 		if (!rec || rec["type"] == 1)
 			return
 		STORE.holdClip_preText := rec["data"]
 		holdClip()
 	}
 
-	static Edit(id) {
+	static Edit(d) {
 		global ini_defImgEditor, STORE, TXT
-		rec := historyGet(id)
+		id := HistoryWin.IdOf(d)
+		isVault := HistoryWin.View(d) = "vault"
+		rec := HistoryWin.Rec(d, id)
 		if !rec
 			return
 		if (rec["type"] == 1) {
@@ -154,15 +203,16 @@ class HistoryWin {
 			STORE.ErrorLevel := 0
 			out := multInputBox(TXT.HST_editTitle, TXT.HST_editPrompt, 10, rec["data"], "History")
 			if (STORE.ErrorLevel == 1)
-				historySetText(id, out)
+				isVault ? vaultSetText(id, out) : historySetText(id, out)
 		}
 		HistoryWin.host.Post("refreshed")
 	}
 
-	static Export(id) {
+	static Export(d) {
 		global CALLER, ONCLIPBOARD, CALLER_STATUS, PROGNAME, TXT
+		id := HistoryWin.IdOf(d)
 		CALLER := 0, ONCLIPBOARD := ""
-		if !historyToClipboard(id) {
+		if !HistoryWin.PutOnClipboard(d, id) {
 			CALLER := CALLER_STATUS
 			return
 		}
@@ -179,12 +229,97 @@ class HistoryWin {
 		MsgBox("Selected Clip " TXT._exportedto "`n" temp, PROGNAME " " TXT.HST__name, 64)
 	}
 
-	static Delete(ids) {
+	static Delete(d) {
+		global TXT
+		ids := (d is Map && d.Has("ids")) ? d["ids"] : d
+		isVault := HistoryWin.View(d) = "vault"
 		if !(ids is Array)
 			return
+		if isVault {
+			HistoryWin.host.g.Opt("+OwnDialogs")
+			if (MsgBox(TXT.VLT_deleteMsg, TXT.VLT__name, 257) != "OK")
+				return
+		}
 		for id in ids
 			if IsInteger(id)
-				deleteHistoryById(id)
+				isVault ? vaultDelete(id) : deleteHistoryById(id)
+		HistoryWin.host.Post("refreshed")
+	}
+
+	; copies a history row into the Vault. An image row only ever held the preview copy, so that is what the
+	; Vault gets: by the time a clip reaches history its original pixels are long gone.
+	static Toast(t) {
+		if HistoryWin.host
+			HistoryWin.host.Post("toast", t)
+	}
+
+	static SaveToVault(d) {
+		global TXT
+		HistoryWin.View(d)
+		rec := historyGet(d["id"])
+		if !rec
+			return
+		if (rec["type"] = 1) {
+			rel := vaultImageFile(A_WorkingDir "\" rec["fileid"])
+			if (rel = "") {
+				HistoryWin.Toast(TXT.ACT_imageUnavailable)
+				return
+			}
+			vaultAdd("[IMAGE]", 1, rel, "image", rec["width"] ? rec["width"] : 0, rec["height"] ? rec["height"] : 0)
+		} else
+			vaultAdd(rec["data"], 0, "", rec["kind"])
+		HistoryWin.Toast(TXT.VLT_added)
+	}
+
+	static Rename(d) {
+		global STORE, TXT
+		HistoryWin.View(d)
+		rec := vaultGet(d["id"])
+		if !rec
+			return
+		STORE.ErrorLevel := 0
+		out := multInputBox(TXT.VLT_nameTitle, TXT.VLT_namePrompt, 1, rec["name"], "History")
+		if (STORE.ErrorLevel == 1)
+			vaultSetName(d["id"], out)
+		HistoryWin.host.Post("refreshed")
+	}
+
+	static MoveEntry(d) {
+		HistoryWin.View(d)
+		if vaultMove(d["id"], Integer(d["delta"]))
+			HistoryWin.host.Post("refreshed")
+	}
+
+	; saves whatever is on the clipboard right now: an image when Gdip finds one there, otherwise the text
+	static AddFromClipboard() {
+		global TXT
+		HistoryWin.curView := "vault"
+		t := Gdip_Startup()
+		bm := Gdip_CreateBitmapFromClipboard()
+		if (bm > 0) {
+			png := ImageClip.Temp("png")
+			ok := (Gdip_SaveBitmapToFile(bm, png) = 0)
+			w := Gdip_GetImageWidth(bm), h := Gdip_GetImageHeight(bm)
+			Gdip_DisposeImage(bm), Gdip_Shutdown(t)
+			rel := ok ? vaultImageFile(png) : ""
+			try FileDelete(png)
+			if (rel != "") {
+				vaultAdd("[IMAGE]", 1, rel, "image", w, h)
+				HistoryWin.host.Post("toast", TXT.VLT_added)
+				HistoryWin.host.Post("refreshed")
+			} else
+				HistoryWin.host.Post("toast", TXT.VLT_nothingToAdd)
+			return
+		}
+		Gdip_Shutdown(t)
+		text := ""
+		try text := A_Clipboard
+		if (Trim(text) = "") {
+			HistoryWin.host.Post("toast", TXT.VLT_nothingToAdd)
+			return
+		}
+		vaultAdd(text, 0)
+		HistoryWin.host.Post("toast", TXT.VLT_added)
 		HistoryWin.host.Post("refreshed")
 	}
 
@@ -199,12 +334,32 @@ class HistoryWin {
 
 	static I18n() {
 		global TXT
-		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes", "HST_actions"]
+		keys := ["HST_search", "HST_partial", "HST_exact", "HST_refresh", "HST_clear", "HST_clip", "HST_date", "HST_size", "HST_copy", "HST_insta", "HST_hold", "HST_edit", "HST_export", "HST_delete", "HST_empty", "HST_noMatch", "HST_items", "HST_match", "HST_onDisk", "HST_sortedBy", "HST_selectHint", "HST_viewimage", "HST_today", "HST_yesterday", "HST_type", "HST_allTypes", "HST_actions", "HST_viewHistory", "VLT__name", "VLT_yourOrder", "VLT_add", "VLT_rename", "VLT_moveUp", "VLT_moveDown"]
 		m := Map()
 		for k in keys
 			m[k] := TXT.%k%
 		HistoryWin.host.Post("i18n", m)
 	}
+}
+
+; test hooks: plain file-level functions, because RunFunc routes any dotted name to API.*
+History_SetView(v) {
+	if !HistoryWin.host
+		return ""
+	HistoryWin.host.Post("setView", v = "vault" ? "vault" : "history")
+	return v
+}
+History_Close() => HistoryWin.Close()
+History_AddFromClipboard() => HistoryWin.AddFromClipboard()
+History_SaveToVault(id) => HistoryWin.SaveToVault(Map("id", id))
+; test hook: the id of the newest history row
+History_Count() {
+	r := getFromTable("history", "count(*)", "id>-1")
+	return r ? r[1] : 0
+}
+History_NewestId() {
+	r := getFromTable("history", "max(id)", "id>-1")
+	return (r && r[1] != "") ? r[1] : 0
 }
 
 HistoryWin_OnMessage(cmd, data, host) {
@@ -222,6 +377,10 @@ HistoryWin_OnMessage(cmd, data, host) {
 		case "export": HistoryWin.Export(data)
 		case "delete": HistoryWin.Delete(data)
 		case "action": HistoryWin.Action(data)
+		case "saveToVault": HistoryWin.SaveToVault(data)
+		case "rename": HistoryWin.Rename(data)
+		case "move": HistoryWin.MoveEntry(data)
+		case "addClipboard": HistoryWin.AddFromClipboard()
 		case "clear": HistoryWin.Clear()
 		case "setPartial": history_partial := data ? 1 : 0
 		case "close": HistoryWin.Close()

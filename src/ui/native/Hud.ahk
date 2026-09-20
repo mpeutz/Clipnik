@@ -157,7 +157,7 @@ class Hud {
 	}
 
 	static FromPasteVars() {
-		global CN, realclipno, CURSAVE, curPformat, fixStatus, halfClip, temp_clipboard, THUMBS_dir, TEMPSAVE, realActive, SPM, ctrlRef
+		global CN, realclipno, CURSAVE, curPformat, fixStatus, halfClip, temp_clipboard, THUMBS_dir, TEMPSAVE, realActive, SPM, ctrlRef, VAULT, TXT
 		s := Hud.NewState()
 		s.channel := CN.Name, s.index := realclipno, s.total := CURSAVE
 		s.pformat := curPformat, s.fixed := (fixStatus != "")
@@ -176,6 +176,19 @@ class Hud {
 				if (s.kind = "color")
 					s.swatch := ClipType.ColorRgb(temp_clipboard)
 			}
+		}
+		; a vault entry has no channel, no clip number, no tags and no fixed flag: it has a name and a place
+		; in the user's order, so the card shows those in the same slots
+		if VAULT.ACTIVE {
+			s.channel := TXT.VLT__name, s.index := VAULT.i, s.total := VAULT.ids.Length, s.fixed := false
+			e := vaultGet(VAULT.ids[VAULT.i])
+			s.tags := (e && e["name"] != "") ? e["name"] : ""
+			if (e && e["type"] = 1) {
+				s.format := "IMAGE"
+				s.imagePath := A_WorkingDir "\" e["fileid"]
+				s.dim := (e["width"] && e["height"]) ? e["width"] "x" e["height"] : ""
+			} else if e
+				s.kind := e["kind"]
 		}
 		mode := "normal"
 		if (ctrlRef = "cancel" || ctrlRef = "delete" || ctrlRef = "cut" || ctrlRef = "copy" || ctrlRef = "deleteAll")
@@ -318,7 +331,7 @@ class Hud {
 		else if info
 			chips := Hud.Chips(TXT.HUD_keys_mode)
 		else if (mode = "normal")
-			chips := Hud.Chips(TXT.HUD_keys_normal)
+			chips := Hud.Chips(VAULT.ACTIVE ? TXT.HUD_keys_vault : TXT.HUD_keys_normal)
 		tags := (mode = "normal" || info) && state.tags != "" ? StrReplace(Trim(state.tags), " ", " · ") : ""
 		dim := (mode = "normal" || info) ? state.dim : ""
 		if (chips.Length || tags != "" || dim != "") {

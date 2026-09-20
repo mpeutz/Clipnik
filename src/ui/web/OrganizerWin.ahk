@@ -137,6 +137,58 @@ class OrganizerWin {
 			OrganizerWin.host.Post("toast", TXT.HST_copiedToast)
 	}
 
+	; a channel clip still has its original bytes in the .avc, so an image saved from here reaches the Vault at
+	; full fidelity, unlike one saved from a history row
+	static Toast(t) {
+		if OrganizerWin.host
+			OrganizerWin.host.Post("toast", t)
+	}
+
+	static SaveToVault(d) {
+		global CDS, TXT
+		ch := Integer(d["channel"]), n := Integer(d["n"])
+		real := API.getChStrength(ch) - n + 1
+		if (real < 1)
+			return
+		text := CDS[ch][real]
+		if (text != "") {
+			vaultAdd(text, 0)
+			OrganizerWin.Toast(TXT.VLT_added)
+			return
+		}
+		avc := A_WorkingDir "\cache\clips" (ch ? ch : "") "\" real ".avc"
+		if !FileExist(avc) {
+			OrganizerWin.Toast(TXT.ACT_imageUnavailable)
+			return
+		}
+		API.blockMonitoring(1)
+		try A_Clipboard := ClipFileRead(avc)
+		ClipWait(2)
+		t := Gdip_Startup()
+		bm := Gdip_CreateBitmapFromClipboard()
+		saved := "", w := 0, h := 0
+		if (bm > 0) {
+			png := ImageClip.Temp("png")
+			if (Gdip_SaveBitmapToFile(bm, png) = 0)
+				saved := png
+			w := Gdip_GetImageWidth(bm), h := Gdip_GetImageHeight(bm)
+			Gdip_DisposeImage(bm)
+		}
+		Gdip_Shutdown(t)
+		API.blockMonitoring(0)
+		if (saved = "") {
+			OrganizerWin.Toast(TXT.ACT_imageUnavailable)
+			return
+		}
+		rel := vaultImageFile(saved)
+		try FileDelete(saved)
+		if (rel != "") {
+			vaultAdd("[IMAGE]", 1, rel, "image", w, h)
+			OrganizerWin.Toast(TXT.VLT_added)
+		} else
+			OrganizerWin.Toast(TXT.ACT_imageUnavailable)
+	}
+
 	static SetProps(d) {
 		ch := Integer(d["channel"]), n := Integer(d["n"])
 		real := API.getChStrength(ch) - n + 1
@@ -290,7 +342,7 @@ class OrganizerWin {
 
 	static I18n() {
 		global TXT
-		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_svg", "KIND_number", "KIND_phone", "KIND_code", "KIND_text", "KIND_image"]
+		keys := ["ORG_search", "ORG_NewClip", "ORG_newChannel", "ORG_chooseCh", "ORG_channels", "ORG_clip", "ORG_tags", "ORG_fixed", "ORG_insta", "ORG_openPst", "ORG_editBtn", "ORG_moveTo", "ORG_copyTo", "ORG_delete", "ORG_moveUp", "ORG_moveDown", "ORG_countStatus", "ORG_selectHint", "ORG_moveTitle", "ORG_copyTitle", "ORG_moveBtn", "ORG_copyBtn", "ORG_delChTitle", "ORG_delChText", "ORG_delChMove", "ORG_delChDelete", "ORG_delChEmpty", "ORG_renameTitle", "ORG_renameBtn", "ORG_newChTitle", "ORG_createBtn", "ORG_footHint", "ORG_channelStatus", "ORG_clipOf", "HST_viewimage", "HST_actions", "SET_cancel", "_rename", "_new", "KIND_url", "KIND_email", "KIND_path", "KIND_color", "KIND_json", "KIND_svg", "KIND_number", "KIND_phone", "KIND_code", "KIND_text", "KIND_image", "VLT_saveToVault"]
 		m := Map()
 		for k in keys
 			m[k] := StrReplace(TXT.%k%, "&")
@@ -324,10 +376,14 @@ OrganizerWin_OnMessage(cmd, data, host) {
 		case "paste": OrganizerWin.Paste(data)
 		case "pasteMode": OrganizerWin.PasteMode(data)
 		case "edit": OrganizerWin.Edit(data)
+		case "saveToVault": OrganizerWin.SaveToVault(data)
 		case "action": OrganizerWin.Action(data)
 		case "close": OrganizerWin.Close()
 	}
 }
+
+; test hook: plain file-level, because RunFunc routes dotted names to API.*
+Organizer_SaveToVault(ch, n) => OrganizerWin.SaveToVault(Map("channel", ch, "n", n))
 
 OrganizerWin_SaveGeometry() {
 	h := OrganizerWin.host

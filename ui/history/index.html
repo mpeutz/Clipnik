@@ -8,6 +8,9 @@
   <script src="../common/bridge.js"></script>
   <style>
     #hdr, #rows .tr { grid-template-columns: minmax(0, 1fr) 84px 150px 70px; }
+    /* .edit is width:100% for dialog fields; in the toolbar it would crowd the buttons off the end */
+    .toolbar .edit { width: auto; min-width: 110px; max-width: 200px; }
+    #hdr.nosort span { cursor: default; }
   </style>
 </head>
 <body>
@@ -19,9 +22,11 @@
       <button class="chip on" id="partial" data-i18n="HST_partial">Partial</button>
       <button class="chip" id="exact" data-i18n="HST_exact">Exact</button>
     </div>
+    <span class="seg"><button class="chip on" id="viewHistory" data-i18n="HST_viewHistory">History</button><button class="chip" id="viewVault" data-i18n="VLT__name">Vault</button></span>
     <select class="edit" id="kind" title="Type"><option value="" data-i18n="HST_allTypes">All types</option></select>
     <button class="btn" id="refresh" data-i18n="HST_refresh">Refresh</button>
     <button class="btn" id="clear" data-i18n="HST_clear">Clear history…</button>
+    <button class="btn" id="addClip" data-i18n="VLT_add" hidden>Add from clipboard</button>
   </div>
   <div class="split">
     <div class="pane">

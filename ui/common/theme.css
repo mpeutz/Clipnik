@@ -30,6 +30,10 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .search input::placeholder { color: var(--muted); }
 .chip { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); background: transparent; cursor: pointer; }
 .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accentText); }
+.seg { display: inline-flex; gap: 2px; }
+.seg .chip { border-radius: 0; }
+.seg .chip:first-child { border-radius: 10px 0 0 10px; }
+.seg .chip:last-child { border-radius: 0 10px 10px 0; }
 .btn { height: 26px; min-width: 76px; padding: 0 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--surfaceAlt); color: var(--text); display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; white-space: nowrap; }
 .btn:hover { filter: brightness(1.12); }
 .btn:active { filter: brightness(.95); }

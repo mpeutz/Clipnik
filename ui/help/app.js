@@ -1,7 +1,7 @@
 // app.js - the Help window page. Topics are HTML fragments under topics/; the reference tables inside them
 // are filled from the host's `reference` message.
 const TOPICS = [
-  "start", "tasks", "reference-pastemode", "reference-actionmode", "reference-formats", "reference-rules",
+  "start", "tasks", "vault", "reference-pastemode", "reference-actionmode", "reference-formats", "reference-rules",
   "reference-settings", "reference-plugins", "reference-shortcuts", "trouble", "about",
 ];
 const state = { topics: [], current: "", i18n: {}, reference: null, filter: "" };

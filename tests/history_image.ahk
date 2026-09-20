@@ -15,6 +15,15 @@ check(name, cond) {
 	if !cond
 		fails++
 }
+; the host appends to this file constantly; a read that collides with a write must not take the suite down
+readLog() {
+	global logFile
+	try
+		return FileExist(logFile) ? FileRead(logFile) : ""
+	catch
+		return ""
+}
+
 old := cj["ini_IsImageStored"]
 cj.setVar("ini_IsImageStored", 1)
 imageFiles() {
@@ -42,7 +51,7 @@ WinActivate(title)
 Sleep 2000
 Send("{Down}")
 Sleep 900
-txt := FileExist(logFile) ? FileRead(logFile) : ""
+txt := readLog()
 check("preview carries the image url", InStr(txt, '"url":"https://cache.clipjump/history/'))
 check("preview reports the image kind", InStr(txt, '"kind":"image"'))
 check("preview reports its size", InStr(txt, '"width":160'))
@@ -50,7 +59,7 @@ check("preview reports its size", InStr(txt, '"width":160'))
 ; directly, so this exercises HistoryWin.Action's image branch and its toast, not just SendPreview
 cj.runFunction("History_ClickAction(imageDataUri)")
 Sleep 500
-txt := FileExist(logFile) ? FileRead(logFile) : ""
+txt := readLog()
 check("image action copies and toasts", InStr(txt, '"cmd":"toast"') && InStr(txt, "clipboard"))
 Sleep 600
 WinGetPos(&x, &y, &w, &h, title)

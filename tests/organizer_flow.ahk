@@ -15,9 +15,13 @@ check(name, cond) {
 	if !cond
 		fails++
 }
+; the host appends to this file constantly; a read that collides with a write must not take the suite down
 readLog() {
 	global logFile
-	return FileExist(logFile) ? FileRead(logFile) : ""
+	try
+		return FileExist(logFile) ? FileRead(logFile) : ""
+	catch
+		return ""
 }
 snap(name) {
 	global title

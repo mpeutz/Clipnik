@@ -37,6 +37,27 @@ ctlReady(winTitle, ctlText) {
 	try return ControlGetHwnd(ctlText, winTitle) != 0
 	return false
 }
+; clicks a control where it actually sits on screen. Control coordinates are relative to the window's client
+; area, so the client origin is what turns them into screen coordinates.
+clickControl(winTitle, ctlText) {
+	if !WinExist(winTitle)
+		return false
+	WinActivate(winTitle)
+	WinWaitActive(winTitle, , 3)
+	h := 0
+	try h := ControlGetHwnd(ctlText, winTitle)
+	if !h
+		return false
+	ControlGetPos(&cx, &cy, &cw, &ch, h)
+	WinGetClientPos(&wx, &wy, , , winTitle)
+	prev := A_CoordModeMouse
+	CoordMode "Mouse", "Screen"
+	MouseMove(wx + cx + cw // 2, wy + cy + ch // 2)
+	Sleep 250
+	Click()
+	CoordMode "Mouse", prev
+	return true
+}
 try FileDelete(logFile)
 cj.runFunction("Help_Open()")
 check("window opens", WinWait(title, , 8) != 0)
@@ -50,14 +71,14 @@ check("reference lists action entries", RegExMatch(ref, "actions=[1-9]"))
 check("reference has the configured hotkeys", RegExMatch(ref, "hotkeys=[1-9]"))
 check("reference lists rule actions", RegExMatch(ref, "rules=[1-9]"))
 topics := cj.runFunction("Help_TopicCount()")
-check("every topic fragment is present", Integer(topics) = 11)
+check("every topic fragment is present", Integer(topics) = 12)
 ; driven through a host message rather than simulated typing: Send/SendEvent into the WebView2 search box
 ; proved unreliable here (focus does not reliably land there in time under the test harness)
 cj.runFunction("Help_Filter(channel)")
 Sleep 400
 snapText := cj.runFunction("HelpWin_FilterProbe()")
 check("filter reports matches", RegExMatch(snapText, "shown=[1-9]"))
-check("filter excludes unrelated topics", !InStr(snapText, "shown=11"))
+check("filter excludes unrelated topics", !InStr(snapText, "shown=12"))
 cj.runFunction("Help_Filter()")
 Sleep 300
 ; "slugify" lives only inside the Formats topic's generated table (the Slugify format's label), never in any
@@ -98,13 +119,15 @@ cj.runLabel("settings")
 check("settings window opens", WinWait(settingsTitle, , 5) != 0)
 WinActivate(settingsTitle)
 check("settings' Help button is built", waitUntil(ctlReady.Bind(settingsTitle, cj["TXT.TRY_help"])))
-ControlClick(cj["TXT.TRY_help"], settingsTitle)
+; a real click, not ControlClick: the themed buttons do not reliably raise their Click event from posted
+; messages, and this step is meant to prove the button works the way a person uses it
+clickControl(settingsTitle, cj["TXT.TRY_help"])
 check("help opened from Settings", WinWait(title, , 8) != 0)
 Sleep 1500
 check("help deep-linked to the settings reference", InStr(cj.runFunction("HelpWin_TopicProbe()"), "reference-settings"))
 cj.runFunction("Help_Close()")
 Sleep 500
-ControlClick(cj["TXT.SET_cancel"], settingsTitle)
+clickControl(settingsTitle, cj["TXT.SET_cancel"])
 check("settings window closed", WinWaitClose(settingsTitle, , 5) != 0)
 
 step("the tray card and the classic tray menu both still carry a Help entry")
@@ -149,12 +172,12 @@ Sleep 500
 cj.runFunction("Help_Filter(channel)")
 Sleep 400
 snapText := cj.runFunction("HelpWin_FilterProbe()")
-check("filter is active before Esc: " snapText, !InStr(snapText, "shown=11"))
+check("filter is active before Esc: " snapText, !InStr(snapText, "shown=12"))
 SendEvent("{Esc}")
 Sleep 400
 check("first Esc left the window open", WinExist(title) != 0)
 snapText := cj.runFunction("HelpWin_FilterProbe()")
-check("first Esc cleared the filter: " snapText, InStr(snapText, "shown=11"))
+check("first Esc cleared the filter: " snapText, InStr(snapText, "shown=12"))
 SendEvent("{Esc}")
 check("second Esc closed the window", WinWaitClose(title, , 5) != 0)
 

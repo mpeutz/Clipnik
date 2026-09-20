@@ -289,6 +289,35 @@ SendEvent("{Ctrl up}")
 Sleep 1000
 check(cj["ctrlRef"] = "", "paste mode ended")
 
+step("B walks the Vault instead of the clip stack")
+vaultBefore := Integer(cj.runFunction("vaultCount()"))
+v1 := cj.runFunction("vaultAdd(vault-alpha-" stamp ",0)")
+v2 := cj.runFunction("vaultAdd(vault-beta-" stamp ",0)")
+ed.Value := ""
+SendEvent("{Ctrl down}v")
+Sleep 500
+check(cj.runFunction("Vault_IsActive()") = "0", "the walker starts on the clip stack")
+SendEvent("b")
+Sleep 800
+check(InStr(cj.runFunction("Vault_IsActive()"), "1 1/"), "B entered the Vault: " cj.runFunction("Vault_IsActive()"))
+cur := cj["CURSAVE"]
+SendEvent("v")
+Sleep 600
+check(InStr(cj.runFunction("Vault_IsActive()"), "1 2/"), "V stepped to the second entry")
+SendEvent("{Space}")
+Sleep 300
+SendEvent("t")
+Sleep 300
+check(cj["CURSAVE"] = cur, "fix and tag did nothing while the Vault was showing")
+SendEvent("b")
+Sleep 700
+check(cj.runFunction("Vault_IsActive()") = "0", "B returned to the clip stack")
+SendEvent("{Ctrl up}")
+Sleep 900
+cj.runFunction("vaultDelete(" v1 ")")
+cj.runFunction("vaultDelete(" v2 ")")
+check(Integer(cj.runFunction("vaultCount()")) = vaultBefore, "the seeded entries were cleaned up")
+
 check(!errorDialog(), "no error dialogs at the end")
 g.Destroy()
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
