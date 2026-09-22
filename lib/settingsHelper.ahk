@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 /**
  * This file has functions which help the settings gui and making changes according to settings.ini in general
  */

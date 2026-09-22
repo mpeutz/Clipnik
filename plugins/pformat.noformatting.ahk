@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 ;@Plugin-Name Trim Formatting
 ;@Plugin-Short Trim
 ;@Plugin-Description Strip off Formatting

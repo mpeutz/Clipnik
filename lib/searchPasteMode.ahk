@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 /*
 Search in Paste Mode functions and labels file.
 introduced in v10.6

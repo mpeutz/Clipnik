@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 /*
 
 This function file helps any AHK v2 script to use Clipjump API functions from its side.

@@ -357,7 +357,6 @@ ORG_movingclp = 移动中
 ORG_Editprops = 编辑属性
 ORG_oEditMsg = 完成后请点击保存。
 ABT_info = Clipjump 是一款使用 AutoHotkey 编写的 Windows 平台剪贴板管理软件。
-        = 它的灵感来自于 Skrommel 的程序 ClipStep。
 _Save = 保存
 SET_T_keepsession = 选中此项将使 Clipjump 在重启后可以继续使用之前保存的全部剪贴板信息(仅默认频道 0)。
 

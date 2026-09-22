@@ -2,6 +2,7 @@
 	Clipjump
 
 	Copyright 2013-15 Avi Aryan
+	Modifications copyright 2026 mpeutz: ported to AutoHotkey v2 and extended.
 
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -19,7 +20,7 @@
 ;@Ahk2Exe-SetName Clipjump
 ;@Ahk2Exe-SetDescription Clipjump
 ;@Ahk2Exe-SetVersion 12.5
-;@Ahk2Exe-SetCopyright Avi Aryan
+;@Ahk2Exe-SetCopyright Avi Aryan, mpeutz
 ;@Ahk2Exe-SetOrigFilename Clipjump.exe
 
 #Requires AutoHotkey v2.0
@@ -61,7 +62,7 @@ if !ini_LANG
 	ini_LANG := "english"
 global TXT := Translations_load("languages/" ini_LANG ".txt") 		;Load translations
 
-global AUTHOR := "Mike Peutz"
+global AUTHOR := "mpeutz"
 global ORIGINAL_AUTHOR := "Avi Aryan", AUTHOR_PAGE := "https://github.com/aviaryan/Clipjump"   ; the project this fork continues
 
 global MSG_TRANSFER_COMPLETE := ""

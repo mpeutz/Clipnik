@@ -334,7 +334,6 @@ ORG_movingclp = Bewege selectierte(n) Clip(s)
 ORG_Editprops = Bearbeite Clip Eigenschaften
 ORG_oEditMsg = Drücke Save um zu beenden
 ABT_info = Clipjump ist ein reiner Windows Clipboard Manager, erstellt in AutoHotkey.
-        = Inspiriert wurde Clipjump durch Skrommel's Anwendung ClipStep.
 _Save = Speichern
 SET_T_keepsession = Soll Clipjump nach einem Restart mit allen gespeicherten Clips (betrifft nur Default Channel 0) fortfahren?
 

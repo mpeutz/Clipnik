@@ -388,7 +388,6 @@ ORG_movingclp = Verplaats geselecteerde opname(s)
 ORG_Editprops = Bewerk opname instellingen
 ORG_oEditMsg = Klik op bewaren als u klaar bent.
 ABT_info = Clipjump is een Windows klembord manager gemaakt in AutoHotkey.
-        = Het is geïnspireerd op Skrommel's applicatie ClipStep.
 _Save = Bewaren
 SET_T_keepsession = Dient Clipjump voortgezet te worden met alle bewaarde klemborden (alleen met het standaard kanaal 0) nadat het is herstart.
 

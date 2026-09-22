@@ -1,0 +1,35 @@
+Clipjump
+Copyright (C) 2013 Avi Aryan
+Licensed under Apache License v2.0
+
+Clipjump is a free multiple clipboard manager with extra-ordinary features.
+
+Clipjump can be redistributed freely provided this file remains intact.
+More on redistribution (and editing) terms can be seen at (http://www.apache.org/licenses/LICENSE-2.0).
+
+Contact ==================
+
+Mail:- avi.aryan123@gmail.com
+Site:- www.aviaryan.github.io
+Site:- www.github.com/aviaryan
+
+Modifications ============
+
+This distribution is a modified version of Clipjump 12.5.
+Modifications copyright (C) 2026 mpeutz, also licensed under the Apache License v2.0.
+
+Changes include a port from AutoHotkey v1 to v2, a rewritten native and WebView2 user
+interface, and new features. Files carried over from the original Clipjump that have been
+modified say so in their header.
+
+Third-party components ===
+
+- AutoHotkey v2 runtime (runtime/AutoHotkey64.exe): GNU GPL v2, see runtime/license.txt.
+  It is shipped as a separate program that runs Clipjump's scripts.
+- thqby ahk2_lib (lib/vendor/JSON.ahk, Promise.ahk, ComVar.ahk, WebView2/WebView2.ahk):
+  MIT License, see lib/vendor/LICENSE-thqby-ahk2_lib.txt.
+- Microsoft WebView2 loader (lib/vendor/WebView2/WebView2Loader.dll): BSD 3-Clause License,
+  see lib/vendor/WebView2/LICENSE-WebView2.txt.
+- Gdip library for AutoHotkey v2 (lib/vendor/Gdip_All.ahk): originally by tic (Tariq Porter).
+- SQLite (sqlite3.dll): public domain.
+- unHTML (plugins/pformat.commonformats.lib/unhtml.ahk): by derRaphael.

@@ -389,6 +389,5 @@ ORG_movingclp = Flyttar markerade klipp
 ORG_Editprops = Redigera klippegenskaper
 ORG_oEditMsg = Tryck 'Spara' när du är klar.
 ABT_info = Clipjump är en urklippshanterare för Windows, skapad i AutoHotkey.
-        = Den inspirerades av Skrommels applikation, ClipStep.
 _Save = Spara
 SET_T_keepsession = Skall Clipjump fortsätta med alla sparade urklipp (endast från standardkanal 0) efter omstart av programmet?

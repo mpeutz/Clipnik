@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 ;@Plugin-Name NoFormatting Paste
 ;@Plugin-Description Pastes current clipboard without formatting. Make first parameter 1 to trim all types of whitespace.
 ;@Plugin-version 0.2

@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 ;@Plugin-Name Hotstring-Paste
 ;@Plugin-Version 0.26
 ;@Plugin-Description Edit the file "plugins\hotPaste.lib\base.ahk" to add hotstrings (like hotkeys) that will paste the desired clip when you write a particular text.

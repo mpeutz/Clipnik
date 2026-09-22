@@ -376,7 +376,6 @@ ORG_movingclp = Movendo o(s) clipe(s) selecionado(s)
 ORG_Editprops = Editar as propriedades do Clipe
 ORG_oEditMsg = Clique em Salvar quando você acabar.
 ABT_info = O Clipjump é um gerenciador de área de transferência que funciona apenas no Windows, e foi criado com o AutoHotkey.
-        = Ele foi inspirado na aplicação ClipStep de Skrommel.
 _save = Salvar
 SET_T_keepsession = O Clipjump deve continuar com todas as Áreas de Transferência (só o canal padrão 0) após a reinicialização
 

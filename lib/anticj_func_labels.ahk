@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 ;#########################
 ;LESS CHANGEABLE LABELS AND FUNCTIONS (v1 labels are now functions with a variadic signature)
 ;#########################

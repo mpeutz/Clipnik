@@ -1,3 +1,4 @@
+; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 ;@Plugin-Name Translation File Cleaner
 ;@Plugin-Description Finds extra and duplicate keys in translation files and shows them
 ;@Plugin-Author Avi
