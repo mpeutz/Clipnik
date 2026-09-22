@@ -199,8 +199,10 @@ class Theme {
 		try Theme.drawn.Delete(hwnd)
 	}
 
-	; The app icon with its red ring repainted in the accent: returns an HICON (cached per file, size and accent)
+	; The app icon with its purple repainted in the accent: returns an HICON (cached per file, size and accent)
 	; for TraySetIcon("HICON:*" h) and Picture controls. Falls back to 0 when anything goes wrong.
+	; Works on the icon's own 32-bit color bitmap (GDI+'s HICON conversion drops the alpha channel and leaves a
+	; dark fringe around anti-aliased edges).
 	static iconCache := Map()
 	static AccentIcon(path, size := 32) {
 		if !Theme.Palette.Has("accent")   ; before Theme.Init the plain file is used
@@ -208,42 +210,74 @@ class Theme {
 		key := path "|" size "|" Format("{:06X}", Theme.Palette["accent"])
 		if Theme.iconCache.Has(key)
 			return Theme.iconCache[key]
-		h := 0
+		h := 0, hdc := 0, src := 0, hbm := 0, mask := 0, color := 0
+		ii := Buffer(8 + 3 * A_PtrSize, 0)   ; ICONINFO: fIcon, xHotspot, yHotspot, hbmMask, hbmColor
 		try {
 			src := DllCall("LoadImage", "Ptr", 0, "Str", path, "UInt", 1, "Int", size, "Int", size, "UInt", 0x10, "Ptr")  ; IMAGE_ICON, LR_LOADFROMFILE
-			if !src
-				return 0
-			tok := Gdip_Startup()
-			bm := Gdip_CreateBitmapFromHICON(src)
-			DllCall("DestroyIcon", "Ptr", src)
-			Theme.Recolor(bm, Theme.Palette["accent"])
-			h := Gdip_CreateHICONFromBitmap(bm)
-			Gdip_DisposeImage(bm)
-			Gdip_Shutdown(tok)
-		}
-		return Theme.iconCache[key] := h
-	}
-
-	; replaces every strongly red pixel (the ring) with rgb, keeping its alpha and relative brightness
-	static Recolor(bm, rgb) {
-		w := Gdip_GetImageWidth(bm), hgt := Gdip_GetImageHeight(bm)
-		if Gdip_LockBits(bm, 0, 0, w, hgt, &stride, &scan0, &data)
-			return
-		loop hgt {
-			y := A_Index - 1
-			loop w {
-				x := A_Index - 1
-				p := scan0 + y * stride + x * 4
-				b := NumGet(p, 0, "UChar"), g := NumGet(p, 1, "UChar"), r := NumGet(p, 2, "UChar"), a := NumGet(p, 3, "UChar")
-				if (a && r > g + 50 && r > b + 50) {   ; red and its anti-aliased pinks
-					f := r / 255, wh := Min(g, b) / 255   ; darkness and the white mixed into edge pixels
-					NumPut("UChar", Round((rgb & 0xFF) * f * (1 - wh) + 255 * wh), p, 0)
-					NumPut("UChar", Round(((rgb >> 8) & 0xFF) * f * (1 - wh) + 255 * wh), p, 1)
-					NumPut("UChar", Round(((rgb >> 16) & 0xFF) * f * (1 - wh) + 255 * wh), p, 2)
+			if src && DllCall("GetIconInfo", "Ptr", src, "Ptr", ii) {
+				mask := NumGet(ii, 8 + A_PtrSize, "Ptr"), color := NumGet(ii, 8 + 2 * A_PtrSize, "Ptr")
+				bmi := Buffer(40, 0)   ; BITMAPINFOHEADER, top-down 32 bpp
+				NumPut("UInt", 40, "Int", size, "Int", -size, "UShort", 1, "UShort", 32, bmi)
+				hdc := DllCall("GetDC", "Ptr", 0, "Ptr")
+				hbm := DllCall("CreateDIBSection", "Ptr", hdc, "Ptr", bmi, "UInt", 0, "Ptr*", &bits := 0, "Ptr", 0, "UInt", 0, "Ptr")
+				if hbm && color && DllCall("GetDIBits", "Ptr", hdc, "Ptr", color, "UInt", 0, "UInt", size, "Ptr", bits, "Ptr", bmi, "UInt", 0) {
+					Theme.Recolor(bits, size * size, Theme.Palette["accent"])
+					NumPut("Ptr", hbm, ii, 8 + 2 * A_PtrSize)
+					h := DllCall("CreateIconIndirect", "Ptr", ii, "Ptr")   ; copies the bitmaps
 				}
 			}
 		}
-		Gdip_UnlockBits(bm, &data)
+		if hdc
+			DllCall("ReleaseDC", "Ptr", 0, "Ptr", hdc)
+		for b in [mask, color, hbm]
+			if b
+				DllCall("DeleteObject", "Ptr", b)
+		if src
+			DllCall("DestroyIcon", "Ptr", src)
+		return Theme.iconCache[key] := h
+	}
+
+	; repaints the icon's purple (body, lit crescent, shading) in rgb: every purple pixel takes the accent's hue and
+	; saturation and keeps its lightness relative to the body purple, so the two tones survive. White and gray stay.
+	; bits: count BGRA pixels. An icon without an alpha channel (all alpha 0) is recolored wherever its colors are.
+	static Recolor(bits, count, rgb) {
+		static bodyL := 0.6255   ; lightness of the body purple #8440FF
+		acc := Theme.ToHsl(rgb)
+		hasAlpha := false
+		loop count
+			if NumGet(bits, (A_Index - 1) * 4 + 3, "UChar") {
+				hasAlpha := true
+				break
+			}
+		loop count {
+			p := bits + (A_Index - 1) * 4
+			if hasAlpha && !NumGet(p, 3, "UChar")
+				continue
+			hsl := Theme.ToHsl((NumGet(p, 2, "UChar") << 16) | (NumGet(p, 1, "UChar") << 8) | NumGet(p, 0, "UChar"))
+			if hsl[2] < 0.25 || hsl[1] < 230 || hsl[1] > 300   ; not purple
+				continue
+			l := hsl[3]
+			nl := l <= bodyL ? acc[3] * l / bodyL : acc[3] + (1 - acc[3]) * (l - bodyL) / (1 - bodyL)
+			c := Theme.FromHsl(acc[1], acc[2] * hsl[2], nl)
+			NumPut("UChar", c & 0xFF, p, 0), NumPut("UChar", (c >> 8) & 0xFF, p, 1), NumPut("UChar", (c >> 16) & 0xFF, p, 2)
+		}
+	}
+
+	; [hue 0-360, saturation 0-1, lightness 0-1] of an RGB integer
+	static ToHsl(rgb) {
+		r := ((rgb >> 16) & 0xFF) / 255, g := ((rgb >> 8) & 0xFF) / 255, b := (rgb & 0xFF) / 255
+		mx := Max(r, g, b), mn := Min(r, g, b), l := (mx + mn) / 2, d := mx - mn
+		if !d
+			return [0, 0, l]
+		s := d / (1 - Abs(2 * l - 1))
+		h := mx = r ? Mod((g - b) / d + 6, 6) : mx = g ? (b - r) / d + 2 : (r - g) / d + 4
+		return [h * 60, s, l]
+	}
+
+	static FromHsl(h, s, l) {
+		c := (1 - Abs(2 * l - 1)) * s, x := c * (1 - Abs(Mod(h / 60, 2) - 1)), m := l - c / 2
+		rgb := h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]
+		return (Round((rgb[1] + m) * 255) << 16) | (Round((rgb[2] + m) * 255) << 8) | Round((rgb[3] + m) * 255)
 	}
 
 	; frees a control's window (AHK has no per-control destroy) so rebuilding a Gui's controls leaves no orphans
@@ -350,12 +384,13 @@ class Theme {
 		Theme.ApplyToHwnd(g.Hwnd, corner, border)
 	}
 
-	static AppIcon := 0   ; HICON shown in title bars (the recolored app icon), set by setTrayIcon
+	static AppIcon := 0        ; HICONs shown in title bars and Alt+Tab (the recolored app icon), set by setTrayIcon
+	static AppIconSmall := 0
 
 	static ApplyToHwnd(hwnd, corner := 2, border := false) {
 		dark := Theme.IsDark ? 1 : 0
-		if Theme.AppIcon
-			try SendMessage(0x80, 1, Theme.AppIcon, hwnd), SendMessage(0x80, 0, Theme.AppIcon, hwnd)   ; WM_SETICON big + small
+		if Theme.AppIcon && Theme.AppIconSmall
+			try SendMessage(0x80, 1, Theme.AppIcon, hwnd), SendMessage(0x80, 0, Theme.AppIconSmall, hwnd)   ; WM_SETICON big + small
 		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 20, "Int*", dark, "UInt", 4)   ; DWMWA_USE_IMMERSIVE_DARK_MODE
 		try DllCall("dwmapi\DwmSetWindowAttribute", "Ptr", hwnd, "UInt", 33, "Int*", corner, "UInt", 4)  ; DWMWA_WINDOW_CORNER_PREFERENCE
 		; title bar and frame follow a custom accent; with the Windows accent they are left to the system setting

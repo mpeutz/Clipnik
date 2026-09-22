@@ -1919,10 +1919,12 @@ changeIcon() {
 	}
 }
 
-; tray icon with the ring in the accent color when the file can be recolored, the plain file otherwise
+; tray icon with its purple in the accent color when the file can be recolored, the plain file otherwise.
+; Loaded at the system's small and large icon sizes so the tray gets the .ico's hand-drawn small artwork.
 setTrayIcon(path) {
-	h := Theme.AccentIcon(path, 32)
-	Theme.AppIcon := h
+	h := Theme.AccentIcon(path, SysGet(49))      ; SM_CXSMICON
+	hBig := Theme.AccentIcon(path, SysGet(11))   ; SM_CXICON
+	Theme.AppIcon := hBig, Theme.AppIconSmall := h
 	if h
 		TraySetIcon("HICON:*" h)
 	else
@@ -1930,8 +1932,8 @@ setTrayIcon(path) {
 	; title bars of windows that already exist
 	DetectHiddenWindows true
 	for hwnd in WinGetList("ahk_class AutoHotkeyGUI ahk_pid " ProcessExist())
-		if h
-			try SendMessage(0x80, 1, h, hwnd), SendMessage(0x80, 0, h, hwnd)
+		if h && hBig
+			try SendMessage(0x80, 1, hBig, hwnd), SendMessage(0x80, 0, h, hwnd)
 	DetectHiddenWindows false
 }
 

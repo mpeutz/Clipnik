@@ -20,7 +20,7 @@ class AboutWin {
 		g.MarginX := 0, g.MarginY := 0
 		Theme.ApplyToGui(g)
 		w := 440
-		hIcon := Theme.AccentIcon(mainIconPath, 48)
+		hIcon := Theme.AccentIcon(mainIconPath, 56)   ; the Picture's own size, so it is never rescaled
 		try g.Add("Picture", "x" ((w - 56) / 2) " y20 w56 h56", hIcon ? "HICON:*" hIcon : mainIconPath)
 		g.SetFont("s16 bold c" Theme.Hex("text"), Theme.FontName)
 		g.Add("Text", "x0 y82 w" w " +Center", PROGNAME)
