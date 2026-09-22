@@ -113,7 +113,7 @@ class HistoryWin {
 			if !rec
 				return
 			if (rec["type"] = 1) {
-				rec["url"] := "https://cache.clipjump/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
+				rec["url"] := "https://cache.clipnik/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
 				rec.Delete("fileid"), rec.Delete("data")
 			}
 			HistoryWin.host.Post("preview", rec)
@@ -126,7 +126,7 @@ class HistoryWin {
 			rec["kind"] := historyEnsureKind(id)
 		if (rec["type"] == 1) {
 			; the page never needs the raw fileid or the (already blanked) data field
-			rec["url"] := "https://cache.clipjump/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
+			rec["url"] := "https://cache.clipnik/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
 			rec.Delete("fileid"), rec.Delete("data")
 		}
 		HistoryWin.host.Post("preview", rec)
@@ -221,7 +221,7 @@ class HistoryWin {
 			Sleep 50
 		ClipWait(1)
 		loop
-			if !FileExist(temp := A_MyDocuments "\export" A_Index ".cj")
+			if !FileExist(temp := A_MyDocuments "\export" A_Index ".cnk")
 				break
 		try FileAppend(ClipboardAll(), temp)
 		CALLER := CALLER_STATUS

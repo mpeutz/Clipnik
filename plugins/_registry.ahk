@@ -4,4 +4,4 @@
 #Include *i %A_ScriptDir%\plugins\pformat.commonformats.ahk
 #Include *i %A_ScriptDir%\plugins\pformat.noformatting.ahk
 #Include *i %A_ScriptDir%\plugins\pformat.sentencecase.ahk
-#Include *i %A_ScriptDir%\plugins\updateClipjumpClipboard.ahk
+#Include *i %A_ScriptDir%\plugins\updateClipnikClipboard.ahk

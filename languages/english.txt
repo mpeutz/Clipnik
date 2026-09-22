@@ -1,4 +1,4 @@
-;English translation for Clipjump
+;English translation for Clipnik
 ;first made by Avi Aryan
 
 ; NOTES
@@ -6,7 +6,7 @@
 ; Add new keys in the future versions at the bottom for easy & consistent development
 ; Add version no in comment when adding a new key in the translation file.
 ; Most keys have format XXX_ where XXX is the component name
-; Dont translate 'Clipjump'
+; Dont translate 'Clipnik'
 ; & in &Preview is to create shortcut Alt+P when the window is active. When translating into a non-english language, omit '&' and when in a english type language, use '&'
 ; only when you are sure you are right.
 ; Words inside %..% are variables. Take them as constants and translate them accordingly.
@@ -36,9 +36,9 @@ TIP_modem = Release Ctrl to confirm
           = Press X to switch modes
 
 ABT__name = About
-ABT_reset = Reset &Clipjump
-ABT_resetM = Are you sure you want to reset Clipjump by removing all its clips and settings ?
-ABT_removeStart = A startup entry for Clipjump was found. Do you want to remove it as well ?
+ABT_reset = Reset &Clipnik
+ABT_resetM = Are you sure you want to reset Clipnik by removing all its clips and settings ?
+ABT_removeStart = A startup entry for Clipnik was found. Do you want to remove it as well ?
 ABT_resetfinal = will be closed now.
 
 HST__name = Clipboard History
@@ -90,18 +90,18 @@ SET_apply = &Apply
 SET_advanced_error = is not able to find the settings file (settings.ini) or Notepad ? Make sure both exist in their respective places.
                    =
                    = Try contacting the author if problem persists.
-SET_T_limitmaxclips = Will Clipjump's Clipboards be limited
+SET_T_limitmaxclips = Will Clipnik's Clipboards be limited
                     = Checked = yes
 SET_T_maxclips = It is the minimum no of clipboards that you want simultaneously to be active.
                = If you want 20, SPECIFY 20.
 SET_T_threshold = Threshold is the extra number of clipboard that will be active other than your minimum limit..
                 = Most recommended value is 10.
                 =
-                = [TIP] - Threshold = 1 will make Clipjump store an exact number of maximum clipboards.
+                = [TIP] - Threshold = 1 will make Clipnik store an exact number of maximum clipboards.
 SET_T_quality = The quality of Thumbnail previews you want to have.
               = Recommended value is 90
               = Can be between 1 - 100
-SET_T_copybeep = Check to hear a customizable beep when clipboard data is added to Clipjump.
+SET_T_copybeep = Check to hear a customizable beep when clipboard data is added to Clipnik.
                =
                = You can change the Beep Frequency in the [Advanced] section of Settings.ini
 SET_T_ismessage = This value determines whether you want to see the confirmation message or not while copy/cut operations.
@@ -115,7 +115,7 @@ SET_T_cfilep = Shortcut to copy selected file's path
              = Set the shortcut to None to disable the key combination
 SET_T_cfolderp = Shortcut to copy selected folder's path.
                = Set the shortcut to None to disable the key combination
-SET_T_cfiled = Shortcut to copy selected file contents to Clipjump.
+SET_T_cfiled = Shortcut to copy selected file contents to Clipnik.
              = Set it to None to disable the key combination
 SET_T_pitswp = The shortcut to activate the PitSwap feature. (also available from Action Mode)
              = For more details on the feature refer the Help file.
@@ -154,7 +154,7 @@ _exportedto = exported to
 ;9.9.0.2
 ;============
 
-IGN_Restartmsg = It is required to restart Clipjump for changes to take effect. Do Restart ?
+IGN_Restartmsg = It is required to restart Clipnik for changes to take effect. Do Restart ?
 IGN_tip = Press Space to add Class.
         = Press Esc to exit Class Grab Tool.
 
@@ -164,10 +164,10 @@ IGN_tip = Press Space to add Class.
 
 TRY_options = &Options
 TRY_tools = &Tools
-HST_delall_msg = Are you sure you want to permanently clear Clipjump's History ?
+HST_delall_msg = Are you sure you want to permanently clear Clipnik's History ?
 ; the following key was modified in v9.9.1 and so you see its entry here
-SET_T_actmd = The shortcut to open Clipjump Action Mode.
-            = The Action Mode as you may know provides interface for almost all the functionalities in Clipjump.
+SET_T_actmd = The shortcut to open Clipnik Action Mode.
+            = The Action Mode as you may know provides interface for almost all the functionalities in Clipnik.
             = If you want System-Level shortcuts for those functionalities , you can find them here in the Settings Editor.
 
 ;==========
@@ -175,8 +175,8 @@ SET_T_actmd = The shortcut to open Clipjump Action Mode.
 ;==========
 
 TIP_empty3 = Release Ctrl to exit.
-UPD_restart = Clipjump will now restart to apply the updates.
-UPD_automsg = Click Yes to auto update Clipjump or No to go to website.
+UPD_restart = Clipnik will now restart to apply the updates.
+UPD_automsg = Click Yes to auto update Clipnik or No to go to website.
 
 ;=========
 ;10
@@ -201,12 +201,12 @@ TIP_delallprompt = WARNING
 ;10.6
 ;=======
 
-ABT_runadmin = Clipjump is not running as Administrator
+ABT_runadmin = Clipnik is not running as Administrator
              = This (may) cause improper functioning of the program.
              =
              = [This message will be shown only once]
 ABT_cjready = Hi!
-            = Clipjump is now activated.
+            = Clipnik is now activated.
             = Try doing some quick copy and pastes...
 TIP_editdone = Clip has been edited
 TIP_editnotdone = Clip NOT edited !
@@ -249,12 +249,12 @@ PLG_Sb_deleted = Plugin Deleted
 SET_T_pst = Single character combination to use with Ctrl in activating [PASTE MODE]
           = Note that letters  E C X Z S A F H are reserved.
           =
-          = Also make sure to see "Copy bypassing Clipjump" in the help file
+          = Also make sure to see "Copy bypassing Clipnik" in the help file
 SET_pformat = Default Paste-Format
-SET_T_pformat = The Paste format you would like to be active at Clipjump startup. '-original' is the default Clipjump pasting technique.
+SET_T_pformat = The Paste format you would like to be active at Clipnik startup. '-original' is the default Clipnik pasting technique.
 SET_t_plugM = Shortcut to open Plugin Manager
 PLG_edit = Edit (F2)
-CUS_error = There was an error in a ClipjumpCustom.ini routine?
+CUS_error = There was an error in a ClipnikCustom.ini routine?
 
 ;=====
 ;10.7.8
@@ -266,18 +266,18 @@ TRY_pstmdshorts = Paste Mode shortcuts
 ;10.9
 ;=====
 
-SET_T_holdclip = Copies the selected text or item to a buffer and prevents it from being captured by Clipjump.
+SET_T_holdclip = Copies the selected text or item to a buffer and prevents it from being captured by Clipnik.
                = You can then paste the clip, move it to a channel or reject it.
 SET_keepactivepos = Preserve Current Active Clip position
-SET_T_keepactivepos = Do you want Clipjump to remember the last active Clip in Paste Mode ?
-                    = Unticking it will make Clipjump Paste Mode always start from Clip 1.
+SET_T_keepactivepos = Do you want Clipnik to remember the last active Clip in Paste Mode ?
+                    = Unticking it will make Clipnik Paste Mode always start from Clip 1.
 
 ;=====
 ;11
 ;=====
 
 HST_viewimage = [IMAGE]
-ORG__name = Clipjump Channel Organizer
+ORG__name = Clipnik Channel Organizer
 ORG_m_inc = Move Up    (Alt+Up)
 ORG_m_dec = Move Down   (Alt+Down)
 ORG_error = Not Supported
@@ -290,7 +290,7 @@ ORG_delCnlMsg = What do you want to do with the selected Channel ?
       = Do Nothing = Cancel
 _rename = Rename
 ORG_renameAsk = Please write new name for channel number
-TIP_initMsg = Initialising Clipjump
+TIP_initMsg = Initialising Clipnik
 
 ;======
 ;11.2
@@ -339,16 +339,16 @@ ORG_copyingclp = Copying selected clip(s)
 ORG_movingclp = Moving selected clip(s)
 ORG_Editprops = Edit Clip properties
 ORG_oEditMsg = Hit Save when you're done.
-ABT_info = Clipjump is a Windows only Clipboard Manager created in AutoHotkey.
+ABT_info = Clipnik is a Windows only Clipboard Manager created in AutoHotkey.
 _Save = Save
-SET_T_keepsession = Should Clipjump continue with all the saved clipboards (only of default channel 0) after it's restart
+SET_T_keepsession = Should Clipnik continue with all the saved clipboards (only of default channel 0) after it's restart
 
 ;========
 ; 11.5
 ;========
-_ClipjumpError = Clipjump Error
+_ClipjumpError = Clipnik Error
 TIP_genErrMsg = Please contact the author if you continue to have problems.
-TRY_reloadcustom = Reload ClipjumpCustom.ini
+TRY_reloadcustom = Reload ClipnikCustom.ini
 
 ;=======
 _language = Language
@@ -384,7 +384,7 @@ TIP_empty2_2 = %PROGNAME% is empty
 ;====
 
 SET_T_histshort = Shortcut for Clipboard History Tool
-PLG_sync_cb = Sync Clipjump Clipboard
+PLG_sync_cb = Sync Clipnik Clipboard
 
 ;====
 ; 12
@@ -395,7 +395,7 @@ ORG_clpdelmsg = Selected Clip(s) Deleted
 TIP_syscb = System clipboard has clip %realclipno%
 TIP_editing = Editing....
             = Press Esc to cancel.
-            = After editing, save (Ctrl+S) the file and close the editor to have it loaded into Clipjump.
+            = After editing, save (Ctrl+S) the file and close the editor to have it loaded into Clipnik.
 
 ;=====
 ; 12.3
@@ -431,9 +431,9 @@ TIP_help =
 ; 12.5
 ;=====
 
-SET_winClipjump = Use Win-based shortcuts for copy/cut to Clipjump
-SET_T_winClipjump = Use Win+C and Win+X to copy and cut to Clipjump 
-                  = Ctrl-C and Ctrl-X will not affect clipjump
+SET_winClipjump = Use Win-based shortcuts for copy/cut to Clipnik
+SET_T_winClipjump = Use Win+C and Win+X to copy and cut to Clipnik 
+                  = Ctrl-C and Ctrl-X will not affect clipnik
                   = Additionally, Win+V will become the paste mode shortcut.
                   = Refer to help file for more info.
 ACT_switchChannel = Switch Channel
@@ -472,8 +472,8 @@ SET_maxHistoryHint = 0 keeps every clip
 SET_imageDaysHint = 0 keeps images as long as everything else
 SET_qualityHint = JPEG quality for stored image previews
 SET_monitorClipboard = &Monitor the clipboard
-SET_monitorHint = off: only Clipjump shortcuts record clips
-SET_T_monitorClipboard = When off, copies are only recorded through the Clipjump copy and cut shortcuts.
+SET_monitorHint = off: only Clipnik shortcuts record clips
+SET_T_monitorClipboard = When off, copies are only recorded through the Clipnik copy and cut shortcuts.
 SET_exclusionHint = KeePass, 1Password, Bitwarden
 SET_partial = Search matches &partial text by default
 SET_closeOnInstaPaste = Close the History window after Insta-Paste
@@ -624,7 +624,7 @@ RUL_transformTextOnly = Applies to text clips only; images are unaffected
 RUL_tag = Tag
 RUL_name = Name (optional)
 ABT_forkOf = Forked from the original Clipjump by
-IGN_intro = Clipjump does not record copies made in these windows, and paste mode passes Ctrl+V through to them.
+IGN_intro = Clipnik does not record copies made in these windows, and paste mode passes Ctrl+V through to them.
 _close = Close
 PLG_search = Search plugins
 ; v13 Clipboard History page
@@ -717,13 +717,13 @@ RNG_origShort = Original
 RNG_actionTitle = Action mode
 RNG_act_H = every clip ever copied
 RNG_act_O = channels and their clips
-RNG_act_E = all of Clipjump's options
+RNG_act_E = all of Clipnik's options
 RNG_act_B = keep the next copy at the top
 RNG_act_P = swap with the pit channel
 RNG_act_T = skip recording the next copy
 RNG_act_C = the selected file's full path
 RNG_act_M = enable and edit plugins
-RNG_act_L = apps Clipjump leaves alone
+RNG_act_L = apps Clipnik leaves alone
 RNG_act_X = the open folder's path
 RNG_act_F = the file itself, not its path
 RNG_act_U = push the active clip to Windows

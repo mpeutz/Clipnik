@@ -1,7 +1,7 @@
 ﻿; Unit tests for the copy-time rules engine (src/core/rules.ahk).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\rules.ahk
 #Requires AutoHotkey v2.0
-#Warn All, Off   ; cliptype.ahk's ClipType.Of/Store reference clipPref/AddClipPref/CDS, which only Clipjump.ahk defines
+#Warn All, Off   ; cliptype.ahk's ClipType.Of/Store reference clipPref/AddClipPref/CDS, which only Clipnik.ahk defines
 #Include ..\lib\v2compat.ahk
 #Include ..\src\core\cliptype.ahk
 #Include ..\src\core\rules.ahk
@@ -73,7 +73,7 @@ check(Rules.List.Length = 0, "saving an empty list clears the section")
 try FileDelete(CONFIGURATION_FILE)
 
 ; image clips: kind-only and kind+regex conditions (Match is kind-agnostic, so these already pass; kept as
-; regression cover for the image-arm rule step in Clipjump.ahk)
+; regression cover for the image-arm rule step in Clipnik.ahk)
 ir := Rules.New()
 ir["kinds"] := ["image"], ir["action"] := "tag", ir["arg"] := "shot"
 check(Rules.Match(ir, "image", "", "app.exe", "Cls"), "an image rule matches an image clip")

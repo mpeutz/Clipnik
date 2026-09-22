@@ -1,4 +1,4 @@
-; Opens the tray menu card of the running Clipjump (via the API), captures it, opens the Channels submenu with
+; Opens the tray menu card of the running Clipnik (via the API), captures it, opens the Channels submenu with
 ; the keyboard, captures again, then closes it with Esc. Saves tests\out\tray-*.png.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
@@ -6,7 +6,7 @@
 SendLevel 1
 SetTitleMatchMode 1
 CoordMode("Mouse", "Screen")
-cj := Clipjump()
+cj := Clipnik()
 fails := 0
 check(name, cond) {
 	global fails
@@ -16,7 +16,7 @@ check(name, cond) {
 }
 snap(name) {
 	l := 99999, t := 99999, r := 0, b := 0
-	for h in WinGetList("Clipjump_TrayMenu ahk_class AutoHotkeyGUI") {
+	for h in WinGetList("Clipnik_TrayMenu ahk_class AutoHotkeyGUI") {
 		WinGetPos(&x, &y, &w, &hh, h)
 		l := Min(l, x), t := Min(t, y), r := Max(r, x + w), b := Max(b, y + hh)
 	}
@@ -27,7 +27,7 @@ snap(name) {
 }
 MouseMove(A_ScreenWidth - 120, A_ScreenHeight - 60)
 cj.runFunction("TrayMenu_Open()")
-check("card opens", WinWait("Clipjump_TrayMenu ahk_class AutoHotkeyGUI", , 5) != 0)
+check("card opens", WinWait("Clipnik_TrayMenu ahk_class AutoHotkeyGUI", , 5) != 0)
 Sleep 600
 snap("main")
 Send("{Down}")
@@ -36,25 +36,25 @@ Send("{Down}")
 Sleep 250
 Send("{Right}")
 Sleep 600
-check("submenu opens", WinGetList("Clipjump_TrayMenu ahk_class AutoHotkeyGUI").Length = 2)
+check("submenu opens", WinGetList("Clipnik_TrayMenu ahk_class AutoHotkeyGUI").Length = 2)
 snap("channels")
 Send("{Esc}")
 Sleep 300
 Send("{Esc}")
 Sleep 500
-check("Esc closes", !WinExist("Clipjump_TrayMenu ahk_class AutoHotkeyGUI"))
+check("Esc closes", !WinExist("Clipnik_TrayMenu ahk_class AutoHotkeyGUI"))
 ; the real path: the tray icon posts AHK_NOTIFYICON with WM_RBUTTONUP to the script window
 DetectHiddenWindows true
 SetTitleMatchMode 2
-scriptWin := WinExist("\Clipjump.ahk - ahk_class AutoHotkey")
+scriptWin := WinExist("\Clipnik.ahk - ahk_class AutoHotkey")
 SetTitleMatchMode 1
 PostMessage(0x404, 0, 0x205, , "ahk_id " scriptWin)
-check("tray right-click opens the card", WinWait("Clipjump_TrayMenu ahk_class AutoHotkeyGUI", , 5) != 0)
+check("tray right-click opens the card", WinWait("Clipnik_TrayMenu ahk_class AutoHotkeyGUI", , 5) != 0)
 Sleep 600
 check("standard menu did not appear", !WinExist("ahk_class #32768"))
 MouseMove(A_ScreenWidth // 2, 80)
 Click()
 Sleep 600
-check("click outside closes", !WinExist("Clipjump_TrayMenu ahk_class AutoHotkeyGUI"))
+check("click outside closes", !WinExist("Clipnik_TrayMenu ahk_class AutoHotkeyGUI"))
 FileAppend((fails ? "FAILED " fails : "ALL PASSED") "`n", "*")
 ExitApp fails

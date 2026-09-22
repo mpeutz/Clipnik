@@ -15,7 +15,8 @@ Site:- www.github.com/aviaryan
 
 Modifications ============
 
-This distribution is a modified version of Clipjump 12.5.
+This distribution is Clipnik, a modified version of Clipjump 12.5. It is released under a
+new name and is not endorsed by the original author.
 Modifications copyright (C) 2026 mpeutz, also licensed under the Apache License v2.0.
 
 Changes include a port from AutoHotkey v1 to v2, a rewritten native and WebView2 user

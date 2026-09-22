@@ -1,13 +1,13 @@
 ; Help window (WebView2): opens from Action Mode, shows the topic list, filters, deep links, and remembers
-; its geometry. Needs a running Clipjump and an idle desktop.
+; its geometry. Needs a running Clipnik and an idle desktop.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 SendLevel 1
 SetTitleMatchMode 1
 CoordMode "Mouse", "Screen"
-cj := Clipjump()
-title := "Clipjump Help ahk_class AutoHotkeyGUI"
-logFile := A_Temp "\Clipjump\webhost.log"
+cj := Clipnik()
+title := "Clipnik Help ahk_class AutoHotkeyGUI"
+logFile := A_Temp "\Clipnik\webhost.log"
 fails := 0
 step(s) => FileAppend("     .. " s "`n", "*")
 check(name, cond) {
@@ -63,7 +63,7 @@ cj.runFunction("Help_Open()")
 check("window opens", WinWait(title, , 8) != 0)
 WinActivate(title)
 Sleep 2500
-check("no error dialog", !WinExist("Clipjump.ahk ahk_class #32770"))
+check("no error dialog", !WinExist("Clipnik.ahk ahk_class #32770"))
 ref := cj.runFunction("Help_ReferenceProbe()")
 check("reference has paste-mode rows", RegExMatch(ref, "pasteMode=[1-9]"))
 check("reference lists a format letter", RegExMatch(ref, "formats=[1-9]"))
@@ -114,7 +114,7 @@ check("help deep-linked to the paste-mode reference", InStr(cj.runFunction("Help
 step("Settings' Help button opens the settings reference")
 cj.runFunction("Help_Close()")
 Sleep 600
-settingsTitle := "Clipjump Settings ahk_class AutoHotkeyGUI"
+settingsTitle := "Clipnik Settings ahk_class AutoHotkeyGUI"
 cj.runLabel("settings")
 check("settings window opens", WinWait(settingsTitle, , 5) != 0)
 WinActivate(settingsTitle)

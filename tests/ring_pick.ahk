@@ -39,7 +39,7 @@ later(ms, fn) => SetTimer(fn, -ms)
 
 later(400, () => SendEvent("b"))
 check(Ring.Pick(items, {prefix: ""}) = "B", "a letter picks")
-check(Ring_IsOpen() = 0 && !WinExist("Clipjump_Ring ahk_class AutoHotkeyGUI"), "the ring is hidden after a pick")
+check(Ring_IsOpen() = 0 && !WinExist("Clipnik_Ring ahk_class AutoHotkeyGUI"), "the ring is hidden after a pick")
 
 later(400, () => SendEvent("{Esc}"))
 check(Ring.Pick(items, {prefix: ""}) = "", "Esc cancels")
@@ -124,7 +124,7 @@ try {
     threw := (e.Message = "boom")
 }
 check(threw, "an exception inside Pick propagates")
-check(Ring_IsOpen() = 0 && !WinExist("Clipjump_Ring ahk_class AutoHotkeyGUI"), "the ring is closed and hidden after the exception")
+check(Ring_IsOpen() = 0 && !WinExist("Clipnik_Ring ahk_class AutoHotkeyGUI"), "the ring is closed and hidden after the exception")
 
 later(400, () => SendEvent("b"))
 check(Ring.Pick(items, {prefix: ""}) = "B", "a normal Pick still works after a prior Pick threw")

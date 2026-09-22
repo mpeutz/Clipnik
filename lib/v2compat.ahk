@@ -1,5 +1,5 @@
 ; v2compat.ahk - helpers that preserve AutoHotkey v1 object and control-flow semantics
-; that the Clipjump codebase relies on, so the port can stay close to the original code.
+; that the Clipnik codebase relies on, so the port can stay close to the original code.
 
 ; CJMap: a Map that behaves like a v1 associative array.
 ;   - keys are case-insensitive; canonical integer strings ("12") and integers (12) are the same key
@@ -229,7 +229,7 @@ ToolTipAt(text := "", x := "", y := "", which := 1) {
 		ToolTip(text, x, y, which)
 }
 
-; Reads a clip file (.avc / .cj) and returns a ClipboardAll object.
+; Reads a clip file (.avc, or a .cj / .cnk export) and returns a ClipboardAll object.
 ; Clipjump v1 running on 64-bit AutoHotkey wrote each block as format(4) size(8) data; v2 expects format(4) size(4) data.
 ; Files are sniffed for the 8-byte layout and converted on the fly, so caches created by v1 keep working.
 ClipFileRead(path) {

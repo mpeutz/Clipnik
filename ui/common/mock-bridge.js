@@ -67,7 +67,7 @@
       { key: "O", label: "Channel Organizer", desc: "Move clips between channels" },
       { key: "E", label: "Settings", desc: "Open settings" },
     ],
-    // every clip kind Clipjump knows, same shape as the real Help_Reference() -- lets a format's raw
+    // every clip kind Clipnik knows, same shape as the real Help_Reference() -- lets a format's raw
     // "text,code" kind list resolve to real labels in the mock instead of only ever hitting the id fallback
     rules: {
       kinds: [
@@ -77,7 +77,7 @@
         { kind: "text", label: "Text" }, { kind: "image", label: "Image" },
       ],
     },
-    version: "12.5-mock",
+    version: "1.0-mock",
   };
 
   // ---- organizer ----

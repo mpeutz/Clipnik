@@ -1,11 +1,11 @@
 ; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
 /*
 
-This function file helps any AHK v2 script to use Clipjump API functions from its side.
+This function file helps any AHK v2 script to use Clipnik API functions from its side.
 Just include this file in your script.
 
 Note that API.text2binary() is not supported currently.
-The ClipjumpCommunicator.ahk file is already included in this file.
+The ClipnikCommunicator.ahk file is already included in this file.
 
 v 15.5.17 (AutoHotkey v2 port)
 
@@ -14,7 +14,7 @@ v 15.5.17 (AutoHotkey v2 port)
 /*
 EXAMPLES
 
-cj := Clipjump()
+cj := Clipnik()
 
 cj.IncognitoMode(1)
 cj.pasteText("some text")
@@ -27,17 +27,17 @@ MsgBox cj.version
 
 */
 
-;cj := Clipjump()
+;cj := Clipnik()
 ;cj.runFunction("set_pformat(NO-FORMATTING)")
 ;cj.getClipAt(0, 7)
 ;MsgBox cj.author_page
 
-class Clipjump
+class Clipnik
 {
 	__New() {
 	}
 
-	; any unknown method call is forwarded to Clipjump's API class over WM_COPYDATA
+	; any unknown method call is forwarded to Clipnik's API class over WM_COPYDATA
 	__Call(funcname, parameters) {
 		cbF := A_Temp "\cjcb.txt"
 		rFuncs := "|getClipAt|getClipLoc|getVar|runFunction|"
@@ -54,7 +54,7 @@ class Clipjump
 		returned := CjControl("API:" funcname ps)
 		if (returned > 0) && InStr(rFuncs, "|" funcname "|")
 		{
-			Clipjump_wait4file()
+			Clipnik_wait4file()
 			out := FileRead(cbF)
 			try FileDelete(cbF)
 			return out
@@ -65,7 +65,7 @@ class Clipjump
 
 	/*
 	Use -
-		cj := Clipjump()
+		cj := Clipnik()
 		MsgBox cj.version
 	*/
 	__Get(var, params) {
@@ -74,7 +74,7 @@ class Clipjump
 
 	/*
 	Use -
-		cj := Clipjump()
+		cj := Clipnik()
 		cj["pastemodekey.z"] := "y"
 		cj.MYVAR := "value"
 	*/
@@ -93,20 +93,24 @@ class Clipjump
 	;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 }
 
-Clipjump_wait4file() {
+; the class's name before the rename, so scripts that call Clipjump() keep working
+class Clipjump extends Clipnik {
+}
+
+Clipnik_wait4file() {
 	while !FileExist(A_Temp "\cjcb.txt")
 		Sleep 15
 }
 
 
-;---------------------- Clipjump Communicator.ahk ---------------------------------------------
+;---------------------- Clipnik Communicator.ahk ---------------------------------------------
 
 CjControl(Code)
 {
 	if !(IsExe := CjControl_check())
-		return -1       ;Clipjump doesn't exist
+		return -1       ;Clipnik doesn't exist
 
-	TargetScriptTitle := "Clipjump" (IsExe == 1 ? ".ahk ahk_class AutoHotkey" : ".exe ahk_class AutoHotkey")
+	TargetScriptTitle := "Clipnik" (IsExe == 1 ? ".ahk ahk_class AutoHotkey" : ".exe ahk_class AutoHotkey")
 
 	CopyDataStruct := Buffer(3 * A_PtrSize, 0)
 	SizeInBytes := (StrLen(Code) + 1) * 2
@@ -130,14 +134,14 @@ CjControl(Code)
 	DetectHiddenWindows Prev_DetectHiddenWindows
 	SetTitleMatchMode Prev_TitleMatchMode
 
-	while !FileExist(A_Temp "\clipjumpcom.txt")
+	while !FileExist(A_Temp "\clipnikcom.txt")
 	{
 		if (A_Index > 40)		;2 secs total
 			if !CjControl_check()
 				return -1
 		Sleep 50
 	}
-	try FileDelete(A_Temp "\clipjumpcom.txt")
+	try FileDelete(A_Temp "\clipnikcom.txt")
 
 	return 1        ;True
 }
@@ -146,8 +150,8 @@ CjControl_check() {
 	HW := A_DetectHiddenWindows, TM := A_TitleMatchMode
 	DetectHiddenWindows true
 	SetTitleMatchMode 2
-	A := WinExist("\Clipjump.ahk - ahk_class AutoHotkey")
-	E := WinExist("\Clipjump.exe - ahk_class AutoHotkey")
+	A := WinExist("\Clipnik.ahk - ahk_class AutoHotkey")
+	E := WinExist("\Clipnik.exe - ahk_class AutoHotkey")
 	DetectHiddenWindows HW
 	SetTitleMatchMode TM
 

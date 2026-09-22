@@ -1,7 +1,7 @@
 ; Unit tests for src/core/vault.ahk against a temporary database.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\vault.ahk
 #Requires AutoHotkey v2.0
-#Warn All, Off   ; vault.ahk references symbols only Clipjump.ahk defines
+#Warn All, Off   ; vault.ahk references symbols only Clipnik.ahk defines
 #Include ..\lib\v2compat.ahk
 #Include ..\lib\SQLiteDB\SQLiteDB.ahk
 #Include ..\src\core\cliptype.ahk

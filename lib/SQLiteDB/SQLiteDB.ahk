@@ -1,5 +1,5 @@
 ; SQLiteDB for AutoHotkey v2
-; Minimal port of the API surface Clipjump uses from just me's Class_SQLiteDB (v1):
+; Minimal port of the API surface Clipnik uses from just me's Class_SQLiteDB (v1):
 ;   OpenDB, CloseDB, Exec, GetTable, Query, ErrorMsg, ErrorCode, LastInsertRowID
 ; Result objects mirror the v1 shapes: Table has RowCount/ColumnCount/Rows and Next(&Row);
 ; RecordSet has Next(&Row), Reset(), Free(). Next() returns 1 for a row, -1 at end, 0 on error.

@@ -1,14 +1,14 @@
-; Opens the Settings window of the running Clipjump, walks every page and saves tests\out\settings-<page>.png.
+; Opens the Settings window of the running Clipnik, walks every page and saves tests\out\settings-<page>.png.
 ; Optional argument: a page id to stop on (leaves the window open for manual inspection).
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 1
 SetControlDelay -1
-cj := Clipjump()
+cj := Clipnik()
 pToken := Gdip_Startup()
 DirCreate(A_ScriptDir "\out")
-title := "Clipjump Settings ahk_class AutoHotkeyGUI"
+title := "Clipnik Settings ahk_class AutoHotkeyGUI"
 cj.runLabel("settings")
 if !WinWait(title, , 5) {
 	FileAppend("no settings window`n", "*")

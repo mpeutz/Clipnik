@@ -27,7 +27,7 @@ class Transforms {
 			e := CJMap()
 			e["name"] := ClipType_T(t[2]), e["*"] := t[3], e["Previewable"] := 1, e["kinds"] := t[4], e["key"] := t[5], e["builtin"] := 1, e["desc"] := ClipType_T("TRF_desc_" t[1]), e["short"] := ClipType_T("TRF_short_" t[1])
 			; the Plugin Manager lists these beside the plugin files, so give them the same displayable fields
-			e["Description"] := e["desc"], e["Author"] := "Clipjump", e["Tags"] := "pformat builtin"
+			e["Description"] := e["desc"], e["Author"] := "Clipnik", e["Tags"] := "pformat builtin"
 			e["Letter"] := t[5], e["Applies to"] := Transforms.KindLabels(t[4]), e["Wedge label"] := e["short"]
 			PLUGINS.pformat[t[1]] := e
 		}

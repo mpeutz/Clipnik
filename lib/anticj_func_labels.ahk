@@ -489,7 +489,7 @@ hkZ(key, fn, Status := 1) {
 		try
 			Hotkey(t, fn, Status ? "On" : "Off")
 		catch
-			MsgBox("It looks like the hotkey " t " doesn't exist ? `nRefer to troubleshooting page in help file.", "Clipjump Warning", 16)
+			MsgBox("It looks like the hotkey " t " doesn't exist ? `nRefer to troubleshooting page in help file.", "Clipnik Warning", 16)
 	}
 }
 

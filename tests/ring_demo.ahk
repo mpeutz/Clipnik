@@ -1,5 +1,5 @@
 ; Renders the action ring in every mode and page, dark and light, and saves screenshots to tests\out\ring-*.png.
-; Standalone: stubs the few Clipjump globals the modules touch. Run with Clipjump NOT running (it uses hotkeys).
+; Standalone: stubs the few Clipnik globals the modules touch. Run with Clipnik NOT running (it uses hotkeys).
 #Requires AutoHotkey v2.0
 #Warn All, Off
 #Include ..\lib\v2compat.ahk
@@ -43,7 +43,7 @@ for mode in ["dark", "light"] {
     Ring.RenderToFile(Ring.State(fp[2], 7, Ring.NavLabel("back"), TXT.RNG_backDesc), "tests\out\ring-" mode "-format-page2.png")
     Ring.RenderToFile(Ring.State(ap[1], 0, "Clipboard History", "every clip ever copied"), "tests\out\ring-" mode "-action.png")
     Ring.RenderToFile(Ring.State(ap[1], 1, "Channel Organizer", "channels and their clips"), "tests\out\ring-" mode "-action-organizer.png")
-    Ring.RenderToFile(Ring.State(ap[1], 2, "Settings", "all of Clipjump's options"), "tests\out\ring-" mode "-action-settings.png")
+    Ring.RenderToFile(Ring.State(ap[1], 2, "Settings", "all of Clipnik's options"), "tests\out\ring-" mode "-action-settings.png")
 }
 FileAppend("done`n", "*")
 ExitApp

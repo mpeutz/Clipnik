@@ -1,4 +1,4 @@
-; Opens About, saves the icon area from the screen to tests\out\about_icon.png, and closes it. Requires a running Clipjump.
+; Opens About, saves the icon area from the screen to tests\out\about_icon.png, and closes it. Requires a running Clipnik.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
@@ -6,7 +6,7 @@ SetTitleMatchMode 2
 cj := Clipjump()
 pToken := Gdip_Startup()
 DirCreate(A_ScriptDir "\out")
-t := "About Clipjump ahk_class AutoHotkeyGUI"
+t := "About Clipnik ahk_class AutoHotkeyGUI"
 cj.runLabel("main")
 if WinWait(t, , 5) {
     WinActivate(t)

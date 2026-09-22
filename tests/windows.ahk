@@ -1,4 +1,4 @@
-; Opens each Clipjump window through the API, verifies it appears, then closes it. Requires a running Clipjump.
+; Opens each Clipnik window through the API, verifies it appears, then closes it. Requires a running Clipnik.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\windows.ahk
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
@@ -13,10 +13,10 @@ check(cond, msg) {
 }
 errorDialog() {
     DetectHiddenWindows false
-    return WinExist("Clipjump.ahk ahk_class #32770")
+    return WinExist("Clipnik.ahk ahk_class #32770")
 }
-cj := Clipjump()
-wins := [["main", "About Clipjump"], ["settings", "Clipjump Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]], ["classTool", cj["TXT.IGN__name"]]]
+cj := Clipnik()
+wins := [["main", "About Clipnik"], ["settings", "Clipnik Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]], ["classTool", cj["TXT.IGN__name"]]]
 for w in wins {
     cj.runLabel(w[1])
     found := WinWait(w[2] " ahk_class AutoHotkeyGUI", , 5)

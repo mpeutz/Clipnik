@@ -1,4 +1,4 @@
-; Drives the Settings window of the running Clipjump: records a hotkey, changes a spinner and the theme,
+; Drives the Settings window of the running Clipnik: records a hotkey, changes a spinner and the theme,
 ; applies, and checks settings.ini and the live hotkey. Restores the previous values at the end.
 ; Needs an idle desktop. Logs to tests\out\settings_flow.log; prints PASS/FAIL lines.
 #Requires AutoHotkey v2.0
@@ -8,9 +8,9 @@ SendLevel 1
 SetTitleMatchMode 1
 SetControlDelay -1
 SetKeyDelay 30, 30
-cj := Clipjump()
+cj := Clipnik()
 ini := A_ScriptDir "\..\settings.ini"
-title := "Clipjump Settings ahk_class AutoHotkeyGUI"
+title := "Clipnik Settings ahk_class AutoHotkeyGUI"
 logFile := A_ScriptDir "\out\settings_flow.log"
 try FileDelete(logFile)
 fails := 0
@@ -108,7 +108,7 @@ ControlClick(cj["TXT.SET_cancel"], cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI
 check("rule editor closed", WinWaitClose(cj["TXT.RUL_title"] " ahk_class AutoHotkeyGUI", , 3))
 
 ; --- Run at startup: Advanced page check box toggles the Startup shortcut, then back
-lnk := A_Startup "\Clipjump.lnk"
+lnk := A_Startup "\Clipnik.lnk"
 oldStartup := FileExist(lnk) ? true : false
 WinActivate(title)
 ControlClick(cj["TXT.SET_advancedPage"], title)

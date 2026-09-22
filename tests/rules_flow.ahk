@@ -1,11 +1,11 @@
-; Copy-time rules against a RUNNING Clipjump: a URL rule routes to channel 1 (the toast names that channel and
+; Copy-time rules against a RUNNING Clipnik: a URL rule routes to channel 1 (the toast names that channel and
 ; the active channel is unchanged), a transform rule rewrites the clip and its kind, an email rule tags the clip,
 ; an ignore rule drops a clip, and an image rule routes an image clip to a channel. Rules are restored afterwards.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 1
-cj := Clipjump()
+cj := Clipnik()
 ini := A_ScriptDir "\..\settings.ini"
 fails := 0
 check(name, cond) {
@@ -16,7 +16,7 @@ check(name, cond) {
 }
 ; text of the newest copy toast, "|" separated (the message is a Static, the {channel} pill a Button)
 toastText() {
-	t := "Clipjump_Toast ahk_class AutoHotkeyGUI"
+	t := "Clipnik_Toast ahk_class AutoHotkeyGUI"
 	if !WinExist(t)
 		return ""
 	out := ""
@@ -25,7 +25,7 @@ toastText() {
 			out .= ControlGetText(ctl, t) "|"
 	return out
 }
-; Clipjump coalesces clipboard notifications that arrive inside 200 ms (unchanged from v1), and AHK's own
+; Clipnik coalesces clipboard notifications that arrive inside 200 ms (unchanged from v1), and AHK's own
 ; "A_Clipboard :=" clears the clipboard before it writes, so a copy is occasionally swallowed whole. Wait for
 ; the clip to actually land where the rule should put it, and copy again if it never did, rather than assuming
 ; one write is always seen. A retry only ever happens when nothing landed, so the strength checks still hold.
@@ -96,7 +96,7 @@ check("email tagged", cj.runFunction("clipPref(0," cj["CURSAVE"] ",Tags)") = "co
 before0 := Integer(cj.runFunction("API.getChStrength(0)"))
 A_Clipboard := "secret-" stamp
 Sleep 1200
-; the toast proves the rule fired: without it, a copy Clipjump never saw would pass this check too
+; the toast proves the rule fired: without it, a copy Clipnik never saw would pass this check too
 igToast := toastText()
 check("ignore rule announced itself [" igToast "]", InStr(igToast, "secrets"))
 check("secret ignored", Integer(cj.runFunction("API.getChStrength(0)")) = before0)

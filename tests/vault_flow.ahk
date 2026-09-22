@@ -1,13 +1,13 @@
-; The Vault against a RUNNING Clipjump: entries reach the page, keep the user's order, survive an edit with a
+; The Vault against a RUNNING Clipnik: entries reach the page, keep the user's order, survive an edit with a
 ; re-detected kind, are reachable from Clipboard History and the Organizer, and are never pruned.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\vault_flow.ahk
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 1
-cj := Clipjump()
-title := "Clipjump Clipboard History ahk_class AutoHotkeyGUI"
-logFile := A_Temp "\Clipjump\webhost.log"
+cj := Clipnik()
+title := "Clipnik Clipboard History ahk_class AutoHotkeyGUI"
+logFile := A_Temp "\Clipnik\webhost.log"
 fails := 0
 check(name, cond) {
 	global fails

@@ -1,14 +1,14 @@
 ; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
-;@Plugin-Name Sync Clipjump Clipboard
+;@Plugin-Name Sync Clipnik Clipboard
 ;@Plugin-Silent 1
-;@Plugin-Description Updates/Syncs clipjump clipboards with the current active system clipboard
+;@Plugin-Description Updates/Syncs clipnik clipboards with the current active system clipboard
 ;@Plugin-Author Avi
 ;@Plugin-Version 0.1
-;@Plugin-Tags system clipboard clipjump
+;@Plugin-Tags system clipboard clipnik
 
 ;@Plugin-param1 Pass 1 or True to show confirmation message after updating
 
-plugin_updateClipjumpClipboard(zMsg := 1) {
+plugin_updateClipnikClipboard(zMsg := 1) {
 	failed := 0
 	try
 		zcb := ClipboardAll()

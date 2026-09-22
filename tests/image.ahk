@@ -1,4 +1,4 @@
-; Image clip capture and preview against a RUNNING Clipjump.
+; Image clip capture and preview against a RUNNING Clipnik.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
@@ -11,8 +11,8 @@ check(cond, msg) {
     if !cond
         fails++
 }
-errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
-cj := Clipjump()
+errorDialog() => WinExist("Clipnik.ahk ahk_class #32770")
+cj := Clipnik()
 ; the history-row check below needs image storage on for the run, the same as tests/history_image.ahk
 oldImageStored := cj["ini_IsImageStored"]
 cj.setVar("ini_IsImageStored", 1)
@@ -48,12 +48,12 @@ ed.Focus()
 Sleep 400
 SendEvent("{Ctrl down}v")
 Sleep 900
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "HUD card shown for the image clip")
+check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "HUD card shown for the image clip")
 SendEvent("x")
 Sleep 300
 SendEvent("{Ctrl up}")
 Sleep 1000
-check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "HUD card hidden after cancel")
+check(!WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "HUD card hidden after cancel")
 check(!errorDialog(), "no error dialogs")
 
 n := Integer(cj["CURSAVE"]), ch := Integer(cj["CN.NG"])

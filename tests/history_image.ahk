@@ -1,13 +1,13 @@
 ; Turns image storage on for the run, copies a generated image, checks it lands in the history table and that the
-; History page previews it (image URL served from cache.clipjump). Restores the setting.
+; History page previews it (image URL served from cache.clipnik). Restores the setting.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1
 SetTitleMatchMode 1
-cj := Clipjump()
-title := "Clipjump Clipboard History ahk_class AutoHotkeyGUI"
-logFile := A_Temp "\Clipjump\webhost.log"
+cj := Clipnik()
+title := "Clipnik Clipboard History ahk_class AutoHotkeyGUI"
+logFile := A_Temp "\Clipnik\webhost.log"
 fails := 0
 check(name, cond) {
 	global fails
@@ -52,7 +52,7 @@ Sleep 2000
 Send("{Down}")
 Sleep 900
 txt := readLog()
-check("preview carries the image url", InStr(txt, '"url":"https://cache.clipjump/history/'))
+check("preview carries the image url", InStr(txt, '"url":"https://cache.clipnik/history/'))
 check("preview reports the image kind", InStr(txt, '"kind":"image"'))
 check("preview reports its size", InStr(txt, '"width":160'))
 ; drives the real page (Actions button -> menu item -> bridge.send) instead of calling the host handler

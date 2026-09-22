@@ -35,7 +35,7 @@ class Ring {
 		Ring.isOpen := true
 		; anything thrown from BindKeys(true) through the wait loop (Draw, o.until.Call()) must not leave the
 		; 16 ms timer running, the keys bound system-wide, the dim window stuck at alpha 128 or isOpen stuck
-		; true (which would make every later Pick return "" until Clipjump restarts) -- finally always undoes
+		; true (which would make every later Pick return "" until Clipnik restarts) -- finally always undoes
 		; everything BindKeys(true)/dim set up, whatever happened in between.
 		try {
 			Ring.BindKeys(true)
@@ -66,7 +66,7 @@ class Ring {
 	static Window() {
 		if Ring.g
 			return
-		Ring.g := Gui("-Caption +E0x80000 +E0x08000000 +AlwaysOnTop +ToolWindow -DPIScale +Owner" A_ScriptHwnd, "Clipjump_Ring")
+		Ring.g := Gui("-Caption +E0x80000 +E0x08000000 +AlwaysOnTop +ToolWindow -DPIScale +Owner" A_ScriptHwnd, "Clipnik_Ring")
 	}
 
 	static Draw() {
@@ -168,7 +168,7 @@ class Ring {
 	}
 
 	; {text, icon}: GDI+ font families. The icon family comes from a private collection because the GDI private
-	; font Clipjump registers at startup is invisible to GDI+.
+	; font Clipnik registers at startup is invisible to GDI+.
 	static Fonts() {
 		if IsObject(Ring.fontSet)
 			return Ring.fontSet

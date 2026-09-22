@@ -7,7 +7,7 @@
 ;   host.Show(opts), host.Hide(), host.Visible, host.g (Gui), host.core (WebView2.Core)
 ;   host.OnClose(fn), host.OnResize(fn)
 ;
-; Pages load from https://app.clipjump/<page>; cache/ is mapped to https://cache.clipjump/ for thumbnails.
+; Pages load from https://app.clipnik/<page>; cache/ is mapped to https://cache.clipnik/ for thumbnails.
 ; The palette is injected before every document as CSS variables plus a "cj-theme" class on <html>.
 
 class WebHost {
@@ -60,7 +60,7 @@ class WebHost {
 			return true
 		if !WebHost.Available()
 			return false
-		dataDir := A_Temp "\Clipjump\wv2"
+		dataDir := A_Temp "\Clipnik\wv2"
 		DirCreate(dataDir)
 		env := WebView2.CreateEnvironmentAsync(0, dataDir, "", A_WorkingDir "\lib\vendor\WebView2\WebView2Loader.dll").await()
 		this.ctrl := env.CreateCoreWebView2ControllerAsync(this.g.Hwnd).await()
@@ -72,11 +72,11 @@ class WebHost {
 		s.AreDevToolsEnabled := !A_IsCompiled
 		s.AreHostObjectsAllowed := false
 		this.ctrl.DefaultBackgroundColor := WebHost.Wv2Color(Theme.Palette["surface"])
-		core.SetVirtualHostNameToFolderMapping("app.clipjump", A_WorkingDir "\ui", 1)       ; COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW
-		core.SetVirtualHostNameToFolderMapping("cache.clipjump", A_WorkingDir "\cache", 1)
+		core.SetVirtualHostNameToFolderMapping("app.clipnik", A_WorkingDir "\ui", 1)       ; COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW
+		core.SetVirtualHostNameToFolderMapping("cache.clipnik", A_WorkingDir "\cache", 1)
 		core.AddScriptToExecuteOnDocumentCreatedAsync(this.ThemeScript()).await()
 		this.token := core.WebMessageReceived(this.OnWebMessage.Bind(this))
-		core.Navigate("https://app.clipjump/" this.page)
+		core.Navigate("https://app.clipnik/" this.page)
 		this.ctrl.Fill()
 		return true
 	}
@@ -125,7 +125,7 @@ class WebHost {
 	}
 
 	static Log(text) {
-		try FileAppend(A_Now " " text "`n", A_Temp "\Clipjump\webhost.log")
+		try FileAppend(A_Now " " text "`n", A_Temp "\Clipnik\webhost.log")
 	}
 
 	Post(cmd, data := "") {

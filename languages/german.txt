@@ -1,4 +1,4 @@
-﻿;Deutsche übersetzung für Clipjump
+﻿;Deutsche übersetzung für Clipnik
 ;erstellt von fump2000 / hoppfrosch
 
 ; NOTES
@@ -6,7 +6,7 @@
 ; Add new keys in the future versions at the bottom for easy & consistent development
 ; Add version no in comment when adding a new key in the translation file.
 ; Most keys have format XXX_ where XXX is the component name
-; Dont translate 'Clipjump'
+; Dont translate 'Clipnik'
 ; & in &Preview is to create shortcut Alt+P when the window is active. When translating into a non-english language, omit '&' and when in a english type language, use '&'
 ; only when you are sure you are right.
 ; Words inside %..% are variables. Take them as constants and translate them accordingly.
@@ -36,9 +36,9 @@ TIP_modem = Zum bestätigen STRG loslassen
           = Drücke X um den Modus zu wechseln
 
 ABT__name = Über
-ABT_reset = &Clipjump zurücksetzen
-ABT_resetM = Sind Sie sicher, dass Sie Clipjump zurücksetzen wollen? Es gehen alle Clips und Einstellungen verloren!
-ABT_removeStart = Clipjump wurde im Autostart gefunden. Möchten Sie dies entfernen?
+ABT_reset = &Clipnik zurücksetzen
+ABT_resetM = Sind Sie sicher, dass Sie Clipnik zurücksetzen wollen? Es gehen alle Clips und Einstellungen verloren!
+ABT_removeStart = Clipnik wurde im Autostart gefunden. Möchten Sie dies entfernen?
 ABT_resetfinal = wird nun geschlossen.
 ABT_noupdate = keine Updates verfügbar.
 
@@ -60,12 +60,12 @@ HST_m_ref = &Aktualisieren
 HST_m_del = &Löschen
 
 PRV__name = Vorschau
-PRV_copy = Senden an Clipjump
+PRV_copy = Senden an Clipnik
 PRV_find = &Suche
 
 SET__name = Einstellungen
 SET_main = Allgemein
-SET_limitmaxclips = &Clipjump Zwischenablagen limitieren
+SET_limitmaxclips = &Clipnik Zwischenablagen limitieren
 SET_maxclips = Mindestanzahl der aktiven &Clips
 SET_threshold = &Threshold
 SET_quality = &Qualität der Vorschaubilder
@@ -87,18 +87,18 @@ SET_apply = &Speichern
 SET_advanced_error = ist nicht in der Lage die Einstellungsdatei (settings.ini) oder den Editor (notepad.exe) zu finden. Stellen Sie sicher, dass die Dateien in ihren jeweiligen Ordnern existieren.
                    =
                    = Wenden Sie sich an den Author falls das Problem weiterhin besteht.
-SET_T_limitmaxclips = Limmitiert Clipjump's Clipanzahl
+SET_T_limitmaxclips = Limmitiert Clipnik's Clipanzahl
                     = Markiert = Limitierung aktiv
 SET_T_maxclips = Die minimale Anzahl der Zwischenablagen, die Sie zur Nutzung aktivieren wollen.
                = Wenn 20 gewünscht werden, geben Sie 20 an.
 SET_T_threshold = Threshold bietet eine zusätzliche Anzahl an Zwischenablagen.
                 = Empfohlene Menge = 10.
                 =
-                = [TIPP] - Threshold = 1 und Clipjump speichert exakt die gewünschte minimale Anzahl an Clips.
+                = [TIPP] - Threshold = 1 und Clipnik speichert exakt die gewünschte minimale Anzahl an Clips.
 SET_T_quality = Die Qualität der Bilder in der Bildvorschau.
               = Range 1 - 100
               = Empfohlen = 90
-SET_T_copybeep = Aktivieren Sie diese Option und Sie hören fortan einen Ton wenn Clipjump Daten aufnimmt.
+SET_T_copybeep = Aktivieren Sie diese Option und Sie hören fortan einen Ton wenn Clipnik Daten aufnimmt.
                =
                = Sie können die Ton Frequenz in der [Advanced] Sektion der Settings.ini verändern.
 SET_T_ismessage = Möchten Sie beim Kopieren oder Ausschneiden per ToolTip informiert werden?
@@ -110,7 +110,7 @@ SET_T_cfilep = Hotkey um den Pfad der ausgewählten Datei zu kopieren.
              = Geben Sie keinen Buchstaben an wird der Hotkey deaktiviert.
 SET_T_cfolderp = Hotkey um den Pfad des ausgewählten Ordners zu kopieren.
                = Geben Sie keinen Buchstaben an wird der Hotkey deaktiviert.
-SET_T_cfiled = Hotkey um den Dateiinhalt der ausgewählten Datei an Clipjump zu senden.
+SET_T_cfiled = Hotkey um den Dateiinhalt der ausgewählten Datei an Clipnik zu senden.
              = Geben Sie keinen Buchstaben an wird der Hotkey deaktiviert.
 SET_T_pitswp = 	Hotkey um direkt in den PitSwap channel zu wechseln. (Funktioniert nur dann wenn es den Channel bereits gibt.)
              = Für weitere Einzelheiten über die Funktion lesen Sie den Part in der Hilfedatei.
@@ -150,7 +150,7 @@ _exportedto = Exportiert
 ;9.9.0.2
 ;============
 
-IGN_Restartmsg = Es ist nötig zur Übernahme und Aktivierung der neuen Einstellunegn Clipjump neu zu starten. Wollen Sie jetzt neustarten?
+IGN_Restartmsg = Es ist nötig zur Übernahme und Aktivierung der neuen Einstellunegn Clipnik neu zu starten. Wollen Sie jetzt neustarten?
 IGN_tip = Mit der Leertaste die Fenster-Classe hinzufügen.
         = Mit Escape die Aktion abbrechen.
 
@@ -163,7 +163,7 @@ TRY_tools = &Tools
 HST_delall_msg = Sind Sie sicher, dass Sie alle Einträge der Historie löschen wollen?
 ; the following key was modified in v9.9.1 and so you see its entry here
 SET_T_actmd = Hotkey um den Aktionsmodus zu starten.
-            = Der Aktionsmodus, bietet eine Schnittstelle für fast alle funktionen in Clipjump.
+            = Der Aktionsmodus, bietet eine Schnittstelle für fast alle funktionen in Clipnik.
             = Eventuell ist es für Sie angenehmer selten verwendete Hotkeys zu deaktivieren und stattdessen den Aktionsmodus zu nutzen.
 
 ;==========
@@ -171,8 +171,8 @@ SET_T_actmd = Hotkey um den Aktionsmodus zu starten.
 ;==========
 
 TIP_empty3 = Ctrl Taste loslassen um zu verlassen
-UPD_restart = Clipjump führt einen Neustart aus um die Updates anzuwenden
-UPD_automsg = Drücke Yes um ein Auto-Update für Clipjump durchzuführen oder No um zur Webesite zu gehen.
+UPD_restart = Clipnik führt einen Neustart aus um die Updates anzuwenden
+UPD_automsg = Drücke Yes um ein Auto-Update für Clipnik durchzuführen oder No um zur Webesite zu gehen.
 
 ;=========
 ;10
@@ -197,13 +197,13 @@ TIP_delallprompt = WARNUNG
 ;10.6
 ;=======
 
-ABT_seehelp = Soll die Clipjump Hilfe geöffnet werden?
-ABT_runadmin = Clipjump läuft nicht mit Administratorrechten.
+ABT_seehelp = Soll die Clipnik Hilfe geöffnet werden?
+ABT_runadmin = Clipnik läuft nicht mit Administratorrechten.
              = Dies kann zu Fehlfunktionen führen.
              =
              = [Dieser Hinweis erscheint nur einmal]
 ABT_cjready = Hi!
-            = Clipjump ist nun aktiv.
+            = Clipnik ist nun aktiv.
             = Testen Sie ein paar Copy&Paste aktionen...
 TIP_editdone = Clip wurde bearbeitet!
 TIP_editnotdone = Clip wurde NICHT bearbeitet!
@@ -243,12 +243,12 @@ PLG_Sb_deleted = Plugin wurde gelöscht
 SET_T_pst = Einzelne Zeichenkombination zusammen mit Ctrl bei der Aktivierung des [PASTE MODE]
           = Achtung: Die Buchstaben  E C X Z S A F H sind reserviert.
           =
-          = Beachten Sie den Abschnitt "Copy bypassing Clipjump" in der Hilfe
+          = Beachten Sie den Abschnitt "Copy bypassing Clipnik" in der Hilfe
 SET_pformat = Default Einfügen-Format
-SET_T_pformat = Das Paste-Format, das bei der Aktivierung von Clipjump verwendet werden soll (default: '-original' )
+SET_T_pformat = Das Paste-Format, das bei der Aktivierung von Clipnik verwendet werden soll (default: '-original' )
 SET_t_plugM = Shortcut um den Plugin-Manager zu öffnen
 PLG_edit = Bearbeiten (F2)
-CUS_error = Fehler in der ClipjumpCustom.ini Routine?
+CUS_error = Fehler in der ClipnikCustom.ini Routine?
 
 ;=====
 ;10.7.8
@@ -260,18 +260,18 @@ TRY_pstmdshorts = PasteMode Tastaturkürzel
 ;10.9
 ;=====
 
-SET_T_holdclip = Kopiert den selektierten Text in einen Buffer und verhindert, dass Clipjump den Text auffängt.
+SET_T_holdclip = Kopiert den selektierten Text in einen Buffer und verhindert, dass Clipnik den Text auffängt.
 			   = Sie können dann den Clip entweder einfügen, in einen Channel verschieben oder zurückweisen
 SET_keepactivepos = Bewahre die Position des aktuell aktiven Clips
-SET_T_keepactivepos = Wollen Sie, dass sich Clipjump an den letzten aktiven Clip im PasteMode erinnert?
-                    = Abschalten bedeutet, das der Clipjump PasteMode immer mit Clip 1 startet.
+SET_T_keepactivepos = Wollen Sie, dass sich Clipnik an den letzten aktiven Clip im PasteMode erinnert?
+                    = Abschalten bedeutet, das der Clipnik PasteMode immer mit Clip 1 startet.
 
 ;=====
 ;11
 ;=====
 
 HST_viewimage = [IMAGE]
-ORG__name = Clipjump Channel Organizer
+ORG__name = Clipnik Channel Organizer
 ORG_m_inc = Aufwärts bewegen    (Alt+Up)
 ORG_m_dec = Abwärts bewegen   (Alt+Down)
 ORG_error = Nicht unterstützt
@@ -284,7 +284,7 @@ ORG_delCnlMsg = Was wollen Sie mit dem ausgewählten Channel machen?
       = Nichts = Cancel
 _rename = Umbenennen
 ORG_renameAsk = Neuer Name fur Channel Nummer
-TIP_initMsg = Initialisiere Clipjump
+TIP_initMsg = Initialisiere Clipnik
 
 ;======
 ;11.2
@@ -333,23 +333,23 @@ ORG_copyingclp = Kopiere selektierte(n) Clip(s)
 ORG_movingclp = Bewege selectierte(n) Clip(s)
 ORG_Editprops = Bearbeite Clip Eigenschaften
 ORG_oEditMsg = Drücke Save um zu beenden
-ABT_info = Clipjump ist ein reiner Windows Clipboard Manager, erstellt in AutoHotkey.
+ABT_info = Clipnik ist ein reiner Windows Clipboard Manager, erstellt in AutoHotkey.
 _Save = Speichern
-SET_T_keepsession = Soll Clipjump nach einem Restart mit allen gespeicherten Clips (betrifft nur Default Channel 0) fortfahren?
+SET_T_keepsession = Soll Clipnik nach einem Restart mit allen gespeicherten Clips (betrifft nur Default Channel 0) fortfahren?
 
 ;========
 ; 11.5
 ;========
-_ClipjumpError = Clipjump Fehler
+_ClipjumpError = Clipnik Fehler
 TIP_genErrMsg = Bitte Programmautor kontaktieren, falls weiterhin Probleme bestehen.
-TRY_reloadcustom = Neuladen von ClipjumpCustom.ini
+TRY_reloadcustom = Neuladen von ClipnikCustom.ini
 
 ;=======
 _language = Sprache
 _disabled = Abgeschaltet
 PLG_delfilefolder = Lösche [File/Folder]
 ABT_chmErr = Ein Problem ist aufgetreten.
-   = Bitte überprüfen Sie, ob Clipjump.chm im Basisverzeichnis existiert.
+   = Bitte überprüfen Sie, ob Clipnik.chm im Basisverzeichnis existiert.
 
 ;=======
 ; 11.6
@@ -381,7 +381,7 @@ TIP_empty2_2 = %PROGNAME% ist leer
 ;====
 
 SET_T_histshort = Shortcut für das Clipboard History Tool
-PLG_sync_cb = Sync Clipjump Clipboard
+PLG_sync_cb = Sync Clipnik Clipboard
 
 ;====
 ; 12

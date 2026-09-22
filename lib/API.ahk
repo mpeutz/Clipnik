@@ -1,5 +1,5 @@
 ; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
-; Plugin API for Clipjump
+; Plugin API for Clipnik
 
 /**
  * run a api function in the string given
@@ -327,7 +327,7 @@ class API
 		return valueOf("%" var "%")
 	}
 
-	; EXecute a section in the ClipjumpCustom.ini
+	; EXecute a section in the ClipnikCustom.ini
 	static ExecuteSection(secName) {
 		global CUSTOMS
 		customization_Run(CUSTOMS["_" secName])
@@ -353,7 +353,7 @@ class API
 		return FileExist(f) ? f : ""
 	}
 
-	;disable Clipjump - status=1 means disable , status=-1 means toggle
+	;disable Clipnik - status=1 means disable , status=-1 means toggle
 	static disable(status := 1) {
 		global CLIPJUMP_STATUS
 		status .= ""
@@ -385,7 +385,7 @@ class API
 		}
 	}
 
-	;pastes the given text without copying it to clipjump
+	;pastes the given text without copying it to clipnik
 	static pasteText(Text) {
 		this.blockMonitoring(1)
 		oldclip := ""

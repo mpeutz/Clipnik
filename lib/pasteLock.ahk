@@ -8,7 +8,7 @@ prefix so they keep driving the card while the target application holds the focu
 
 Bare hotkeys, not an InputHook. An InputHook that suppresses a key kills every hotkey on that key,
 modified ones included: suppressing "a" also killed Ctrl+Shift+A, and suppressing "c" and "x" would
-have killed Clipjump's own Ctrl+C and Ctrl+X hooks for as long as the card stayed locked. In AHK "c"
+have killed Clipnik's own Ctrl+C and Ctrl+X hooks for as long as the card stayed locked. In AHK "c"
 and "^c" are separate hotkeys, so binding the bare letter leaves every Ctrl combination alone. The
 cost is that a key we do NOT bind still reaches the application - the trade Ring.BindKeys makes too.
 

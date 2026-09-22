@@ -1,5 +1,5 @@
 ; Renders the HUD card and toasts in every mode, in dark and light, and saves screenshots to tests\out\hud-*.png.
-; Standalone: stubs the few Clipjump globals the modules touch. Run with Clipjump NOT running (it uses hotkeys).
+; Standalone: stubs the few Clipnik globals the modules touch. Run with Clipnik NOT running (it uses hotkeys).
 #Requires AutoHotkey v2.0
 #Warn All, Off
 #Include ..\lib\v2compat.ahk
@@ -19,7 +19,7 @@ global CN := CJMap("Name", "Default", "NG", 0), realclipno := 3, CURSAVE := 40, 
 global temp_clipboard := "", THUMBS_dir := "cache/thumbs", TEMPSAVE := 1, realActive := 1, SPM := CJMap(), ctrlRef := ""
 global VAULT := CJMap(), LOCK := CJMap()
 global TXT := Translations_load("languages/english.txt")
-global PROGNAME := "Clipjump"
+global PROGNAME := "Clipnik"
 hkZ(key, fn, status := 1) => Hotkey(key, fn, status ? "On" : "Off")
 clipPref(ch, clip, name) => (name = "Tags") ? "work urgent" : ""
 GetClipboardFormat(type := 1) => "[Text]"
@@ -79,7 +79,7 @@ for themeMode in ["dark", "light"] {
 	}
 	Hud.Message("Cancelled"), snap(themeMode "-message")
 	; menu (non-blocking snapshot: render the state Menu() would build)
-	m := Hud.NewState(), m.mode := "menu", m.title := "Clipjump Action mode"
+	m := Hud.NewState(), m.mode := "menu", m.title := "Clipnik Action mode"
 	m.items := [{key: "0..9", caption: "Switch channel"}, {key: "H", caption: "Clipboard History"}, {key: "O", caption: "Channel Organizer"}, {key: "E", caption: "Settings"}, {key: "Esc", caption: "Exit"}]
 	Hud.Render(m), snap(themeMode "-menu")
 	cf := Hud.NewState(), cf.mode := "confirm", cf.mono := TXT.TIP_delallprompt, cf.keys := "Y N"

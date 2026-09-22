@@ -12,7 +12,7 @@
 
 projectDir := A_WorkingDir
 
-fstr := FileRead("Clipjump.ahk")
+fstr := FileRead("Clipnik.ahk")
 
 loop files "lib\*.ahk"
 	fstr .= "`n" FileRead(A_LoopFileFullPath)
@@ -45,7 +45,7 @@ loop read F
 		dup .= k "`n"
 }
 
-cj := Clipjump()
+cj := Clipnik()
 str := '"INVALIDS`n`n' err '`n`nDUPLICATES`n`n' dup '"'
 fstr := 'guiMsgBox("Translation File Cleaner Results",' str ")"
 cj.runFunction(fstr)

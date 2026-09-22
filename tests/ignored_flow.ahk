@@ -6,9 +6,9 @@
 SendLevel 1
 SetTitleMatchMode 1
 SetControlDelay -1
-cj := Clipjump()
+cj := Clipnik()
 ini := A_ScriptDir "\..\settings.ini"
-title := "Clipjump " cj["TXT.IGN__name"] " ahk_class AutoHotkeyGUI"
+title := "Clipnik " cj["TXT.IGN__name"] " ahk_class AutoHotkeyGUI"
 fails := 0
 check(name, cond) {
 	global fails
@@ -49,7 +49,7 @@ SendEvent("{Ctrl down}v")
 Sleep 500
 SendEvent("{Ctrl up}")
 Sleep 800
-hudShown := WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI") && (WinGetStyle("Clipjump_HUD ahk_class AutoHotkeyGUI") & 0x10000000)
+hudShown := WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI") && (WinGetStyle("Clipnik_HUD ahk_class AutoHotkeyGUI") & 0x10000000)
 check("no paste-mode card in ignored window", !hudShown)
 check("text pasted through", InStr(edt.Value, marker))
 

@@ -1629,7 +1629,7 @@ Gdip_SaveBitmapToFile(pBitmap, sOutput, Quality:=75)
 		Quality := (Quality < 0) ? 0 : (Quality > 100) ? 100 : Quality
 
 		if RegExMatch(extension, "^\.(?i:JPG|JPEG|JPE|JFIF)$") {
-			; Clipjump: rebuilt EncoderParameters (Count + one EncoderQuality parameter of type Long);
+			; Clipnik: rebuilt EncoderParameters (Count + one EncoderQuality parameter of type Long);
 			; the upstream NumPut chain produced an invalid pointer on x64.
 			off := (A_PtrSize = 8) ? 8 : 4
 			EncoderParameters := Buffer(off + 16 + 4 + 4 + A_PtrSize, 0)

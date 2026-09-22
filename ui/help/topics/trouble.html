@@ -2,7 +2,7 @@
   <h1>When something goes wrong</h1>
 
   <h2>Ctrl+V does nothing in one app</h2>
-  <p>That window is probably on the ignored list. Clipjump does not record copies made in an ignored window,
+  <p>That window is probably on the ignored list. Clipnik does not record copies made in an ignored window,
     and paste mode passes <kbd>Ctrl</kbd>+<kbd>V</kbd> straight through to it, so you get the plain Windows
     paste.</p>
   <p>To see or change the list, open Settings, go to the Channels page and choose Manage next to Ignored
@@ -10,13 +10,13 @@
     the card shows the right class, or <kbd>Esc</kbd> to give up. Select a class and choose Delete Class to stop
     ignoring it. Changes take effect at once.</p>
   <p>If the window is not on the list, check that the paste-mode key on the Shortcuts page is still what you
-    expect, and that Clipjump has not been disabled from Action Mode (<kbd>D</kbd>).</p>
+    expect, and that Clipnik has not been disabled from Action Mode (<kbd>D</kbd>).</p>
 
   <h2>Clips from a password manager never appear</h2>
-  <p>That is deliberate. Password managers mark what they put on the clipboard as private, and Clipjump honors
+  <p>That is deliberate. Password managers mark what they put on the clipboard as private, and Clipnik honors
     that mark: the clip is not recorded and a short warning appears instead.</p>
   <p>The switch is "Skip clips that apps mark as private (password managers)" on the General page of Settings.
-    Turning it off makes Clipjump record those clips like any other, which means your passwords end up in the
+    Turning it off makes Clipnik record those clips like any other, which means your passwords end up in the
     channel files and in history. Leave it on unless you have a reason not to.</p>
 
   <h2>Images are not stored</h2>
@@ -36,21 +36,21 @@
   <h2>Copy as data URI says the image is too large</h2>
   <p>An image data URI is capped at 2 MB of PNG data, so a large screenshot fails with this message instead
     of flooding the clipboard with an enormous string. The same message also appears if the source image can
-    no longer be found, for example an old channel clip whose file was compacted away; Clipjump does not
+    no longer be found, for example an old channel clip whose file was compacted away; Clipnik does not
     distinguish the two cases. SVG's Copy as data URI has no size cap.</p>
 
   <h2>The help or history window does not open</h2>
-  <p>Clipboard History, the Channel Organizer and this Help window are web pages hosted inside Clipjump, and
-    they need the Microsoft Edge WebView2 runtime. When it is missing, Clipjump says so once and offers a
+  <p>Clipboard History, the Channel Organizer and this Help window are web pages hosted inside Clipnik, and
+    they need the Microsoft Edge WebView2 runtime. When it is missing, Clipnik says so once and offers a
     download link; paste mode, Action Mode and everything else keep working without it.</p>
   <p>If a window does open but a button in it seems to do nothing, the host logs what it tried to
-    <code>%TEMP%\Clipjump\webhost.log</code>.</p>
+    <code>%TEMP%\Clipnik\webhost.log</code>.</p>
 
   <h2>Starting over</h2>
-  <p>Settings live in <code>settings.ini</code> in the Clipjump folder; the Settings footer has a link that
-    opens that folder. Close Clipjump, delete the file and start it again to get the defaults back. Your clips
+  <p>Settings live in <code>settings.ini</code> in the Clipnik folder; the Settings footer has a link that
+    opens that folder. Close Clipnik, delete the file and start it again to get the defaults back. Your clips
     and history are in <code>cache</code> and are left alone.</p>
   <p>To clear everything instead, open the About window and choose Reset. It deletes the cache,
-    <code>settings.ini</code> and <code>ClipjumpCustom.ini</code>, offers to remove the startup shortcut, and
-    then closes Clipjump.</p>
+    <code>settings.ini</code> and <code>ClipnikCustom.ini</code>, offers to remove the startup shortcut, and
+    then closes Clipnik.</p>
 </section>

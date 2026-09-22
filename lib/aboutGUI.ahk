@@ -1,5 +1,5 @@
 ; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
-;The About GUI for Clipjump
+;The About GUI for Clipnik
 
 
 aboutGUI() {
@@ -29,13 +29,13 @@ reset(*) {
 	{
 		try DirDelete("cache", 1)
 		try FileDelete("settings.ini")
-		try FileDelete("ClipjumpCustom.ini")
+		try FileDelete("ClipnikCustom.ini")
 		if A_IsCompiled
 			try DirDelete("icons", 1)
-		if FileExist(A_Startup "/Clipjump.lnk")
+		if FileExist(A_Startup "/Clipnik.lnk")
 		{
 			if (MsgBox(TXT.ABT_removeStart, "Resetting " PROGNAME, 52) = "Yes")
-				FileDelete(A_Startup "/Clipjump.lnk")
+				FileDelete(A_Startup "/Clipnik.lnk")
 		}
 		MsgBox(PROGNAME " " TXT.ABT_resetfinal, "Reset Complete", 64)
 		OnExit(onExitHandler, 0)

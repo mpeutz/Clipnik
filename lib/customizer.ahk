@@ -10,16 +10,18 @@ What is supported?
 
 
 /**
- * loads customs from the ClipjumpCustom.ini file
+ * loads customs from the ClipnikCustom.ini file
  * @return {void}
  */
 loadCustomizations() {
 	global CUSTOMS, startUpComplete
-	if !FileExist("ClipjumpCustom.ini") {
-		FileAppend(";Customizer File for Clipjump`n;Add your custom settings here`n`n[AutoRun]`n;auto-run items go here", "ClipjumpCustom.ini")
+	if !FileExist("ClipnikCustom.ini") && FileExist("ClipjumpCustom.ini")   ; the file from before the rename
+		try FileMove("ClipjumpCustom.ini", "ClipnikCustom.ini")
+	if !FileExist("ClipnikCustom.ini") {
+		FileAppend(";Customizer File for Clipnik`n;Add your custom settings here`n`n[AutoRun]`n;auto-run items go here", "ClipnikCustom.ini")
 		return
 	}
-	f := "ClipjumpCustom.ini"
+	f := "ClipnikCustom.ini"
 
 	o := IniRead(f) 	; load sections
 	loop parse o, "`n", A_Space
@@ -56,7 +58,7 @@ loadCustomizations() {
 
 
 /**
- * reset all customizations applied in Clipjump, including the hotkey bindings
+ * reset all customizations applied in Clipnik, including the hotkey bindings
  * @return {void}
  */
 resetCustomizations() {
@@ -193,7 +195,7 @@ RunFunc(v) {
 
 
 /**
- * The hotkey callback for any hotkey created in Clipjump Custom
+ * The hotkey callback for any hotkey created in Clipnik Custom
  */
 CustomHotkey(ThisHotkey, *) {
 	global CUSTOMS

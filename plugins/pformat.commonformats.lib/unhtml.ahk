@@ -4,7 +4,7 @@
 ; StdLib compliant collection to convert HTML to Text
 ;
 ; v 1.3 / (a & w) Nov 2008 by derRaphael(at)oleco.net
-; Ported to AutoHotkey v2 for Clipjump. Entities that cannot be converted are now skipped instead of looping forever.
+; Ported to AutoHotkey v2 for Clipnik. Entities that cannot be converted are now skipped instead of looping forever.
 
 ; Syntax sugar for combined call of StripEntities & StripTags
 unHTML(html) {

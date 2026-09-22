@@ -5,9 +5,9 @@
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1
 SetTitleMatchMode 1
-cj := Clipjump()
-title := "Clipjump Clipboard History ahk_class AutoHotkeyGUI"
-logFile := A_Temp "\Clipjump\webhost.log"
+cj := Clipnik()
+title := "Clipnik Clipboard History ahk_class AutoHotkeyGUI"
+logFile := A_Temp "\Clipnik\webhost.log"
 fails := 0
 check(name, cond) {
 	global fails
@@ -21,7 +21,7 @@ snap(name) {
 	p := Gdip_Startup(), b := Gdip_BitmapFromScreen(x "|" y "|" w "|" h)
 	Gdip_SaveBitmapToFile(b, A_ScriptDir "\out\history-" name ".png"), Gdip_DisposeImage(b), Gdip_Shutdown(p)
 }
-; wait for Clipjump to record each seed clip instead of sleeping: a copy that is replaced before the copy
+; wait for Clipnik to record each seed clip instead of sleeping: a copy that is replaced before the copy
 ; path finishes never reaches history, and the row the test then selects is somebody else's clip
 waitClip(needle) {
 	global cj
@@ -70,7 +70,7 @@ waitFor(needle, ms := 8000) {
 check("list sent to the page", waitFor('"cmd":"list"'))
 check("kinds sent to the page", waitFor('"cmd":"kinds"'))
 check("rows carry a kind", InStr(readLog(), '"kind":"text"') || InStr(readLog(), '"kind":"'))
-; Which row the marker lands on depends on how quickly Clipjump commits each copy to history, so the list is
+; Which row the marker lands on depends on how quickly Clipnik commits each copy to history, so the list is
 ; narrowed to the marker with the search box rather than walking a fixed number of rows. The retry covers a
 ; history insert that has not committed yet when the first search runs; ArrowDown moves focus out of the
 ; search box (select() focuses the table), so Ctrl+C afterwards still reaches the list.

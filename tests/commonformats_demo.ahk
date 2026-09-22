@@ -1,5 +1,5 @@
 ; Renders the Common Formats "Choose Format" dialog in dark and light and saves screenshots to
-; tests\out\commonformats-<mode>.png. Standalone: stubs the few Clipjump globals the plugin touches.
+; tests\out\commonformats-<mode>.png. Standalone: stubs the few Clipnik globals the plugin touches.
 ; Never sends keys or moves the mouse; the dialog is closed with WinClose (which cancels it).
 #Requires AutoHotkey v2.0
 #Warn All, Off
@@ -19,7 +19,7 @@ commonformats_demo_OnError(e, mode) {
 
 global STORE := CJMap(), CJGUI := Map()
 global TXT := Translations_load("languages/english.txt")
-global PROGNAME := "Clipjump"
+global PROGNAME := "Clipnik"
 
 DirExist("tests\out") || DirCreate("tests\out")
 

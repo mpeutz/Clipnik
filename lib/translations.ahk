@@ -1,5 +1,5 @@
 ; Originally from Clipjump by Avi Aryan (Apache License 2.0). Modified by mpeutz, 2026: ported to AutoHotkey v2.
-;Translations Function for Clipjump
+;Translations Function for Clipnik
 ;IDEAS
 ;Translation files are simple text-files with var=value syntax . Add ; before for comment . Only newline comments
 ;returns object

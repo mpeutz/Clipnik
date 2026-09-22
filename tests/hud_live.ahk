@@ -1,14 +1,14 @@
-; Screenshots the live HUD card and toast while driving a RUNNING Clipjump: copy, Ctrl+V, V, X, F search.
+; Screenshots the live HUD card and toast while driving a RUNNING Clipnik: copy, Ctrl+V, V, X, F search.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 2
 SendLevel 1
-cj := Clipjump()
+cj := Clipnik()
 ; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
 if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
     cj.runFunction("compacter()")
-errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
+errorDialog() => WinExist("Clipnik.ahk ahk_class #32770")
 fails := 0
 check(cond, msg) {
     global fails
@@ -29,7 +29,7 @@ snapWin(title, name) {
 stamp := "live-" A_TickCount
 A_Clipboard := stamp " first clip with a fairly long sentence so the preview wraps onto a second line of the card"
 Sleep 500
-snapWin("Clipjump_Toast ahk_class AutoHotkeyGUI", "toast")
+snapWin("Clipnik_Toast ahk_class AutoHotkeyGUI", "toast")
 Sleep 600
 A_Clipboard := stamp " second"
 Sleep 800
@@ -41,15 +41,15 @@ ed.Focus()
 Sleep 400
 SendEvent("{Ctrl down}v")
 Sleep 600
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "HUD card visible in paste mode")
+check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "HUD card visible in paste mode")
 check(WinActive("cj-live-target"), "target window still active (card did not steal focus)")
-snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-normal")
+snapWin("Clipnik_HUD ahk_class AutoHotkeyGUI", "card-normal")
 SendEvent("v")
 Sleep 500
-snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-clip2")
+snapWin("Clipnik_HUD ahk_class AutoHotkeyGUI", "card-clip2")
 SendEvent("x")
 Sleep 500
-snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-cancelmode")
+snapWin("Clipnik_HUD ahk_class AutoHotkeyGUI", "card-cancelmode")
 seen := ""
 loop 6 {
     SendEvent("x")
@@ -63,7 +63,7 @@ while (cj["ctrlRef"] != "cancel") {
 }
 SendEvent("{Ctrl up}")
 Sleep 900
-check(!WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "card hidden after release")
+check(!WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "card hidden after release")
 check(ed.Value = "", "cancelled: nothing pasted")
 
 ; search
@@ -77,7 +77,7 @@ Sleep 300
 check(cj["SPM.ACTIVE"] = 1, "search active after F")
 SendEvent("first")
 Sleep 900
-snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-search")
+snapWin("Clipnik_HUD ahk_class AutoHotkeyGUI", "card-search")
 check(InStr(cj["temp_clipboard"], stamp " first"), "typed search jumped to 'first' clip")
 check(WinActive("cj-live-target"), "target window still active while searching")
 SendEvent("{Enter}")
@@ -91,7 +91,7 @@ SendEvent("{Ctrl down}v")
 Sleep 500
 SendEvent("{F1}")
 Sleep 500
-snapWin("Clipjump_HUD ahk_class AutoHotkeyGUI", "card-help")
+snapWin("Clipnik_HUD ahk_class AutoHotkeyGUI", "card-help")
 SendEvent("x")
 Sleep 300
 SendEvent("{Ctrl up}")
@@ -101,7 +101,7 @@ Sleep 800
 SendEvent("^+a")
 Sleep 800
 check(cj.runFunction("Ring_IsOpen()") = 1, "action ring shown")
-snapWin("Clipjump_Ring ahk_class AutoHotkeyGUI", "card-actionmode")
+snapWin("Clipnik_Ring ahk_class AutoHotkeyGUI", "card-actionmode")
 SendEvent("{Esc}")
 Sleep 500
 check(cj.runFunction("Ring_IsOpen()") = 0, "action ring closed by Esc")

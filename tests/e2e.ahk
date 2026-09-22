@@ -1,4 +1,4 @@
-; End-to-end smoke test against a RUNNING Clipjump (v2): copy capture, paste-mode cycling in Notepad.
+; End-to-end smoke test against a RUNNING Clipnik (v2): copy capture, paste-mode cycling in Notepad.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\e2e.ahk
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
@@ -11,7 +11,7 @@ check(cond, msg) {
     if !cond
         fails++
 }
-cj := Clipjump()
+cj := Clipnik()
 ; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
 if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
     cj.runFunction("compacter()")

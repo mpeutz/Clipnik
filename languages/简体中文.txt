@@ -1,4 +1,4 @@
-﻿;Chinese translation for Clipjump
+﻿;Chinese translation for Clipnik
 ;first made by 兔子
 
 ; NOTES
@@ -6,7 +6,7 @@
 ; Add new keys in the future versions at the bottom for easy & consistent development
 ; Add version no in comment when adding a new key in the translation file.
 ; Most keys have format XXX_ where XXX is the component name
-; Dont translate 'Clipjump'
+; Dont translate 'Clipnik'
 ; & in &Preview is to create shortcut Alt+P when the window is active. When translating into a non-english language, omit '&' and when in a english type language, use '&'
 ; only when you are sure you are right.
 ; Words inside %..% are variables. Take them as constants and translate them accordingly.
@@ -62,9 +62,9 @@ TIP_modem = 松开 Ctrl 确认
           = 按 X 切换模式
 
 ABT__name = 关于
-ABT_reset = 重置 &Clipjump
-ABT_resetM = 确定要重置 Clipjump 吗？(将移除所有保存的剪贴板信息并恢复默认设置)
-ABT_removeStart = 发现 Clipjump 已设为自启动，想一并移除吗？
+ABT_reset = 重置 &Clipnik
+ABT_resetM = 确定要重置 Clipnik 吗？(将移除所有保存的剪贴板信息并恢复默认设置)
+ABT_removeStart = 发现 Clipnik 已设为自启动，想一并移除吗？
 ABT_resetfinal = 将被关闭。
 ABT_noupdate = 已是最新版本。
 
@@ -106,17 +106,17 @@ SET_pst = 粘贴 (Ctrl + …)
 SET_actmd = 活动命令
 SET_channels = 频道
 SET_advanced = 高级设置
-SET_manageignore = 管理忽略窗口(不想 Clipjump 起作用的窗口)
+SET_manageignore = 管理忽略窗口(不想 Clipnik 起作用的窗口)
 SET_cancel = 取消(&C)
 SET_apply = 应用(&A)
 
 SET_advanced_error = 无法找到设置文件(settings.ini) 或 记事本程序？确保它们在各自位置存在。
                    =
                    = 如果问题仍然存在，请联系作者。
-SET_T_limitmaxclips = Clipjump 的剪贴板信息数量是否存在最大限制。
+SET_T_limitmaxclips = Clipnik 的剪贴板信息数量是否存在最大限制。
                     = 选中 = 是
 SET_T_maxclips = 最大数量 = 基础值+阈值
-               = 比如基础值为10，阈值为5；当 Clipjump 中已存在14条剪贴板信息后，此时再进行一次复制操作，剪贴板数量将变为10而非15。
+               = 比如基础值为10，阈值为5；当 Clipnik 中已存在14条剪贴板信息后，此时再进行一次复制操作，剪贴板数量将变为10而非15。
 SET_T_threshold = 阈值的详细作用参见基础值的解释；简单理解可视为基础值之上临时增加的数量。
                 = 多数时候推荐值是10。
                 =
@@ -174,7 +174,7 @@ _exportedto = 导出到
 ;9.9.0.2
 ;============
 
-IGN_Restartmsg = 需要重启 Clipjump 以使更改生效。确认重启？
+IGN_Restartmsg = 需要重启 Clipnik 以使更改生效。确认重启？
 IGN_tip = 鼠标点选窗口后，按 空格 即可添加。
         = 按 Esc 返回。
 ;===========*
@@ -183,7 +183,7 @@ IGN_tip = 鼠标点选窗口后，按 空格 即可添加。
 
 TRY_options = 设置(&O)
 TRY_tools = 工具(&T)
-HST_delall_msg = 确定要清空 Clipjump 的历史记录？
+HST_delall_msg = 确定要清空 Clipnik 的历史记录？
 ; the following key was modified in v9.9.1 and so you see its entry here
 SET_T_actmd = 这个快捷键用于打开 活动命令。
             = 活动命令状态下，可快速调用程序提供的几乎所有功能。
@@ -194,8 +194,8 @@ SET_T_actmd = 这个快捷键用于打开 活动命令。
 ;==========
 
 TIP_empty3 = 松开 Ctrl 退出。
-UPD_restart = Clipjump 现在将重启以便应用更新。
-UPD_automsg = 点击 是 将自动更新 Clipjump 点击 否 将前往主页。
+UPD_restart = Clipnik 现在将重启以便应用更新。
+UPD_automsg = 点击 是 将自动更新 Clipnik 点击 否 将前往主页。
 
 ;=========*
 ;10
@@ -220,13 +220,13 @@ TIP_delallprompt = 警告
 ;10.6
 ;=======
 
-ABT_seehelp = 你想看看 Clipjump 的帮助吗？
-ABT_runadmin = Clipjump 没有以管理员权限运行
+ABT_seehelp = 你想看看 Clipnik 的帮助吗？
+ABT_runadmin = Clipnik 没有以管理员权限运行
              = 这(可能)是因为程序功能不正常。
              = 
              = [这条消息只会显示一次]
 ABT_cjready = 嗨！
-            = Clipjump 已经激活了。
+            = Clipnik 已经激活了。
             = 现在试试复制粘贴点东西…
 TIP_editdone = 剪贴板信息已被编辑
 TIP_editnotdone = 剪贴板信息未被编辑！
@@ -266,12 +266,12 @@ PLG_Sb_deleted = 插件已删除
 SET_T_pst = 粘贴时使用 Ctrl + 哪个键(即粘贴模式)
           = 注意 E C X Z S A F H 是保留的。
           = 
-          = 详细信息请看帮助文件中“Copy bypassing Clipjump”一节。
+          = 详细信息请看帮助文件中“Copy bypassing Clipnik”一节。
 SET_pformat = 粘贴格式
-SET_T_pformat = 你想要 Clipjump 启动后激活的粘贴格式。默认值是“-original”。
+SET_T_pformat = 你想要 Clipnik 启动后激活的粘贴格式。默认值是“-original”。
 SET_t_plugM = 打开插件管理的快捷键
 PLG_edit = 编辑 (F2)
-CUS_error = ClipjumpCustom.ini 中存在错误？
+CUS_error = ClipnikCustom.ini 中存在错误？
 
 ;=====*
 ;10.7.8
@@ -283,10 +283,10 @@ TRY_pstmdshorts = 粘贴模式快捷键
 ;10.9
 ;=====
 
-SET_T_holdclip = 复制选中的文本或项目到缓冲区，防止被 Clipjump 捕获。
-               = 然后你可以粘贴、舍弃、或添加到 Clipjump 中。
+SET_T_holdclip = 复制选中的文本或项目到缓冲区，防止被 Clipnik 捕获。
+               = 然后你可以粘贴、舍弃、或添加到 Clipnik 中。
 SET_keepactivepos = 记住当前活动剪贴板信息序号
-SET_T_keepactivepos = 选中此项将使 Clipjump 记住最后被使用的剪贴板信息的序号。
+SET_T_keepactivepos = 选中此项将使 Clipnik 记住最后被使用的剪贴板信息的序号。
                     = 不勾选将使粘贴模式总是从序号1开始。
 
 ;=====*
@@ -307,7 +307,7 @@ ORG_delCnlMsg = 你想对选中频道进行何种操作？
       = 什么也不做 = 取消
 _rename = 重命名
 ORG_renameAsk = 请为以下编号频道输入新名字
-TIP_initMsg = 正在初始化 Clipjump
+TIP_initMsg = 正在初始化 Clipnik
 
 ;======*
 ;11.2
@@ -356,23 +356,23 @@ ORG_copyingclp = 复制中
 ORG_movingclp = 移动中
 ORG_Editprops = 编辑属性
 ORG_oEditMsg = 完成后请点击保存。
-ABT_info = Clipjump 是一款使用 AutoHotkey 编写的 Windows 平台剪贴板管理软件。
+ABT_info = Clipnik 是一款使用 AutoHotkey 编写的 Windows 平台剪贴板管理软件。
 _Save = 保存
-SET_T_keepsession = 选中此项将使 Clipjump 在重启后可以继续使用之前保存的全部剪贴板信息(仅默认频道 0)。
+SET_T_keepsession = 选中此项将使 Clipnik 在重启后可以继续使用之前保存的全部剪贴板信息(仅默认频道 0)。
 
 ;========
 ; 11.5
 ;========
-_ClipjumpError = Clipjump 错误
+_ClipjumpError = Clipnik 错误
 TIP_genErrMsg = 如果你持续遇到这个问题请联系作者。
-TRY_reloadcustom = 重载 ClipjumpCustom.ini
+TRY_reloadcustom = 重载 ClipnikCustom.ini
 
 ;=======
 _language = 语言
 _disabled = 禁用
 PLG_delfilefolder = 删除 [文件/文件夹]
 ABT_chmErr = 出现问题了。
-   = 请检查文件 Clipjump.chm 是否存在于程序根目录。
+   = 请检查文件 Clipnik.chm 是否存在于程序根目录。
 
 ;=======
 ; 11.6
@@ -404,7 +404,7 @@ TIP_empty2_2 = %PROGNAME% 没有可粘贴的内容
 ;====
 
 SET_T_histshort = 剪贴板历史
-PLG_sync_cb = 同步 Clipjump
+PLG_sync_cb = 同步 Clipnik
 
 ;====
 ; 12

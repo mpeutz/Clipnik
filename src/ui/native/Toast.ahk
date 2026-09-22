@@ -52,7 +52,7 @@ class Toast {
 
 	static Create(text, kind, slot, extra := "") {
 		s := Theme.Scale
-		g := Gui("-Caption +AlwaysOnTop +ToolWindow +E0x08000000 -DPIScale +Owner" A_ScriptHwnd, "Clipjump_Toast")
+		g := Gui("-Caption +AlwaysOnTop +ToolWindow +E0x08000000 -DPIScale +Owner" A_ScriptHwnd, "Clipnik_Toast")
 		g.MarginX := 0, g.MarginY := 0
 		g.BackColor := Theme.Hex("surface")
 		Theme.Popup(g)

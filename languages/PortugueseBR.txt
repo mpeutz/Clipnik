@@ -1,4 +1,4 @@
-﻿; Tradução para o português para o Clipjump
+﻿; Tradução para o português para o Clipnik
 ; Feita pela primeira vez por Avi Aryan
 
 ; NOTAS
@@ -6,7 +6,7 @@
 ; Adicionar novas chaves nas versões futuras na parte inferior para facilitar e deixar consistente o desenvolvimento
 ; Adicionar número da versão no comentário ao adicionar uma nova chave no arquivo de tradução.
 ; A maioria das teclas têm o formato XXX_ onde XXX é o nome do componente
-; Não traduzir 'Clipjump'
+; Não traduzir 'Clipnik'
 ; & em &Preview serve para criar um atalho Alt + P quando a janela estiver ativa. Ao traduzir para uma linguagem não-Inglesa, omitir o '&' e, ao utilizar um idioma baseado no Inglês, use '&'
 ; somente quando tiver certeza de que você está certo.
 ; Palavras dentro de %..% são variáveis. Trate-as como constantes e traduza-as de acordo.
@@ -37,9 +37,9 @@ TIP_modem = Solte o Ctrl para confirmar
           = Pressione X para alternar entre os modos
 
 ABT__name = Sobre
-ABT_reset = Redefinir &Clipjump
-ABT_resetM = Tem certeza de que deseja redefinir Clipjump removendo assim todos os seus clipes e configurações?
-ABT_removeStart = Uma entrada de inicialização para Clipjump foi encontrada. Você deseja removê-la também?
+ABT_reset = Redefinir &Clipnik
+ABT_resetM = Tem certeza de que deseja redefinir Clipnik removendo assim todos os seus clipes e configurações?
+ABT_removeStart = Uma entrada de inicialização para Clipnik foi encontrada. Você deseja removê-la também?
 ABT_resetfinal = será fechado agora.
 ABT_noupdate = Não há atualizações disponíveis
 
@@ -91,18 +91,18 @@ SET_apply = &Aplicar
 SET_advanced_error = não foi capaz de encontrar o arquivo de configurações (settings.ini) ou o Bloco de Notas? Certifique-se que ambos existem em seus respectivos lugares.
                    =
                    = Tente entrar em contato com o autor, se o problema persistir.
-SET_T_limitmaxclips = As Áreas de Transferência do Clipjump devem ser limitadas?
+SET_T_limitmaxclips = As Áreas de Transferência do Clipnik devem ser limitadas?
                     = Verificado = yes
 SET_T_maxclips = É o número mínimo de Áreas de Transferência simultaneamente ativas.
                = Se você quiser 20, especifique 20.
 SET_T_threshold = Tamanho máximo é o número extra de Áreas de Transferência que estarão ativas além do seu limite mínimo...
                 = O valor mais recomendado é 10.
                 =
-                = [DICA] - Tamanho máximo = 1 fará o Clipjump armazenar o número exato do que foi especificado como o máximo de Áreas de Transferência.
+                = [DICA] - Tamanho máximo = 1 fará o Clipnik armazenar o número exato do que foi especificado como o máximo de Áreas de Transferência.
 SET_T_quality = A qualidade das visualizações em miniatura que você quer ter.
               = Valor recomendado é 90
               = Pode ser entre 1 - 100
-SET_T_copybeep = Selecione se deseja ouvir um sinal sonoro personalizável quando os dados da área de transferência forem adicionados ao Clipjump.
+SET_T_copybeep = Selecione se deseja ouvir um sinal sonoro personalizável quando os dados da área de transferência forem adicionados ao Clipnik.
                =
                = Você pode alterar a freqüencia do Bipe na seção [Avançado] do Settings.ini
 SET_T_ismessage = Esse valor determina se você deseja ver ou não a mensagem de confirmação durante as operações de copiar/cortar.
@@ -114,10 +114,10 @@ SET_T_cfilep = Atalho para copiar o caminho de arquivo selecionado
              = Defina o atalho para Nenhum para desativar a combinação de teclas
 SET_T_cfolderp = Atalho para copiar o caminho de pasta selecionado.
                = Defina o atalho para Nenhum para desativar a combinação de teclas
-SET_T_cfiled = Atalho para copiar o conteúdo selecionado do arquivo para o Clipjump.
+SET_T_cfiled = Atalho para copiar o conteúdo selecionado do arquivo para o Clipnik.
              = Defina-o como Nenhum para desativar a combinação de teclas
 SET_T_ot = Selecionar atalho para o recurso [Parada Única].
-         = O recurso de [Parada Única] fará com que o Clipjump ignore o próximo dado que for transferido para as Áreas de Transferência do sistema a partir do momento em que for ativado.
+         = O recurso de [Parada Única] fará com que o Clipnik ignore o próximo dado que for transferido para as Áreas de Transferência do sistema a partir do momento em que for ativado.
          = Defina a chave como Nenhum para liberar a combinação de teclas
 SET_T_pitswp = O atalho para ativar o recurso PitSwap. (Também disponível a partir do Modo de Ação)
              = Para mais detalhes sobre o recurso verifique o arquivo de Ajuda.
@@ -165,7 +165,7 @@ _exportedto = exportado para
 ; 9.9.0.2
 ; ============
 
-IGN_Restartmsg = É necessário que o Clipjump seja reiniciado para que as alterações entrem em vigor. Reiniciar?
+IGN_Restartmsg = É necessário que o Clipnik seja reiniciado para que as alterações entrem em vigor. Reiniciar?
 IGN_tip = Pressione Espaço para adicionar Classe.
         = Pressione Esc para sair da Ferramenta de Captura de Classe.
 
@@ -175,10 +175,10 @@ IGN_tip = Pressione Espaço para adicionar Classe.
 
 TRY_options = &Opções
 TRY_tools = &Ferramentas
-HST_delall_msg = Tem certeza de que deseja apagar permanentemente o histórico do Clipjump?
+HST_delall_msg = Tem certeza de que deseja apagar permanentemente o histórico do Clipnik?
 ; a chave seguinte foi modificada na v9.9.1 e então você verá a sua entrada aqui
-SET_T_actmd = O atalho para abrir o Modo de Ação do Clipjump.
-            = O Modo de Ação fornece a interface para quase todas as funcionalidades do Clipjump.
+SET_T_actmd = O atalho para abrir o Modo de Ação do Clipnik.
+            = O Modo de Ação fornece a interface para quase todas as funcionalidades do Clipnik.
             = Se você quiser atalhos ao nível do Sistema para essas funcionalidades, você pode encontrá-los aqui no Editor de Configurações.
 
 ; ==========
@@ -189,8 +189,8 @@ CNL_delete = Apa&gar Canal
 CNL_delmsg = Você realmente quer apagar este canal? Observe que o processo é irreversível e você perderá todos os clipes armazenados nele.
 CNL_del_default = Não é permitido apagar o canal padrão (0).
 TIP_empty3 = Solte o Ctrl para sair.
-UPD_restart = O Clipjump será reiniciado para aplicar as atualizações.
-UPD_automsg = Clique em Sim para auto atualização do Clipjump ou Não para ir para o site.
+UPD_restart = O Clipnik será reiniciado para aplicar as atualizações.
+UPD_automsg = Clique em Sim para auto atualização do Clipnik ou Não para ir para o site.
 
 ; =========
 ; 10
@@ -215,13 +215,13 @@ TIP_delallprompt = ATENÇÃO
 ; 10,6
 ; =======
 
-ABT_seehelp = Você deseja ver a ajuda do Clipjump?
-ABT_runadmin = O Clipjump não está sendo executado como Administrador
+ABT_seehelp = Você deseja ver a ajuda do Clipnik?
+ABT_runadmin = O Clipnik não está sendo executado como Administrador
              = Se não for executado neste modo, (pode) ocorrerá o mau funcionamento do programa.
              =
              = [Esta mensagem será exibida apenas uma vez]
 ABT_cjready = Oi!
-            = O Clipjump agora está ativado.
+            = O Clipnik agora está ativado.
             = Tente fazer algumas cópias e colas rápidas ...
 TIP_editing = Editando ...
             = Pressione Esc para cancelar
@@ -263,12 +263,12 @@ PLG_Sb_deleted = Plugin Apagado
 SET_T_pst = Combinação de caracteres única para usar com o Ctrl na ativação do [MODO DE COLAGEM]
           = Note que letras ECXZSAFH são reservadas ao programa.
           =
-          = Também certifique-se de ver "Copy bypassing Clipjump" no arquivo de ajuda
+          = Também certifique-se de ver "Copy bypassing Clipnik" no arquivo de ajuda
 SET_pformat = Formato Padrão de Colagem
-SET_T_pformat = O formato de Colagem ativo desejado ao inicializar o Clipjump. '-Original' É a técnica de colagem Clipjump padrão.
+SET_T_pformat = O formato de Colagem ativo desejado ao inicializar o Clipnik. '-Original' É a técnica de colagem Clipnik padrão.
 SET_t_plugM = Atalho para abrir o Gerenciador de Plugins
 PLG_edit = Editar (F2)
-CUS_error = Houve um erro em uma rotina do ClipjumpCustom.ini?
+CUS_error = Houve um erro em uma rotina do ClipnikCustom.ini?
 
 ; =====
 ; 10.7.8
@@ -280,18 +280,18 @@ TRY_pstmdshorts = Atalhos do Modo de Colagem
 ; 10,9
 ; =====
 
-SET_T_holdclip = Copia o texto ou item selecionado para um buffer e impede que ele seja capturado pelo Clipjump.
+SET_T_holdclip = Copia o texto ou item selecionado para um buffer e impede que ele seja capturado pelo Clipnik.
                = Você pode, em seguida, colar o clipe, movê-lo para um canal ou rejeitá-lo.
 SET_keepactivepos = Preserve a posição atual do Clipe Ativo
-SET_T_keepactivepos = Você deseja que o Clipjump lembre o último clipe ativo no Modo de Colagem?
-                    = Ao desmarcá-lo, o Modo de Colagem do Clipjump sempre começará do Clipe 1.
+SET_T_keepactivepos = Você deseja que o Clipnik lembre o último clipe ativo no Modo de Colagem?
+                    = Ao desmarcá-lo, o Modo de Colagem do Clipnik sempre começará do Clipe 1.
 
 ; =====
 ; 11
 ; =====
 
 HST_viewimage = [IMAGEM]
-ORG__name = Organizador de Canais do Clipjump
+ORG__name = Organizador de Canais do Clipnik
 ORG_m_inc = Mover para cima (Alt + Up)
 ORG_m_dec = Mover para baixo (Alt + Baixo)
 ORG_error = Não Suportado
@@ -304,7 +304,7 @@ ORG_delCnlMsg = O que você quer fazer com o canal selecionado?
       = Não fazer nada = Cancelar
 _rename = Renamear
 ORG_renameAsk = Por favor, escreva o novo nome para o canal
-TIP_initMsg = Iniciando o Clipjump
+TIP_initMsg = Iniciando o Clipnik
 
 ; ======
 ; 11,2
@@ -375,23 +375,23 @@ ORG_copyingclp = Copiando o(s) clipe(s) selecionado(s)
 ORG_movingclp = Movendo o(s) clipe(s) selecionado(s)
 ORG_Editprops = Editar as propriedades do Clipe
 ORG_oEditMsg = Clique em Salvar quando você acabar.
-ABT_info = O Clipjump é um gerenciador de área de transferência que funciona apenas no Windows, e foi criado com o AutoHotkey.
+ABT_info = O Clipnik é um gerenciador de área de transferência que funciona apenas no Windows, e foi criado com o AutoHotkey.
 _save = Salvar
-SET_T_keepsession = O Clipjump deve continuar com todas as Áreas de Transferência (só o canal padrão 0) após a reinicialização
+SET_T_keepsession = O Clipnik deve continuar com todas as Áreas de Transferência (só o canal padrão 0) após a reinicialização
 
 ; ========
 ; 11.5
 ; ========
-_ClipjumpError = Erro do Clipjump
+_ClipjumpError = Erro do Clipnik
 TIP_genErrMsg = Por favor, entre em contato com o autor, se você continuar a ter problemas.
-TRY_reloadcustom = Recarregar ClipjumpCustom.ini
+TRY_reloadcustom = Recarregar ClipnikCustom.ini
 
 ; =======
 _language = Idioma
 _disabled = Desativado
 PLG_delfilefolder = Apagar [Arquivo/Pasta]
 ABT_chmErr = Houve um problema.
-   = Por favor verifique se Clipjump.chm existe na pasta de instalação.
+   = Por favor verifique se Clipnik.chm existe na pasta de instalação.
 
 ; =======
 ; 11.6
@@ -423,4 +423,4 @@ TIP_empty2_2 = %PROGNAME% está vazio
 ; ====
 
 SET_T_histshort = Atalho para a Ferramenta do Histórico da Área de Transferência
-PLG_sync_cb = Sincronizar Área de Transferência do Clipjump
+PLG_sync_cb = Sincronizar Área de Transferência do Clipnik

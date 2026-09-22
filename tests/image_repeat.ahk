@@ -1,10 +1,10 @@
-; A snipping tool writes the same image to the clipboard twice within a moment: Clipjump must record it once,
-; while two deliberate copies (Ctrl+C in between) are both kept. Needs a running Clipjump and an idle desktop.
+; A snipping tool writes the same image to the clipboard twice within a moment: Clipnik must record it once,
+; while two deliberate copies (Ctrl+C in between) are both kept. Needs a running Clipnik and an idle desktop.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1
-cj := Clipjump()
+cj := Clipnik()
 fails := 0
 check(name, cond) {
 	global fails

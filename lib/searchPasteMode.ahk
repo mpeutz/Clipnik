@@ -40,14 +40,14 @@ spm_onKeyDown(ih, vk, sc) {
 	}
 }
 
-; Legacy: creates the search overlay window (title Clipjump_SPM) just above the card.
+; Legacy: creates the search overlay window (title Clipnik_SPM) just above the card.
 searchPasteMode(x, y, h) {
 	global
 	local g, edit, counter
 	hkZ(pstIdentifier pastemodekey.f, SPM_dispose)
 
 	GuiDestroy("searchpm")
-	g := Gui("+AlwaysOnTop -Caption +ToolWindow", "Clipjump_SPM")
+	g := Gui("+AlwaysOnTop -Caption +ToolWindow", "Clipnik_SPM")
 	CJGUI["searchpm"] := g
 	Theme.ApplyToGui(g, 3, true)
 	edit := Theme.Add(g, "Edit", "x1 y1 w220 R1 vsearchpm -VScroll")
@@ -56,7 +56,7 @@ searchPasteMode(x, y, h) {
 	g.OnEvent("Escape", spm_cancel)
 	g.Show("x" x " y" y " w" (220 + 2 + 5 + 45) " h" (h + 2))
 
-	HotIfWinActive("Clipjump_SPM ahk_class AutoHotkeyGUI")
+	HotIfWinActive("Clipnik_SPM ahk_class AutoHotkeyGUI")
 	hkZ(spmkey.enter, spm_paste, 1)
 	hkZ(spmkey.home, spm_cancel, 1)
 	hkZ(spmkey.up, spm_nextres, 1)

@@ -7,7 +7,7 @@
 
 ;@Plugin-param1 The channels whose clips of type "[File/folder]" are to be deleted separated by space. If this param is empty,
 ;@Plugin-param1 all channels that exist are taken into account.
-;@Plugin-param1 So if you click OK without any parameter, the whole clipjump database will be cleaned of [File/Folder] data-type clips.
+;@Plugin-param1 So if you click OK without any parameter, the whole clipnik database will be cleaned of [File/Folder] data-type clips.
 
 
 plugin_deleteFileFolder(zchannels := "") {

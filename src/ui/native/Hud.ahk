@@ -33,7 +33,7 @@ class Hud {
 	static Init() {
 		if Hud.g
 			return
-		g := Gui("-Caption +AlwaysOnTop +ToolWindow +E0x08000000 -DPIScale +Owner" A_ScriptHwnd, "Clipjump_HUD")
+		g := Gui("-Caption +AlwaysOnTop +ToolWindow +E0x08000000 -DPIScale +Owner" A_ScriptHwnd, "Clipnik_HUD")
 		g.MarginX := 0, g.MarginY := 0
 		Hud.g := g
 		Hud.Restyle()
@@ -603,7 +603,7 @@ class Hud {
 		try
 			Hotkey(t, fn, opt)
 		catch
-			MsgBox("It looks like the hotkey " t " doesn't exist ? `nRefer to troubleshooting page in help file.", "Clipjump Warning", 16)
+			MsgBox("It looks like the hotkey " t " doesn't exist ? `nRefer to troubleshooting page in help file.", "Clipnik Warning", 16)
 	}
 
 	static KeyPressed(ThisHotkey := "", *) {

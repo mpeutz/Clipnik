@@ -1,4 +1,4 @@
-; IgnoredWindowsWin.ahk - the list of window classes Clipjump ignores (paste mode passes Ctrl+V through in them).
+; IgnoredWindowsWin.ahk - the list of window classes Clipnik ignores (paste mode passes Ctrl+V through in them).
 ; Replaces plugins/external.ignoreWmanager.ahk: runs in-process, writes [Advanced] ignoreWindows and rebuilds
 ; the window group right away, so no restart is needed.
 ;

@@ -1,4 +1,4 @@
-; Paste-mode key coverage against a RUNNING Clipjump: action mode, F1, jumps, Space, Z, F search, S, T, Enter.
+; Paste-mode key coverage against a RUNNING Clipnik: action mode, F1, jumps, Space, Z, F search, S, T, Enter.
 ; State is read through the public API (WM_COPYDATA) rather than by scraping tooltips.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\pastemode.ahk
 #Requires AutoHotkey v2.0
@@ -14,13 +14,13 @@ check(cond, msg) {
     if !cond
         fails++
 }
-errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
+errorDialog() => WinExist("Clipnik.ahk ahk_class #32770")
 ; the card's alpha even while hidden (DetectHiddenWindows scoped to this one call only, so it doesn't
-; change what WinExist("Clipjump_HUD ...") sees elsewhere in this file)
+; change what WinExist("Clipnik_HUD ...") sees elsewhere in this file)
 cardAlpha() {
     DetectHiddenWindows(true)
     a := ""
-    try a := WinGetTransparent("Clipjump_HUD ahk_class AutoHotkeyGUI")
+    try a := WinGetTransparent("Clipnik_HUD ahk_class AutoHotkeyGUI")
     DetectHiddenWindows(false)
     return a
 }
@@ -33,7 +33,7 @@ tipText() {
     try t := FileRead(f)
     return StrReplace(t, "`r`n", "|")
 }
-cj := Clipjump()
+cj := Clipnik()
 ; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
 if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
     cj.runFunction("compacter()")
@@ -87,7 +87,7 @@ check(clipNo() = 2, "V moves to clip 2 (realclipno=" clipNo() ")")
 step("F1 help sets the rebuild flag, next V clears it")
 SendEvent("{F1}")
 Sleep 400
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "F1 keeps the card open (help mode)")
+check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "F1 keeps the card open (help mode)")
 SendEvent("v")
 Sleep 400
 check(clipNo() = 3, "V after F1 moves to clip 3")
@@ -103,8 +103,8 @@ SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("{F1}")
 Sleep 600
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI") != 0, "F1 shows the paste-mode card")
-check(!WinExist("Clipjump Help ahk_class AutoHotkeyGUI"), "F1 in paste mode does not open the help window")
+check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI") != 0, "F1 shows the paste-mode card")
+check(!WinExist("Clipnik Help ahk_class AutoHotkeyGUI"), "F1 in paste mode does not open the help window")
 SendEvent("{Ctrl up}")
 Sleep 600
 
@@ -226,7 +226,7 @@ SendEvent("{Ctrl down}v")
 Sleep 400
 SendEvent("f")
 Sleep 800
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "F keeps the card open with the search row")
+check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "F keeps the card open with the search row")
 check(cj["SPM.ACTIVE"] = 1, "SPM.ACTIVE set")
 SendEvent("{Ctrl up}")
 Sleep 300
@@ -269,7 +269,7 @@ if WinWait(cj["TXT._tags"] " ahk_class #32770", , 4) {
     check(!errorDialog(), "getClipByTag works")
 } else
     check(false, "tag InputBox did not appear")
-; the InputBox belongs to Clipjump, not this script's own window; closing it does not reliably hand
+; the InputBox belongs to Clipnik, not this script's own window; closing it does not reliably hand
 ; focus back to our target, so reclaim it explicitly before the next step types into it
 WinActivate("cj-pm-target")
 WinWaitActive("cj-pm-target", , 2)
@@ -282,8 +282,8 @@ SendEvent("a")
 Sleep 400
 SendEvent("{Enter}")
 Sleep 1200
-check(InStr(ed.Value, stamp " gamma"), "Enter pasted clip 1 while Ctrl held: [" ed.Value "] active=" WinGetTitle("A") " hud=" WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI") " multi=" cj["MULTIPASTE"] " ref=" cj["ctrlRef"])
-; the continuation of multipaste cannot be simulated: Clipjump's own Send restores modifiers to their
+check(InStr(ed.Value, stamp " gamma"), "Enter pasted clip 1 while Ctrl held: [" ed.Value "] active=" WinGetTitle("A") " hud=" WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI") " multi=" cj["MULTIPASTE"] " ref=" cj["ctrlRef"])
+; the continuation of multipaste cannot be simulated: Clipnik's own Send restores modifiers to their
 ; physical state, which releases a Ctrl that is only held by SendEvent. Verify that part manually.
 SendEvent("{Ctrl up}")
 Sleep 1000
@@ -341,7 +341,7 @@ step("L keeps the card open after Ctrl is released")
 ed.Value := ""
 lockOpen()
 check(locked() = 1, "still locked after Ctrl came up")
-check(WinExist("Clipjump_HUD ahk_class AutoHotkeyGUI"), "the card is still on screen")
+check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "the card is still on screen")
 check(cj["ctrlRef"] = "pastemode", "the release mode is untouched: [" cj["ctrlRef"] "]")
 check(ed.Value = "", "nothing was pasted by locking: [" ed.Value "]")
 

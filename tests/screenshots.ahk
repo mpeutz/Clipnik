@@ -1,12 +1,12 @@
-; Opens each Clipjump window and saves a screenshot to tests\out\<name>.png. Requires a running Clipjump.
+; Opens each Clipnik window and saves a screenshot to tests\out\<name>.png. Requires a running Clipnik.
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 2
-cj := Clipjump()
+cj := Clipnik()
 pToken := Gdip_Startup()
 DirCreate(A_ScriptDir "\out")
-wins := [["main", "About Clipjump"], ["settings", "Clipjump Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]], ["classTool", "Clipjump " cj["TXT.IGN__name"]]]
+wins := [["main", "About Clipnik"], ["settings", "Clipnik Settings"], ["history", cj["TXT.HST__name"]], ["channelOrganizer", cj["TXT.ORG__name"]], ["pluginManagerGui", cj["TXT.PLG__name"]], ["classTool", "Clipnik " cj["TXT.IGN__name"]]]
 for w in wins {
     cj.runLabel(w[1])
     if !WinWait(w[2] " ahk_class AutoHotkeyGUI", , 5)

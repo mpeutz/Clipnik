@@ -1,4 +1,4 @@
-;Nederlandse vertaling voor Clipjump
+;Nederlandse vertaling voor Clipnik
 ;Voor het eerst gemaakt door Fred van Waard uit Hilversum, Nederland
 
 ; OPMERKINGEN
@@ -6,7 +6,7 @@
 ; Nieuwe sleutels worden in de toekomstige versies aan de onderkant toegevoegd voor gemakkelijk en consistente ontwikkeling.
 ; Voeg geen versie commentaar toe wanneer een nieuwe sleutel wordt toegevoegd in het vertaal bestand.
 ; De meeste sleutels hebben het formaat XXX_ waar XXX staat is dat de component naam
-; Vertaal niet het woord 'Clipjump'
+; Vertaal niet het woord 'Clipnik'
 ; & in &Bekijk is om de sneltoest Alt+P aan te maken wanneer het venster actief is. Wanneer er vertaald wordt in een niet Engelse taal, laat dan het '&' teken weg. En als het vertaald wordt in een engelse taal gebruik dan wel het '&' teken.
 ; alleen wanneer u er zeker van bent.
 
@@ -38,9 +38,9 @@ TIP_modem = Laat de Ctrl toets los om te bevestigen
           = Druk op X om over te schakelen van modus
 
 ABT__name = Over
-ABT_reset = Herstart Clipjump
+ABT_reset = Herstart Clipnik
 ABT_resetM = Weet u het zeker dat u Climpjump wilt resetten door alle opnames en instellingen te verwijderen?
-ABT_removeStart = Een opstart ingang voor Clipjump is gevonden. Wilt u deze ook verwijderen?
+ABT_removeStart = Een opstart ingang voor Clipnik is gevonden. Wilt u deze ook verwijderen?
 ABT_resetfinal = zal nu gesloten worden.
 ABT_noupdate = Geen updates beschikbaar
 
@@ -92,21 +92,21 @@ SET_apply = Bevestig
 SET_advanced_error = kan het instellingenbestand (settings.ini) of Notepad niet vinden? Zorg ervoor dat beide bestaan op de juiste plaatsen.
                    =
                    = Probeer contact te leggen met de auteur als het probleem zich blijft voordoen.
-SET_T_limitmaxclips = Dient de Clipjump's klemborden te worden gelimiteerd?
+SET_T_limitmaxclips = Dient de Clipnik's klemborden te worden gelimiteerd?
                     = Gecontroleerd = ja
 SET_T_maxclips = Wat is het minimale aantal klemborden die u gelijktijdig actief wilt hebben.
                = Als u er 20 wilt, SPECIFICEER dan 20.
 SET_T_threshold = De drempel is het extra aantal Klembord dat actief zal zijn dan je minimale limiet..
                 = De best aanbevolen waarde is 10.
                 =
-                = [TIP] - Drempel = 1 zorgt ervoor dat Clipjump het exact maximum aantal klemborden zal bewaren.
+                = [TIP] - Drempel = 1 zorgt ervoor dat Clipnik het exact maximum aantal klemborden zal bewaren.
 SET_T_quality = De kwaliteit van miniatuuropname die u wilt hebben.
               = Aanbevolen waarde is 90
               = Kan tussen de 1 - 100 zijn
-SET_T_copybeep = Controleer of u de aanpasbare pieptoon hoort wanneer er gegevens aan Clipjump worden toegevoegd.
+SET_T_copybeep = Controleer of u de aanpasbare pieptoon hoort wanneer er gegevens aan Clipnik worden toegevoegd.
                =
                = U kunt de piep frequentie wijzigen in de [Geavanceerde] sectie van Settings.ini
-SET_T_keepsession = Dient Clipjump door te gaan met de bewaarde opnames nadat het is herstart
+SET_T_keepsession = Dient Clipnik door te gaan met de bewaarde opnames nadat het is herstart
 SET_T_ismessage = Deze waarde bepaalt of u het bevestigingsbericht wilt zien of niet tijdens het kopieer/knip opdracht.
 SET_T_daystostore = Aantal dagen dat de klembord opnames bewaart zullen worden
 SET_T_images = Dient de klembord opnames bewaart te worden in de historie ?
@@ -116,7 +116,7 @@ SET_T_cfilep = Sneltoest om het geselecteerd bestandspad te kopieeren
              = De snelkoppeling instellen op Niets voor het uitschakelen van de toetsencombinatie
 SET_T_cfolderp = Sneltoest om het geselecteerde map pad te kopiëren.
                = De snelkoppeling instellen op Niets voor het uitschakelen van de toetsencombinatie
-SET_T_cfiled = Sneltoest om het geselecteerde bestands inhoud te kopiëren naar Clipjump.
+SET_T_cfiled = Sneltoest om het geselecteerde bestands inhoud te kopiëren naar Clipnik.
              = De snelkoppeling instellen op Niets voor het uitschakelen van de toetsencombinatie
 SET_T_ot = Selecteer sneltoets voor [één keer stoppen] functie.
          = [De eenmalige stop] functie zal ervoor zorgen dat Climpjump de volgende gegevens negeert welke overgedragen wordt naar het systeem klembord zolang het geactiveerd is.
@@ -177,10 +177,10 @@ IGN_tip = Druk op de spatiebalk om de soort toe te voegen.
 
 TRY_options = Opties
 TRY_tools = Gereedschap
-HST_delall_msg = Weet u het zeker dat u de Clipjump's historie wilt leegmaken ?
+HST_delall_msg = Weet u het zeker dat u de Clipnik's historie wilt leegmaken ?
 ; de volgende sleutel is veranderd in versie 9.9.1 en zoals je ziet is de invoer hier
-SET_T_actmd = De sneltoets om Clipjump actiemodus te openen.
-            = De actiemodus biedt zoals u wellicht weet de interface voor bijna alle functionaliteit in Clipjump.
+SET_T_actmd = De sneltoets om Clipnik actiemodus te openen.
+            = De actiemodus biedt zoals u wellicht weet de interface voor bijna alle functionaliteit in Clipnik.
             = Als u systeemniveau sneltoetsen wilt hebben voor deze functionaliteit, dan kunt u ze vinden in de Instellingen.
 
 ;==========
@@ -191,8 +191,8 @@ CNL_delete = Verwijder het kanaal
 CNL_delmsg = Wilt u dit kanaal echt verwijderen? Opgemerkt dient te worden dat het proces onomkeerbaar is en dat alle opnames welke bewaart zijn in dit kanaal verloren gaan.
 CNL_del_default = Verwijderen van het standaard kanaal (#0) is niet toegestaan.
 TIP_empty3 = Gebruik de Ctrl toets om te sluiten.
-UPD_restart = Clipjump zal nu opnieuw opstarten om de update te bevestigen.
-UPD_automsg = Klik op Ja om Clipjump automatisch te updaten of Nee om naar de website te gaan.
+UPD_restart = Clipnik zal nu opnieuw opstarten om de update te bevestigen.
+UPD_automsg = Klik op Ja om Clipnik automatisch te updaten of Nee om naar de website te gaan.
 
 ;=========
 ;10
@@ -221,13 +221,13 @@ TIP_confirmcopy = U ziet deze vraag voor bevestiging omdat dit een beschermd kan
                 = Gaat u akkoord met het kopieeren naar dit kanaal ?
                 = Druk op J voor Ja
                 = Druk op N voor Nee
-ABT_seehelp = Wilt u de help van Clipjump zien ?
-ABT_runadmin = Clipjump wordt niet uitgevoerd met Beheerders (Administrator) rechten
+ABT_seehelp = Wilt u de help van Clipnik zien ?
+ABT_runadmin = Clipnik wordt niet uitgevoerd met Beheerders (Administrator) rechten
              = Dit kan mogelijk leiden tot het onjuist functioneren van het programma.
              = 
              = [Deze boodschap wordt maar eenmaal vertoont]
 ABT_cjready = Hi!
-            = Clipjump is nu geactiveerd.
+            = Clipnik is nu geactiveerd.
             = Probeer om snel te kopieeren en te plakken...
 TIP_editing = Bewerken....
             = Druk op Esc om te annuleren
@@ -269,12 +269,12 @@ PLG_Sb_deleted = Plugin verwijderd
 SET_T_pst = Één tekencombinatie om te gebruiken met Ctrl om de [PLAKMODUS] te activeren
           = Opgemerkt dient te worden dat de letters  E C X Z S A F H zijn gereserveerd.
           = 
-          = Zorg ook ervoor dat u 'Kopie omzeilen Clipjump' ziet in het help-bestand
+          = Zorg ook ervoor dat u 'Kopie omzeilen Clipnik' ziet in het help-bestand
 SET_pformat = Standaard Plakformaat
-SET_T_pformat = De indeling plakken welke u actief wilt hebben bij het opstarten van Clipjump. '-origineel' is de standaard Clipjump plaktechniek.
+SET_T_pformat = De indeling plakken welke u actief wilt hebben bij het opstarten van Clipnik. '-origineel' is de standaard Clipnik plaktechniek.
 SET_t_plugM = Sneltoest om de Plugin beheer te openen
 PLG_edit = Bewerken (F2)
-CUS_error = Er was een fout in een ClipjumpCustom.ini routine?
+CUS_error = Er was een fout in een ClipnikCustom.ini routine?
 
 ;=====
 ;10.7.8
@@ -290,18 +290,18 @@ TIP_holdclip = Druk op Ctrl+V om te plakken
              = Druk op Invoegen om de opname aan het kanaal toe te voegen
              = Druk op Esc om te sluiten
 SET_holdclip = Houd Clip functie
-SET_T_holdclip = Kopieer de geselecteerde tekst of het item naar een buffer en voorkom dat het wordt worden vastgelegd door Clipjump.
+SET_T_holdclip = Kopieer de geselecteerde tekst of het item naar een buffer en voorkom dat het wordt worden vastgelegd door Clipnik.
                = U kunt dan vervolgens de opname plakken en verplaatsen naar een kanaal of het afwijzen.
 SET_keepactivepos = Huidige actieve opname positie behouden
-SET_T_keepactivepos = Wilt u dat Clipjump de laatste actieve opname in de plakmodus onthoudt?
-                    = het niet aanvinken zal er voor zorgen dat de Clipjump plakmodus altijd start vanaf Opname 1.
+SET_T_keepactivepos = Wilt u dat Clipnik de laatste actieve opname in de plakmodus onthoudt?
+                    = het niet aanvinken zal er voor zorgen dat de Clipnik plakmodus altijd start vanaf Opname 1.
 
 ;=====
 ;11
 ;=====
 
 HST_viewimage = [PLAATJE]
-ORG__name = Clipjump kanaal verzamelplaats
+ORG__name = Clipnik kanaal verzamelplaats
 ORG_m_inc = Omhoog verplaatsen    (Alt+Up)
 ORG_m_dec = Omlaag verplaatsen    (Alt+Down)
 ORG_error = Niet ondersteund
@@ -314,7 +314,7 @@ ORG_delCnlMsg = Wat wilt u doen met het geselecteerde kanaal?
       = Doe niets = Annuleren
 _rename = Hernoem
 ORG_renameAsk = Geeft een nieuwe naam in voor het kanaalnummer
-TIP_initMsg = Initialiseren Clipjump
+TIP_initMsg = Initialiseren Clipnik
 
 ;======
 ;11.2
@@ -387,16 +387,16 @@ ORG_copyingclp = Kopieer de geselecteerde opname(s)
 ORG_movingclp = Verplaats geselecteerde opname(s)
 ORG_Editprops = Bewerk opname instellingen
 ORG_oEditMsg = Klik op bewaren als u klaar bent.
-ABT_info = Clipjump is een Windows klembord manager gemaakt in AutoHotkey.
+ABT_info = Clipnik is een Windows klembord manager gemaakt in AutoHotkey.
 _Save = Bewaren
-SET_T_keepsession = Dient Clipjump voortgezet te worden met alle bewaarde klemborden (alleen met het standaard kanaal 0) nadat het is herstart.
+SET_T_keepsession = Dient Clipnik voortgezet te worden met alle bewaarde klemborden (alleen met het standaard kanaal 0) nadat het is herstart.
 
 ;========
 ; 11.5
 ;========
-_ClipjumpError = Clipjump fout
+_ClipjumpError = Clipnik fout
 TIP_genErrMsg = Neem contact op met de auteur als u problemen blijft houden.
-TRY_reloadcustom = Laad ClipjumpCustom.ini opnieuw
+TRY_reloadcustom = Laad ClipnikCustom.ini opnieuw
 
 ;=======
 ; 11.6
@@ -428,7 +428,7 @@ TIP_empty2_2 = %PROGNAME% is leeg
 ;====
 
 SET_T_histshort = Sneltoets voor Klembord historie
-PLG_sync_cb = Syncroniseer Clipjump Klembord
+PLG_sync_cb = Syncroniseer Clipnik Klembord
 
 ;====
 ; 12
@@ -439,7 +439,7 @@ ORG_clpdelmsg = Geselecteerd opname(s) zijn verwijderd
 TIP_syscb = Systeem klembord heeft de opname %realclipno%
 TIP_editing = Bewerken....
             = Druk op Esc om te annuleren.
-            = Na bewerking, bewaren het bestand met Ctrl+S en sluit de bewerker af zodat het bestand geladen kan worden in Clipjump.
+            = Na bewerking, bewaren het bestand met Ctrl+S en sluit de bewerker af zodat het bestand geladen kan worden in Clipnik.
 
 ;=====
 ; 12.3

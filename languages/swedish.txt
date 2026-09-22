@@ -1,4 +1,4 @@
-﻿;Swedish translation for Clipjump
+﻿;Swedish translation for Clipnik
 ;TranslatorName=Åke Engelbrektson
 ;TranslatorContact=eson57@gmail.com
 ;TranslatorURL=https://svenskasprakfiler.se
@@ -32,9 +32,9 @@ TIP_modem = Släpp Ctrl för att bekräfta
           = Tryck X för att växla läge
 
 ABT__name = Om
-ABT_reset = Återställ &Clipjump
-ABT_resetM = Vill du verkligen återställa Clipjump genom att ta bort alla klipp och inställningar?
-ABT_removeStart = En autostartpost för Clipjump hittades. Vill du ta bort den också?
+ABT_reset = Återställ &Clipnik
+ABT_resetM = Vill du verkligen återställa Clipnik genom att ta bort alla klipp och inställningar?
+ABT_removeStart = En autostartpost för Clipnik hittades. Vill du ta bort den också?
 ABT_resetfinal = kommer att stängas nu.
 ABT_noupdate = Inga uppdateringar tillgängliga
 
@@ -87,23 +87,23 @@ SET_apply = &Verkställ
 SET_advanced_error = kan inte hitta inställningsfilen (settings.ini) eller Notepad.exe? Tillse att båda finns på sina respektive platser.
                    =
                    = Försök kontakta utvecklaren om problemen kvarstår.
-SET_T_limitmaxclips = Kommer Clipjumps urklippskanaler att vara begränsade
+SET_T_limitmaxclips = Kommer Clipniks urklippskanaler att vara begränsade
                     = Ibockad = Ja
 SET_T_maxclips = Det är det minimala antalet urklippskanaler som du vill skall vara aktiva samtidigt.
                = Om du vill ha 20, ANGE 20.
 SET_T_threshold = Tröskelvärdet är det antal extra urklippskanaler som du vill aktivera utöver minimigränsen..
                 = Högsta rekommenderade värde är 10.
                 =
-                = [TIPS] - Tröskelvärde = 1 gör så att Clipjump lagrar ett exakt maxantal urklippskanaler.
+                = [TIPS] - Tröskelvärde = 1 gör så att Clipnik lagrar ett exakt maxantal urklippskanaler.
 SET_T_quality = Kvaliteten du vill ha på förhandsgranskningsminiatyrerna.
               = Rekommenderat värde är 90
               = Kan vara mellan 1 och 100
-SET_T_copybeep = Aktivera för att höra ett anpassningsbart pip när urklippsdata läggs till i Clipjump.
+SET_T_copybeep = Aktivera för att höra ett anpassningsbart pip när urklippsdata läggs till i Clipnik.
                =
                = Du kan ändra pipets frekvens under [Advanced] i Settings.ini
-SET_T_keepsession = Skall Clipjump fortsätta med alla sparade urklippskanaler efter en omstart
+SET_T_keepsession = Skall Clipnik fortsätta med alla sparade urklippskanaler efter en omstart
 SET_T_ismessage = Detta värde avgör om bekräftelsemeddelande skall visas eller ej, vid kopierings-/urklippsåtgärder.
-SET_T_formatting = Vill du att Clipjump skall starta med 'Ingen formatering' aktiverad?
+SET_T_formatting = Vill du att Clipnik skall starta med 'Ingen formatering' aktiverad?
                  = Bocka i för 'Ja'.
 SET_T_daystostore = Antal dagar som urklippsinnehållet skall lagras
 SET_T_images = Skall urklippta bilder lagras i historiken?
@@ -113,10 +113,10 @@ SET_T_cfilep = Genväg för att kopiera sökvägen till markerad fil.
              = Ange genvägen som 'Inget' för att inaktivera tangentkombinationen
 SET_T_cfolderp = Genväg för att kopiera sökvägen till markerad mapp.
                = Ange genvägen som 'Inget' för att inaktivera tangentkombinationen
-SET_T_cfiled = Genväg för att kopiera markerat filinnehåll till Clipjump.
+SET_T_cfiled = Genväg för att kopiera markerat filinnehåll till Clipnik.
              = Ange genvägen som 'Inget' för att inaktivera tangentkombinationen
 SET_T_ot = Välj genväg för 'Engångsstopp'.
-         = 'Engångsstopp' gör så att Clipjump hoppar över nästa dataöverföring till Urklipp, räknat från den tidpunkt då funktionen aktiveras.
+         = 'Engångsstopp' gör så att Clipnik hoppar över nästa dataöverföring till Urklipp, räknat från den tidpunkt då funktionen aktiveras.
          = Ange genvägen som 'Inget' för att frigöra tangentkombinationen
 SET_T_pitswp = Genväg för att aktivera 'PitSwap'. (tillgänglig även från Åtgärdsläge)
              = För mer information om funktionen, hänvisas till hjälpfilen.
@@ -138,7 +138,7 @@ TRY_disable = &Inaktivera
 TRY_startup = Starta vid systemstart
 TRY_updates = Sök efter &uppdateringar
 TRY_help = Hjälp
-TRY_restart = &Starta om Clipjump
+TRY_restart = &Starta om Clipnik
 TRY_exit = &Avsluta
 
 ACT__name = ÅTGÄRDSLÄGE
@@ -164,7 +164,7 @@ _exportedto = exporterad till
 ;9.9.0.2
 ;============
 
-IGN_Restartmsg = Du måste starta om Clipjump för ändringarna skall få effekt. Vill du starta om nu?
+IGN_Restartmsg = Du måste starta om Clipnik för ändringarna skall få effekt. Vill du starta om nu?
 IGN_tip = Tryck Mellanslag för att lägga till en klass.
         = Tryck Esc för att avsluta klassinhämtningsverktyget.
 
@@ -174,10 +174,10 @@ IGN_tip = Tryck Mellanslag för att lägga till en klass.
 
 TRY_options = &Alternativ
 TRY_tools = &Verktyg
-HST_delall_msg = Vill du verkligen rensa Clipjumps historik permanent?
+HST_delall_msg = Vill du verkligen rensa Clipniks historik permanent?
 ; the following key was modified in v9.9.1 and so you see its entry here
-SET_T_actmd = Genväg för att öppna Clipjump Åtgärdsläge.
-            = Åtgärdsläget tillhandahåller ett grafiskt gränssnitt för nästan alla funktioner i Clipjump.
+SET_T_actmd = Genväg för att öppna Clipnik Åtgärdsläge.
+            = Åtgärdsläget tillhandahåller ett grafiskt gränssnitt för nästan alla funktioner i Clipnik.
             = Vill du ha genvägar på systemnivå för dessa funktioner, hittar du dem här i 'Inställningar'.
 
 ;==========
@@ -188,8 +188,8 @@ CNL_delete = &Ta bort kanal
 CNL_delmsg = Vill du verkligen ta bort den här kanalen? Notera att åtgärden inte kan ångras och du kommer att förlora alla klipp som är lagrade i den.
 CNL_del_default = Standardkanalen (#0) får inte tas bort.
 TIP_empty3 = Släpp Ctrl för att avsluta.
-UPD_restart = Clipjump kommer nu att starta om för att verkställa uppdateringarna.
-UPD_automsg = Tryck Ja för att uppdatera Clipjump automatiskt, eller Nej för att gå till webbsidan.
+UPD_restart = Clipnik kommer nu att starta om för att verkställa uppdateringarna.
+UPD_automsg = Tryck Ja för att uppdatera Clipnik automatiskt, eller Nej för att gå till webbsidan.
 
 ;=========
 ;10
@@ -198,7 +198,7 @@ UPD_automsg = Tryck Ja för att uppdatera Clipjump automatiskt, eller Nej för a
 SET_T_pst = Enkel teckenkombination att använda tillsammans med Ctrl för att aktivera [INKLISTRINGSLÄGE]
           = Notera att bokstäverna E C X Z S är reserverade.
           = 
-          = Läs också "Copy bypassing Clipjump" i hjälpfilen
+          = Läs också "Copy bypassing Clipnik" i hjälpfilen
 CHC_name = Välj kanal
 TIP_done = Klar
 TIP_copycutfailed = Kopiera/Flytta, misslyckades
@@ -222,13 +222,13 @@ TIP_confirmcopy = Du måste bekräfta eftersom detta är en skyddad kanal.
                 = Godkänner du denna kopiering till kanalen?
                 = Tryck Y för Ja
                 = Tryck N för Nej
-ABT_seehelp = Vill du se Clipjump-hjälpen?
-ABT_runadmin = Clipjump körs inte som Administratör
+ABT_seehelp = Vill du se Clipnik-hjälpen?
+ABT_runadmin = Clipnik körs inte som Administratör
              = Detta kan orsaka felaktiga funktioner i programmet.
              = 
              = [Detta meddelande visas endast en gång]
 ABT_cjready = Hej!
-            = Clipjump är nu aktiverat.
+            = Clipnik är nu aktiverat.
             = Prova att göra ett par snabba kopiera/klistra in...
 TIP_editing = Redigerar....
             = Tryck Esc för att avbryta
@@ -270,12 +270,12 @@ PLG_Sb_deleted = Tillägg borttaget
 SET_T_pst = Enkeltecken att kombinera med Ctrl för att aktivera [PASTE MODE]
           = Notera att bokstäverna  E,C,X,Z,S,A,F och H är reserverade.
           =
-          = Läs också "Copy bypassing Clipjump" i hjälpfilen.
+          = Läs också "Copy bypassing Clipnik" i hjälpfilen.
 SET_pformat = Standard inklistringsformat
-SET_T_pformat = Det inklistringsformat du vill aktivera vid Clipjumps uppstart. '-original' är standard Clipjump inklistringsteknik.
+SET_T_pformat = Det inklistringsformat du vill aktivera vid Clipniks uppstart. '-original' är standard Clipnik inklistringsteknik.
 SET_t_plugM = Genväg för att öppna tilläggshanteringen.
 PLG_edit = Redigera (F2)
-CUS_error = Fel i rutinen för ClipjumpCustom.ini?
+CUS_error = Fel i rutinen för ClipnikCustom.ini?
 
 ;=====
 ;10.7.8
@@ -291,18 +291,18 @@ TIP_holdclip = Tryck Ctrl+V för att klistra in
              = Tryck Insert to add clip to channel
              = Tryck Esc för att avsluta
 SET_holdclip = Frys klippfunktion
-SET_T_holdclip = Kopierar markerad text eller objekt till en buffert, och förhindrar att den fångas upp av Clipjump.
+SET_T_holdclip = Kopierar markerad text eller objekt till en buffert, och förhindrar att den fångas upp av Clipnik.
                = Du kan sedan klistra in klippet, flytta det till en kanal eller avvisa det.
 SET_keepactivepos = Bevara aktuell klipposition
-SET_T_keepactivepos = Vill du att Clipjump skall komma ihåg det senast aktiva klippet i inklistringsläget?
-                    = Unticking it will make Clipjump Paste Mode always start from Clip 1.
+SET_T_keepactivepos = Vill du att Clipnik skall komma ihåg det senast aktiva klippet i inklistringsläget?
+                    = Unticking it will make Clipnik Paste Mode always start from Clip 1.
 
 ;=====
 ;11
 ;=====
 
 HST_viewimage = [IMAGE]
-ORG__name = Clipjump kanalhanterare
+ORG__name = Clipnik kanalhanterare
 ORG_m_inc = Flytta upp    (Alt+Up)
 ORG_m_dec = Flytta ner   (Alt+Down)
 ORG_error = Stöd saknas
@@ -315,7 +315,7 @@ ORG_delCnlMsg = Vad vill du göra med den valda kanalen?
       = Gör ingenting = Avbryt
 _rename = Byt namn
 ORG_renameAsk = Ange nytt namn för kanal nummer
-TIP_initMsg = Startar Clipjump
+TIP_initMsg = Startar Clipnik
 
 ;======
 ;11.2
@@ -388,6 +388,6 @@ ORG_copyingclp = Kopierar markerade klipp
 ORG_movingclp = Flyttar markerade klipp
 ORG_Editprops = Redigera klippegenskaper
 ORG_oEditMsg = Tryck 'Spara' när du är klar.
-ABT_info = Clipjump är en urklippshanterare för Windows, skapad i AutoHotkey.
+ABT_info = Clipnik är en urklippshanterare för Windows, skapad i AutoHotkey.
 _Save = Spara
-SET_T_keepsession = Skall Clipjump fortsätta med alla sparade urklipp (endast från standardkanal 0) efter omstart av programmet?
+SET_T_keepsession = Skall Clipnik fortsätta med alla sparade urklipp (endast från standardkanal 0) efter omstart av programmet?

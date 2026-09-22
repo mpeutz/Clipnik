@@ -5,9 +5,9 @@
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1
 SetTitleMatchMode 1
-cj := Clipjump()
+cj := Clipnik()
 title := cj["TXT.ORG__name"] " ahk_class AutoHotkeyGUI"
-logFile := A_Temp "\Clipjump\webhost.log"
+logFile := A_Temp "\Clipnik\webhost.log"
 fails := 0
 check(name, cond) {
 	global fails

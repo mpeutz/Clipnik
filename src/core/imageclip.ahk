@@ -3,13 +3,13 @@
 ;   ImageClip.PngFrom(ref, outPath)   ref is a file path, or "" for the image on the clipboard right now
 ;   ImageClip.DataUri(ref, maxBytes)  "" when the source is missing or the PNG exceeds maxBytes
 ;   ImageClip.SvgDataUri(markup)      url-encoded data:image/svg+xml
-;   ImageClip.Temp(ext)               a fresh path under A_Temp\Clipjump
+;   ImageClip.Temp(ext)               a fresh path under A_Temp\Clipnik
 
 class ImageClip {
 	static MaxUriBytes := 2097152
 
 	static Temp(ext) {
-		dir := A_Temp "\Clipjump"
+		dir := A_Temp "\Clipnik"
 		DirCreate(dir)
 		ImageClip.Sweep(dir)
 		loop

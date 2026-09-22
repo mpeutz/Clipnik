@@ -1,7 +1,7 @@
 ; Unit tests for historyPrune (src/core/history.ahk) against a temporary database.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\history_prune.ahk
 #Requires AutoHotkey v2.0
-#Warn All, Off   ; history.ahk references symbols only Clipjump.ahk defines (getRandomStr, clipPref, CDS)
+#Warn All, Off   ; history.ahk references symbols only Clipnik.ahk defines (getRandomStr, clipPref, CDS)
 #Include ..\lib\v2compat.ahk
 #Include ..\lib\SQLiteDB\SQLiteDB.ahk
 #Include ..\src\core\cliptype.ahk

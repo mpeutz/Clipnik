@@ -1,9 +1,9 @@
-; External-process check of publicAPI.ahk against a running Clipjump (v2).
+; External-process check of publicAPI.ahk against a running Clipnik (v2).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\api_client.ahk
 #Requires AutoHotkey v2.0
 #Include ..\publicAPI.ahk
 out := ""
-cj := Clipjump()
+cj := Clipnik()
 out .= "version=" cj.version "`n"
 out .= "PROGNAME=" cj["PROGNAME"] "`n"
 out .= "clip1 loc=" cj.getClipLoc(0, 1) "`n"

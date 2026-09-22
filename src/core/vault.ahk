@@ -1,4 +1,4 @@
-; vault.ahk - the Vault: clips the user saved on purpose. Nothing in Clipjump deletes from this table on its
+; vault.ahk - the Vault: clips the user saved on purpose. Nothing in Clipnik deletes from this table on its
 ; own: no age limit, no count limit, no compaction. Only an explicit delete removes an entry.
 ;
 ;   vaultCreateTable()   vaultAdd(data, type, fileid, kind, w, h, name)   vaultList(q, partial, kind)

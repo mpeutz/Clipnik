@@ -2,7 +2,7 @@
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\history_kinds.ahk
 #Requires AutoHotkey v2.0
 #Warn All, Off   ; history.ahk's addHistoryImage/getRandomStr and cliptype.ahk's ClipType.Of/Store reference
-                 ; symbols only Clipjump.ahk defines (getRandomStr, clipPref, AddClipPref, CDS)
+                 ; symbols only Clipnik.ahk defines (getRandomStr, clipPref, AddClipPref, CDS)
 #Include ..\lib\v2compat.ahk
 #Include ..\lib\SQLiteDB\SQLiteDB.ahk
 #Include ..\src\core\cliptype.ahk

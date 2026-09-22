@@ -192,7 +192,7 @@ save_Settings(v) {
 }
 
 set_pformat(pst_format := ""){
-; Sets the default pformat at Clipjump startup , runs after all the plugins have been loaded.
+; Sets the default pformat at Clipnik startup , runs after all the plugins have been loaded.
 	global
 	local k, v, success := 0
 	pst_format := pst_format="" ? ini_def_pformat : pst_format
@@ -211,7 +211,7 @@ set_pformat(pst_format := ""){
 }
 
 save_Default(full := 1){
-; Saves the default settings for Clipjump. Runs at start-up on program update or new installation
+; Saves the default settings for Clipnik. Runs at start-up on program update or new installation
 
 	if (full){
 	IniWrite(1, CONFIGURATION_FILE, "Main", "limit_MaxClips")
@@ -326,7 +326,7 @@ Ini_delete(section, key){
 }
 
 validate_Settings()
-; The function validates the settings for Clipjump .
+; The function validates the settings for Clipnik .
 ; The reason validate_Settings() is not inside load_Settings() is conflicts with Ini_MaxClips and its unlimited value (0).
 {
 	global

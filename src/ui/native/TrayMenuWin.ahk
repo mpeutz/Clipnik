@@ -72,7 +72,7 @@ class TrayCard {
 			case "options":
 				items.Push({label: StrReplace(TXT.TRY_incognito, "&"), check: !NOINCOGNITO, fn: incognito}
 					, {label: StrReplace(TXT.TRY_disable, "&") " " PROGNAME, check: !CLIPJUMP_STATUS, fn: disable_clipjump}
-					, {label: TXT.TRY_startup, check: FileExist(A_Startup "\Clipjump.lnk") ? true : false, fn: strtup})
+					, {label: TXT.TRY_startup, check: FileExist(A_Startup "\Clipnik.lnk") ? true : false, fn: strtup})
 		}
 		return {items: items}
 	}
@@ -127,7 +127,7 @@ class TrayCard {
 		s := Theme.Scale
 		if !width
 			width := TrayCard.W
-		g := Gui("-Caption +ToolWindow +AlwaysOnTop -DPIScale +Owner" A_ScriptHwnd, "Clipjump_TrayMenu")
+		g := Gui("-Caption +ToolWindow +AlwaysOnTop -DPIScale +Owner" A_ScriptHwnd, "Clipnik_TrayMenu")
 		g.MarginX := 0, g.MarginY := 0
 		g.BackColor := Theme.Hex("surface")
 		Theme.ApplyToHwnd(g.Hwnd, 2, true)

@@ -1,4 +1,4 @@
-; X mode ring (delete, copy), customizer bindings, incognito/disable toggles, against a RUNNING Clipjump.
+; X mode ring (delete, copy), customizer bindings, incognito/disable toggles, against a RUNNING Clipnik.
 ; Only clips created by this test are deleted.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\modes.ahk
 #Requires AutoHotkey v2.0
@@ -13,8 +13,8 @@ check(cond, msg) {
     if !cond
         fails++
 }
-errorDialog() => WinExist("Clipjump.ahk ahk_class #32770")
-cj := Clipjump()
+errorDialog() => WinExist("Clipnik.ahk ahk_class #32770")
+cj := Clipnik()
 ; keep the channel well below its clip limit so compaction cannot renumber clips mid-test
 if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
     cj.runFunction("compacter()")
@@ -30,7 +30,7 @@ g.Show()
 check(focusTarget(), "cj-md-target focused at startup")
 
 ; Activates cj-md-target and focuses its Edit control, retrying once. The suite interacts with
-; Clipjump's own UI (customizer reload, incognito/disable toggles, the channel chooser) between
+; Clipnik's own UI (customizer reload, incognito/disable toggles, the channel chooser) between
 ; steps, and any of those can leave a different window in the foreground; every step that sends
 ; keys reclaims focus first so keystrokes never land on whatever window happens to be active.
 ; Returns false without sending anything if the window cannot be activated, so callers can make
@@ -99,7 +99,7 @@ if focusTarget() {
 check(!errorDialog(), "no error after mode ring")
 
 step("customizer: a [section] with bind/run/tip works after Reload customizations")
-ini := A_ScriptDir "\..\ClipjumpCustom.ini"
+ini := A_ScriptDir "\..\ClipnikCustom.ini"
 FileCopy(ini, ini ".testbak", 1)
 FileAppend("`n[cjtest]`nbind = Ctrl+Alt+F9`ntip = customizer says hi`nrun = API.pasteText(" stamp " custom)`n", ini)
 reloadCustom()

@@ -105,7 +105,7 @@ class OrganizerWin {
 		; context menu already uses), so the clip record itself only needs to carry the kind
 		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real))
 		if isImg {
-			m["url"] := "https://cache.clipjump/thumbs" (ch ? ch : "") "/" real ".jpg"
+			m["url"] := "https://cache.clipnik/thumbs" (ch ? ch : "") "/" real ".jpg"
 			m["dim"] := clipPref(ch, real, "Dim")
 		}
 		OrganizerWin.host.Post("clip", m)

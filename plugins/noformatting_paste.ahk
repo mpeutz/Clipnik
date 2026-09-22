@@ -18,7 +18,7 @@ run = API.runPlugin(noformattin_paste.ahk, 1)
 */
 
 plugin_noformatting_paste(trimall := 0) {
-	API.blockMonitoring(1) 	; blocks Clipboard monitoring by Clipjump
+	API.blockMonitoring(1) 	; blocks Clipboard monitoring by Clipnik
 	try A_Clipboard := trimall ? Trim(A_Clipboard, "`r`n `t") : RTrim(A_Clipboard, "`r`n") 	; Trims clipboard of any formatting
 	API.blockMonitoring(0) 	; enable monitoring now
 	Send("^{vk56}") 	; i.e. ^v

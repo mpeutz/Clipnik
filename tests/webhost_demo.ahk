@@ -8,7 +8,7 @@
 #Include ..\src\ui\native\Theme.ahk
 #Include ..\src\ui\web\WebHost.ahk
 SetWorkingDir A_ScriptDir "\.."
-global CJGUI := Map(), PROGNAME := "Clipjump", TXT := CJMap()
+global CJGUI := Map(), PROGNAME := "Clipnik", TXT := CJMap()
 TXT["WV2_missingTitle"] := "The WebView2 runtime is not installed", TXT["WV2_missingText"] := "Clipboard History and the Channel Organizer need Microsoft Edge WebView2.", TXT["WV2_download"] := "Download the Evergreen runtime from Microsoft"
 BrowserRun(u) => Run(u)
 Theme.Init("dark")
@@ -26,7 +26,7 @@ catch as e
     FileAppend("ERR " e.Message " (" e.File ":" e.Line ") " e.Extra "`n", "*")
 if !WebHost.Available() {
     Sleep 800
-    if WinExist("Clipjump ahk_class AutoHotkeyGUI") {
+    if WinExist("Clipnik ahk_class AutoHotkeyGUI") {
         WinGetPos(&x, &y, &w, &hh)
         p := Gdip_Startup(), b := Gdip_BitmapFromScreen(x "|" y "|" w "|" hh)
         Gdip_SaveBitmapToFile(b, A_ScriptDir "\out\webhost-missing.png"), Gdip_DisposeImage(b), Gdip_Shutdown(p)

@@ -1,5 +1,5 @@
 /*
-	Clipjump
+	Clipnik, a fork of Clipjump
 
 	Copyright 2013-15 Avi Aryan
 	Modifications copyright 2026 mpeutz: ported to AutoHotkey v2 and extended.
@@ -17,11 +17,11 @@
 	limitations under the License.
 */
 
-;@Ahk2Exe-SetName Clipjump
-;@Ahk2Exe-SetDescription Clipjump
-;@Ahk2Exe-SetVersion 12.5
+;@Ahk2Exe-SetName Clipnik
+;@Ahk2Exe-SetDescription Clipnik
+;@Ahk2Exe-SetVersion 1.0
 ;@Ahk2Exe-SetCopyright Avi Aryan, mpeutz
-;@Ahk2Exe-SetOrigFilename Clipjump.exe
+;@Ahk2Exe-SetOrigFilename Clipnik.exe
 
 #Requires AutoHotkey v2.0
 #Warn All, StdOut
@@ -39,7 +39,7 @@ A_MaxHotkeysPerInterval := 1000
 SendMode "Event"          ; v1 default; paste-mode timing was tuned against it
 SetTitleMatchMode 1       ; v1 default (prefix match)
 
-global ini_LANG := "", H_Compiled := RegExMatch(SubStr(A_AhkPath, InStr(A_AhkPath, "\", , -1) + 1), "iU)^(Clipjump).*(\.exe)$") && (!A_IsCompiled) ? 1 : 0
+global ini_LANG := "", H_Compiled := RegExMatch(SubStr(A_AhkPath, InStr(A_AhkPath, "\", , -1) + 1), "iU)^(Clipnik).*(\.exe)$") && (!A_IsCompiled) ? 1 : 0
 global mainIconPath := H_Compiled || A_IsCompiled ? A_AhkPath : "icons/icon.ico"
 
 /*
@@ -48,8 +48,8 @@ PROGRAM VARIABLES
 **********************
 */
 
-global PROGNAME := "Clipjump"
-global VERSION := "12.5"
+global PROGNAME := "Clipnik"
+global VERSION := "1.0"
 global CONFIGURATION_FILE := "settings.ini"
 
 ; registry of Gui objects keyed by the v1 gui names (History, Settings, chOrg, ...)
@@ -100,7 +100,7 @@ DirCreate("cache/history")
 try FileSetAttrib("-H", A_WorkingDir "\cache")
 
 ;Init Non-Ini Configurations
-try FileDelete(A_Temp "/clipjumpcom.txt")
+try FileDelete(A_Temp "/clipnikcom.txt")
 try A_Clipboard := ""
 
 
@@ -187,12 +187,15 @@ if !FileExist(CONFIGURATION_FILE)
 	save_default(1)
 	if !A_IsAdmin
 		MsgBox(TXT.ABT_runadmin, "WARNING", 16)
-	try TrayTip(TXT.ABT_cjready, "Clipjump", 1)
+	try TrayTip(TXT.ABT_cjready, "Clipnik", 1)
 }
 else if (ini_Version != VERSION)
 {
 	save_default(0) 			;0 corresponds to selective save
-	reloadClipjump() 		; Update plugin includes with what the user has incase he updates his Clipjump
+	; pick up the plugins this version ships, then restart on them. Not reloadClipjump(): its exit routine would
+	; write settings that are not loaded yet and close a history database that is not open yet.
+	updatePluginIncludes()
+	Reload()
 	Sleep 10000 		; to counter race condition
 }
 
@@ -211,7 +214,7 @@ DEFAULT SETTINGS LOADING
 for spmk in StrSplit("Enter|Up|Down|Home", "|")
 	spmkey[spmk] := spmk
 
-init_actionmode() ;Initialising Clipjump Channels
+init_actionmode() ;Initialising Clipnik Channels
 initChannels()
 
 /*
@@ -319,10 +322,13 @@ fillHISTORYOBJ()
 historyCleanup() ;Clean History
 SetTimer(historyCleanup, 86400000)   ; and daily after that: a machine left running for weeks never restarts into it
 OnMessage(0x4a, Receive_WM_COPYDATA)  ; 0x4a is WM_COPYDATA
-; Portable Startup: re-point the shortcut in case the folder moved
-if isRunAtStartup()
+; Portable Startup: re-point the shortcut in case the folder moved. A Clipjump.lnk from before the rename is
+; taken over only when it starts this folder, so another Clipjump install keeps its own shortcut.
+if migrateStartupShortcut()
+	setRunAtStartup(true)
+else if isRunAtStartup()
 {
-	FileDelete(A_Startup "\Clipjump.lnk")
+	FileDelete(A_Startup "\Clipnik.lnk")
 	setRunAtStartup(true)
 }
 EmptyMem()
@@ -342,7 +348,7 @@ startupTarget() {
 	global H_Compiled
 	if (A_IsCompiled || H_Compiled)
 		return A_AhkPath
-	return FileExist(A_ScriptDir "\Clipjump.cmd") ? A_ScriptDir "\Clipjump.cmd" : A_ScriptFullPath
+	return FileExist(A_ScriptDir "\Clipnik.cmd") ? A_ScriptDir "\Clipnik.cmd" : A_ScriptFullPath
 }
 
 onExitHandler(*) {
@@ -530,7 +536,7 @@ cjClipboardChanged(DataType) {
 		if clipPref(CN.NG, CURSAVE, FIXATE_txt)	; not active if the first clip is FIXED
 			IScurCBACTIVE := 0
 		if !ISACTIVEEXCEL 				;excel has known bugs with AHK and manipulating clipboard *infront* of it will cause errors
-			makeClipboardAvailable(0) 						;close clipboard in case it is still opened by clipjump
+			makeClipboardAvailable(0) 						;close clipboard in case it is still opened by clipnik
 		STORE.CBCaptured := 1
 	}
 	else
@@ -837,9 +843,9 @@ multiPaste_run(*) {
 	; would reopen the card unlocked with Ctrl not held, and the next tick would paste again: a loop.
 	if LOCK.ACTIVE
 		return
-	if SPM.ACTIVE && WinExist("Clipjump_SPM ahk_class AutoHotkeyGUI") {
-		WinHide("Clipjump_SPM ahk_class AutoHotkeyGUI")
-		WinWaitNotActive("Clipjump_SPM ahk_class AutoHotkeyGUI")
+	if SPM.ACTIVE && WinExist("Clipnik_SPM ahk_class AutoHotkeyGUI") {
+		WinHide("Clipnik_SPM ahk_class AutoHotkeyGUI")
+		WinWaitNotActive("Clipnik_SPM ahk_class AutoHotkeyGUI")
 		temp_spmWasActive := 1
 	}
 	MULTIPASTE := PASTEMODE_ACT := 1
@@ -848,7 +854,7 @@ multiPaste_run(*) {
 	if MULTIPASTE 		; if multipaste is still ON, becomes OFF due to release of ctrl (which doesnt disturb when spm is active)
 		paste()
 	if temp_spmWasActive {
-		try WinShow("Clipjump_SPM ahk_class AutoHotkeyGUI")
+		try WinShow("Clipnik_SPM ahk_class AutoHotkeyGUI")
 		temp_spmWasActive := 0
 	}
 }
@@ -1237,7 +1243,7 @@ ctrlCheck(*) {
 		else if (ctrlRef = "deleteAll")
 		{
 			Critical "Off" 			;End Critical so that the below function can overlap this thread
-			IScurCBACTIVE := 0 		; now not active in clipjump
+			IScurCBACTIVE := 0 		; now not active in clipnik
 
 			temp21 := Hud.Confirm(TXT.TIP_delallprompt, "Y N")
 			if (temp21 = "Y")
@@ -1396,7 +1402,7 @@ addClipLater(*) {
 }
 
 hkZ_pasteMode(mode := 0, disableAll := 1) {
-; mode=0 is for initialising Clipjump
+; mode=0 is for initialising Clipnik
 ; mode=1 is for init Paste Mode
 	global
 	Critical "On"
@@ -1463,7 +1469,7 @@ pitSwap(*) {
 holdClip(*) {
 	global
 	local temp_cb := "", keyPressed, t_cb := ""
-	; cut - make own by clipjump custom ---- send = this, then del
+	; cut - make own by clipnik custom ---- send = this, then del
 	API.blockMonitoring(1), ONCLIPBOARD := 0, IScurCBACTIVE := 0
 	if (STORE.holdClip_preText == "")
 		Send(STORE.holdClip_send ? STORE.holdClip_send : "^{vk43}")
@@ -1718,7 +1724,7 @@ init_actionmode() {
 	global
 	ACTIONMODE := CJMap("H", "history", "O", "channelOrganizer", "C", "copyfile", "X", "copyfolder", "F", "CopyFileData", "D", "disable_clipjump"
 		, "P", "pitswap", "T", "onetime", "E", "settings", "F1", "help_actionmode", "Esc", "Exit_actmd", "M", "pluginManager_GUI()", "F2", "help_pastemode", "L", "classTool"
-		, "U", "API.runPlugin(updateClipjumpClipboard.ahk)", "B", "holdclip"
+		, "U", "API.runPlugin(updateClipnikClipboard.ahk)", "B", "holdclip"
 		, "H_caption", TXT.HST__name, "O_caption", TXT.SET_org, "C_caption", TXT._cfilep, "X_caption", TXT._cfolderp, "F_caption", TXT._cfiled
 		, "D_caption", TXT.ACT_disable " " PROGNAME, "P_caption", TXT._pitswp, "T_caption", TXT._ot, "E_caption", TXT.SET__name
 		, "F1_caption", TXT.TRY_help, "Esc_caption", TXT.ACT_exit, "M_caption", TXT.PLG__name, "F2_caption", TXT.try_pstmdshorts, "L_caption", TXT.IGN__name
@@ -1819,10 +1825,25 @@ strtup(*) {
 }
 
 ; the Startup-folder shortcut is the only record of this option: the tray and Settings both read it
-isRunAtStartup() => FileExist(A_Startup "\Clipjump.lnk") ? true : false
+isRunAtStartup() => FileExist(A_Startup "\Clipnik.lnk") ? true : false
+
+; deletes the pre-rename Clipjump.lnk when it points into this folder, or at a file that is gone (the folder was
+; renamed along with the app); true when it did
+migrateStartupShortcut() {
+	old := A_Startup "\Clipjump.lnk"
+	if !FileExist(old) || isRunAtStartup()
+		return false
+	try FileGetShortcut(old, &target, &dir)
+	catch
+		return false
+	if !InStr(target, A_ScriptDir "\") && dir != A_ScriptDir && FileExist(target)
+		return false
+	try FileDelete(old)
+	return true
+}
 
 setRunAtStartup(on) {
-	lnk := A_Startup "\Clipjump.lnk"
+	lnk := A_Startup "\Clipnik.lnk"
 	if (on && !FileExist(lnk))
 		FileCreateShortcut(startupTarget(), lnk, A_ScriptDir)
 	else if (!on && FileExist(lnk))
@@ -1844,7 +1865,7 @@ addToWinClip(lastEntry, extraTip) {
 }
 
 /**
- * makes the shortcut responsible for copy and cut to clipjump
+ * makes the shortcut responsible for copy and cut to clipnik
  * status - enabled/disabled
  * @return {void}
  */
@@ -1959,7 +1980,7 @@ export(*) {
 	local temp
 	endPastemode()
 	loop
-		if !FileExist(temp := A_MyDocuments "\export" A_Index ".cj")
+		if !FileExist(temp := A_MyDocuments "\export" A_Index ".cnk")
 			break
 	Toast.Show("{" CN.Name "} Clip " realClipNo " " TXT._exportedto "`n" temp, 2500)
 	try FileAppend(ClipboardAll(), temp)
@@ -2073,7 +2094,7 @@ windows_cut(*) {
 	API.blockMonitoring(0)
 }
 
-;Copies text to a var in the script without invoking Clipjump
+;Copies text to a var in the script without invoking Clipnik
 CopytoVar(clipwait_time := 3, send_macro := "^{vk43}") {
 	global
 	local oldclip := "", var := ""
@@ -2117,9 +2138,9 @@ routines_Exit() {
 
 ;#################### COMMUNICATION ##########################################
 
-;The function enables/disables Clipjump with respect to the Communicator.
+;The function enables/disables Clipnik with respect to the Communicator.
 Act_CjControl(C) {
-	MsgBox("Clipjump Controller has been discontinued.", PROGNAME, 48)
+	MsgBox("Clipnik Controller has been discontinued.", PROGNAME, 48)
 }
 
 Receive_WM_COPYDATA(wParam, lParam, *) {
@@ -2138,9 +2159,9 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 	if !(a is String || a is Number)
 		a := "" 	; objects cannot cross the process boundary (v1 wrote an empty string)
 	loop 50 {
-		if FileExist(A_Temp "\clipjumpcom.txt")
+		if FileExist(A_Temp "\clipnikcom.txt")
 			break
-		try FileAppend(a, A_Temp "\clipjumpcom.txt")
+		try FileAppend(a, A_Temp "\clipnikcom.txt")
 		catch
 			Sleep 10
 	}
