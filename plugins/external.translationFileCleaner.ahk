@@ -45,7 +45,7 @@ loop read F
 		dup .= k "`n"
 }
 
-cj := Clipnik()
+cnk := Clipnik()
 str := '"INVALIDS`n`n' err '`n`nDUPLICATES`n`n' dup '"'
 fstr := 'guiMsgBox("Translation File Cleaner Results",' str ")"
-cj.runFunction(fstr)
+cnk.runFunction(fstr)

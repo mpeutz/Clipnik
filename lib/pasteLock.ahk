@@ -103,7 +103,7 @@ pasteLock_fire(fn, *) {
 }
 
 ; key name -> action. Built from the live pastemodekey table rather than hardcoded keys, so a remap
-; through the public API (cj["pastemodekey.z"] := "y") keeps working.
+; through the public API (cnk["pastemodekey.z"] := "y") keeps working.
 pasteLock_keymap() {
 	global pastemodekey, pstIdentifier, paste_k
 	local m := Map()

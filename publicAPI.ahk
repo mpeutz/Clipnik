@@ -14,23 +14,23 @@ v 15.5.17 (AutoHotkey v2 port)
 /*
 EXAMPLES
 
-cj := Clipnik()
+cnk := Clipnik()
 
-cj.IncognitoMode(1)
-cj.pasteText("some text")
-MsgBox cj.getClipLoc(1, 5)
-cj.Paste("","")
-cj["CALLER"] := 0
-cj["STORE.somevar"] := "abc value"
-MsgBox cj.getVar("version")
-MsgBox cj.version
+cnk.IncognitoMode(1)
+cnk.pasteText("some text")
+MsgBox cnk.getClipLoc(1, 5)
+cnk.Paste("","")
+cnk["CALLER"] := 0
+cnk["STORE.somevar"] := "abc value"
+MsgBox cnk.getVar("version")
+MsgBox cnk.version
 
 */
 
-;cj := Clipnik()
-;cj.runFunction("set_pformat(NO-FORMATTING)")
-;cj.getClipAt(0, 7)
-;MsgBox cj.author_page
+;cnk := Clipnik()
+;cnk.runFunction("set_pformat(NO-FORMATTING)")
+;cnk.getClipAt(0, 7)
+;MsgBox cnk.author_page
 
 class Clipnik
 {
@@ -65,8 +65,8 @@ class Clipnik
 
 	/*
 	Use -
-		cj := Clipnik()
-		MsgBox cj.version
+		cnk := Clipnik()
+		MsgBox cnk.version
 	*/
 	__Get(var, params) {
 		return this.getVar(var)
@@ -74,15 +74,15 @@ class Clipnik
 
 	/*
 	Use -
-		cj := Clipnik()
-		cj["pastemodekey.z"] := "y"
-		cj.MYVAR := "value"
+		cnk := Clipnik()
+		cnk["pastemodekey.z"] := "y"
+		cnk.MYVAR := "value"
 	*/
 	__Set(var, params, value) {
 		this.setVar(var, value)
 	}
 
-	; cj["STORE.somevar"] := "abc" / x := cj["version"]
+	; cnk["STORE.somevar"] := "abc" / x := cnk["version"]
 	__Item[var] {
 		get => this.getVar(var)
 		set => this.setVar(var, value)
