@@ -1942,12 +1942,16 @@ changeIcon() {
 
 ; tray icon with its purple in the accent color when the file can be recolored, the plain file otherwise.
 ; Loaded at the system's small and large icon sizes so the tray gets the .ico's hand-drawn small artwork.
+; The tray sits on the taskbar rather than on one of our surfaces, so it takes Theme.TrayTint (the accent
+; lifted clear of the taskbar background); title bars and Alt+Tab stay on the app accent. The icon cache
+; keys on the tint, so the two only cost one extra load when they differ at all.
 setTrayIcon(path) {
+	trayH := Theme.AccentIcon(path, SysGet(49), Theme.TrayTint())
 	h := Theme.AccentIcon(path, SysGet(49))      ; SM_CXSMICON
 	hBig := Theme.AccentIcon(path, SysGet(11))   ; SM_CXICON
 	Theme.AppIcon := hBig, Theme.AppIconSmall := h
-	if h
-		TraySetIcon("HICON:*" h)
+	if trayH
+		TraySetIcon("HICON:*" trayH)
 	else
 		TraySetIcon(path)
 	; title bars of windows that already exist

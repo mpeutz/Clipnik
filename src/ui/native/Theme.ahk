@@ -19,6 +19,7 @@ class Theme {
 	static Mode := "system"
 	static CustomAccent := ""
 	static IsDark := false
+	static SystemIsDark := false   ; the taskbar's theme, which the tray icon answers to
 	static Accent := 0x0078D4
 	static WindowsAccent := 0x0078D4
 	static Palette := Map()
@@ -59,6 +60,11 @@ class Theme {
 			try dark := !RegRead("HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1)
 		}
 		Theme.IsDark := dark
+		; the tray icon sits on the taskbar, which has its own setting and ignores both AppsUseLightTheme
+		; and the user's choice of theme for Clipnik's own windows
+		sysDark := dark
+		try sysDark := !RegRead("HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme", 1)
+		Theme.SystemIsDark := sysDark
 		accent := 0x0078D4
 		try {
 			abgr := RegRead("HKCU\Software\Microsoft\Windows\DWM", "AccentColor")
@@ -82,6 +88,26 @@ class Theme {
 		Theme.Palette := p
 	}
 
+	; The tint for the tray icon. It answers to the TASKBAR's theme, not to the app palette: Clipnik can
+	; be in light mode, and a custom accent skips LegibleAccent altogether, so the palette accent can be
+	; a mid-dark blue sitting on a near-black taskbar. Steps the accent toward white (dark taskbar) or
+	; black (light one) until it clears TrayContrast, so the hue is kept and only the legibility moves.
+	static TrayContrast := 4.5
+	static TrayBgDark := 0x202020, TrayBgLight := 0xF3F3F3
+
+	static TrayTint(accent?, dark?) {
+		accent := accent ?? Theme.Accent
+		dark := dark ?? Theme.SystemIsDark
+		bg := dark ? Theme.TrayBgDark : Theme.TrayBgLight
+		toward := dark ? 0xFFFFFF : 0x000000
+		tint := accent, t := 0
+		while (t < 1 && Theme.ContrastRatio(tint, bg) < Theme.TrayContrast) {
+			t := Min(t + 0.05, 1)
+			tint := Theme.Mix(accent, toward, t)
+		}
+		return tint
+	}
+
 	; brightens a dark accent for dark backgrounds, darkens a pale one for light backgrounds
 	static LegibleAccent(rgb, dark) {
 		lum := Theme.Luminance(rgb)
@@ -100,6 +126,23 @@ class Theme {
 	static Mix(a, b, t) {
 		ch(sa, sb) => Round(sa + (sb - sa) * t)
 		return (ch((a >> 16) & 0xFF, (b >> 16) & 0xFF) << 16) | (ch((a >> 8) & 0xFF, (b >> 8) & 0xFF) << 8) | ch(a & 0xFF, b & 0xFF)
+	}
+
+	; WCAG relative luminance, with the sRGB channels linearized. Luminance() above is the cheap
+	; unlinearized version and stays that way: it answers "does this look bright", which is all the
+	; palette needs, but it is too optimistic about saturated blues to threshold a contrast ratio on.
+	static LinChannel(c) {
+		v := c / 255
+		return (v <= 0.03928) ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+	}
+
+	static RelLuminance(rgb) {
+		return 0.2126 * Theme.LinChannel((rgb >> 16) & 0xFF) + 0.7152 * Theme.LinChannel((rgb >> 8) & 0xFF) + 0.0722 * Theme.LinChannel(rgb & 0xFF)
+	}
+
+	static ContrastRatio(a, b) {
+		la := Theme.RelLuminance(a), lb := Theme.RelLuminance(b)
+		return (Max(la, lb) + 0.05) / (Min(la, lb) + 0.05)
 	}
 
 	static Hex(name) => Format("{:06X}", Theme.Palette[name])
@@ -234,10 +277,11 @@ class Theme {
 	; Works on the icon's own 32-bit color bitmap (GDI+'s HICON conversion drops the alpha channel and leaves a
 	; dark fringe around anti-aliased edges).
 	static iconCache := Map()
-	static AccentIcon(path, size := 32) {
+	static AccentIcon(path, size := 32, tint?) {
 		if !Theme.Palette.Has("accent")   ; before Theme.Init the plain file is used
 			return 0
-		key := path "|" size "|" Format("{:06X}", Theme.Palette["accent"])
+		tint := tint ?? Theme.Palette["accent"]   ; the tray passes its own; title bars and About keep the app accent
+		key := path "|" size "|" Format("{:06X}", tint)
 		if Theme.iconCache.Has(key)
 			return Theme.iconCache[key]
 		h := 0, hdc := 0, src := 0, hbm := 0, mask := 0, color := 0
@@ -251,7 +295,7 @@ class Theme {
 				hdc := DllCall("GetDC", "Ptr", 0, "Ptr")
 				hbm := DllCall("CreateDIBSection", "Ptr", hdc, "Ptr", bmi, "UInt", 0, "Ptr*", &bits := 0, "Ptr", 0, "UInt", 0, "Ptr")
 				if hbm && color && DllCall("GetDIBits", "Ptr", hdc, "Ptr", color, "UInt", 0, "UInt", size, "Ptr", bits, "Ptr", bmi, "UInt", 0) {
-					Theme.Recolor(bits, size * size, Theme.Palette["accent"])
+					Theme.Recolor(bits, size * size, tint)
 					NumPut("Ptr", hbm, ii, 8 + 2 * A_PtrSize)
 					h := DllCall("CreateIconIndirect", "Ptr", ii, "Ptr")   ; copies the bitmaps
 				}
