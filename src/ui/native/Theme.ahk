@@ -193,6 +193,36 @@ class Theme {
 	static ShowPopup(g, x, y, w, h, activate := false) {
 		g.Show((activate ? "" : "NoActivate ") "x" x " y" y " w" w " h" h)
 		WinMove(x, y, w, h, g.Hwnd)
+		Theme.Raise(g.Hwnd)
+	}
+
+	; Puts a window back in the topmost band. The cards are created once and shown again and again, so
+	; one SetWindowPos from an external window manager - PowerToys Always On Top, FancyZones, Groupy, a
+	; virtual-desktop switcher - is enough to leave them drawing behind every ordinary window for the
+	; rest of the session. Windows does not always clear WS_EX_TOPMOST when it moves a window out of
+	; the band, so the style bits cannot be trusted; the real z-order is what gets asked.
+	; Only a window that has actually fallen out is moved, so re-showing the card never jumps it over
+	; another popup of ours that is legitimately above it (the Action Ring, say).
+	static Raise(hwnd) {
+		if Theme.InTopmostBand(hwnd)
+			return
+		DllCall("SetWindowPos", "Ptr", hwnd, "Ptr", -1, "Int", 0, "Int", 0, "Int", 0, "Int", 0, "UInt", 0x13) ; HWND_TOPMOST, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+	}
+
+	; true while every visible window above this one is itself topmost. Walking up stops at the first
+	; ordinary window, so the common case (nothing moved us) costs a handful of GetWindow calls.
+	static InTopmostBand(hwnd) {
+		w := DllCall("GetWindow", "Ptr", hwnd, "UInt", 3, "Ptr")   ; GW_HWNDPREV: the window above
+		while w {
+			if DllCall("IsWindowVisible", "Ptr", w) && !(DllCall("GetWindowLongPtr", "Ptr", w, "Int", -20, "Ptr") & 0x8) {
+				cloak := 0   ; a window parked on another virtual desktop is not really above anything
+				try DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", w, "UInt", 14, "Int*", &cloak, "UInt", 4)
+				if !cloak
+					return false
+			}
+			w := DllCall("GetWindow", "Ptr", w, "UInt", 3, "Ptr")
+		}
+		return true
 	}
 
 	static UnregisterDraw(hwnd) {

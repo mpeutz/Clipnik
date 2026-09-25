@@ -97,6 +97,7 @@ class Ring {
 		Gdip_DeleteGraphics(G), SelectObject(hdc, obm), DeleteObject(hbm), DeleteDC(hdc)
 		if !Ring.visible {
 			DllCall("ShowWindow", "Ptr", Ring.g.Hwnd, "Int", 4)   ; SW_SHOWNOACTIVATE
+			Theme.Raise(Ring.g.Hwnd)   ; the window is reused, so the topmost band has to be re-claimed on every open
 			Ring.visible := true
 		}
 	}
