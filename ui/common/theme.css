@@ -59,6 +59,7 @@ mark { background: var(--mark); color: inherit; border-radius: 2px; }
 .table .hdr .sorted.asc::after { transform: translateY(2px) rotate(-135deg); }
 .tr { display: grid; gap: 12px; height: 30px; align-items: center; padding: 0 12px; border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent); white-space: nowrap; cursor: default; }
 .tr > span { overflow: hidden; text-overflow: ellipsis; }
+.tr .thumb { object-fit: cover; vertical-align: middle; margin-right: 8px; border-radius: 3px; background: var(--surfaceAlt); }
 .tr.sel { background: var(--hover); box-shadow: inset 3px 0 0 var(--accent); }
 .tr:hover { background: var(--hover); }
 .tr.drag { opacity: .5; }

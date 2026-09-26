@@ -14,6 +14,7 @@
   };
   const state = { channels: [], active: 0, channel: 0, chSel: 0, rows: [], sel: new Set(), anchor: null, focusN: null, clip: null, q: "", pane: "clips", labels: {}, actionsByKind: {} };
   const rowsEl = el("rows"), tableEl = el("table"), chEl = el("channels"), qEl = el("q"), sheet = el("sheet");
+  cj.dropBrokenThumbs(rowsEl);
   const chName = (n) => { const c = state.channels.find((x) => x.n === n); return c ? c.name : String(n); };
   const chLabel = (n) => `${n} - ${chName(n)}`;
 
@@ -55,7 +56,10 @@
     rowsEl.innerHTML = rows.map((r) => {
       const isImg = +r.type === 1;
       const tags = (r.tags || "").split(/\s+/).filter(Boolean).map((t) => `<span class="badge">${esc(t)}</span>`).join(" ");
-      return `<div class="tr${state.sel.has(r.n) ? " sel" : ""}" data-n="${r.n}" draggable="true"><span class="dim">${r.n}</span><span class="mono${isImg ? " dim" : ""}">${esc(isImg ? T.HST_viewimage : oneLine(r.clip, 220))}</span><span>${cj.kindBadge(r.kind, state.labels)} ${tags}${+r.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""}</span></div>`;
+      // an image row shows its thumbnail and its size ("820x193" from the host); [IMAGE] only when the size is unknown
+      const [w, h] = (r.dim || "").split("x").map(Number);
+      const clip = isImg ? cj.thumb(r.url, w, h) + esc(cj.dims(w, h) || T.HST_viewimage) : esc(oneLine(r.clip, 220));
+      return `<div class="tr${state.sel.has(r.n) ? " sel" : ""}" data-n="${r.n}" draggable="true"><span class="dim">${r.n}</span><span class="mono${isImg ? " dim" : ""}">${clip}</span><span>${cj.kindBadge(r.kind, state.labels)} ${tags}${+r.fixed ? ' <span class="badge accent">' + esc(T.ORG_fixed.toLowerCase()) + "</span>" : ""}</span></div>`;
     }).join("");
     el("count").textContent = `${rows.length} ${T.ORG_countStatus}`;
     updateButtons();

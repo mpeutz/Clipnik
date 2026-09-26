@@ -6,6 +6,7 @@
 ;   host.Post(cmd, data)                queued until the page reports ready
 ;   host.Show(opts), host.Hide(), host.Visible, host.g (Gui), host.core (WebView2.Core)
 ;   host.OnClose(fn), host.OnResize(fn)
+;   WebHost.CacheUrl(path, stamp)       the page's URL for a file under cache\
 ;
 ; Pages load from https://app.clipnik/<page>; cache/ is mapped to https://cache.clipnik/ for thumbnails.
 ; The palette is injected before every document as CSS variables plus a "cj-theme" class on <html>.
@@ -30,6 +31,16 @@ class WebHost {
 			}
 		}
 		return WebHost.avail := ok
+	}
+
+	; The page's URL for a file under cache\ (a path relative to the working dir, "cache\history\x.jpg"). stamp adds
+	; the file's size and time for files that are renamed in place: channel thumbnails are named by position, so after
+	; a delete or a compaction the same name holds a different image, and the WebView must not serve the old one.
+	static CacheUrl(path, stamp := false) {
+		url := "https://cache.clipnik/" StrReplace(RegExReplace(path, "i)^cache[\\/]"), "\", "/")
+		if stamp && FileExist(path)
+			url .= "?v=" FileGetSize(path) "-" FileGetTime(path, "M")
+		return url
 	}
 
 	; COREWEBVIEW2_COLOR is {A, R, G, B} bytes, little-endian in a UInt

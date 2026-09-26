@@ -11,6 +11,7 @@
   };
   const state = { view: "history", q: "", partial: true, sort: "time", asc: false, rows: [], sel: new Set(), anchor: null, focusId: null, preview: null, kind: "", kinds: [], labels: {}, actionsByKind: {} };
   const rowsEl = el("rows"), tableEl = el("table"), qEl = el("q");
+  cj.dropBrokenThumbs(rowsEl);
 
   function applyI18n() {
     document.querySelectorAll("[data-i18n]").forEach((n) => { const k = n.dataset.i18n; if (T[k]) n.textContent = T[k]; });
@@ -49,8 +50,9 @@
     }
     rowsEl.innerHTML = state.rows.map((r) => {
       const isImg = +r.type === 1;
-      const text = r.name ? r.name : (isImg ? T.HST_viewimage : oneLine(r.clip, 220));
-      const html = hlWords(text, words);
+      // an image row shows its thumbnail and then its name (a Vault entry) or its size; [IMAGE] only when neither is known
+      const text = r.name ? r.name : (isImg ? cj.dims(r.width, r.height) || T.HST_viewimage : oneLine(r.clip, 220));
+      const html = (isImg ? cj.thumb(r.url, r.width, r.height) : "") + hlWords(text, words);
       return `<div class="tr${state.sel.has(r.id) ? " sel" : ""}" data-id="${r.id}" tabindex="-1" draggable="false">` +
         `<span class="mono${isImg ? " dim" : ""}">${html}</span><span>${cj.kindBadge(r.kind, state.labels)}</span><span class="dim">${esc(fmtDate(r.time))}</span><span class="dim">${bytes(r.size)}</span></div>`;
     }).join("");

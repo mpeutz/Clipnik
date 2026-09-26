@@ -86,8 +86,12 @@ class OrganizerWin {
 		loop (strength = "" ? 0 : strength) {
 			n := A_Index, real := strength - n + 1
 			text := CDS[ch][real]
-			isImg := (text = "") && FileExist("cache\thumbs" (ch ? ch : "") "\" real ".jpg")
-			rows.Push(Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real)))
+			thumb := "cache\thumbs" (ch ? ch : "") "\" real ".jpg"
+			isImg := (text = "") && FileExist(thumb)
+			row := Map("n", n, "clip", SubStr(getRealCD(text), 1, 300), "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real))
+			if isImg   ; the row's thumbnail; stamped, because the file is named by position (see WebHost.CacheUrl)
+				row["url"] := WebHost.CacheUrl(thumb, true), row["dim"] := clipPref(ch, real, "Dim")
+			rows.Push(row)
 		}
 		OrganizerWin.host.Post("clips", Map("channel", ch, "rows", rows))
 	}
@@ -105,7 +109,7 @@ class OrganizerWin {
 		; context menu already uses), so the clip record itself only needs to carry the kind
 		m := Map("channel", ch, "n", n, "data", isImg ? "" : text, "type", isImg ? 1 : 0, "tags", clipPref(ch, real, "Tags"), "fixed", clipPref(ch, real, "fixed") ? 1 : 0, "kind", isImg ? "image" : ClipType.Of(ch, real))
 		if isImg {
-			m["url"] := "https://cache.clipnik/thumbs" (ch ? ch : "") "/" real ".jpg"
+			m["url"] := WebHost.CacheUrl(thumb, true)
 			m["dim"] := clipPref(ch, real, "Dim")
 		}
 		OrganizerWin.host.Post("clip", m)

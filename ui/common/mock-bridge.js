@@ -21,6 +21,8 @@
     { id: 1, data: "Brings the Latest Resources widget in line with the Figma mockup: the shared resource card is restyled, the section header is restructured with the carousel prev/next buttons moved into the header, and the grid now collapses to a single column below 720px.\n\nAlso fixes a regression where the fallback image was never shown.", type: 0, time: day(0, "14:22"), size: 312, kind: "text" },
     { id: 2, data: "https://github.com/aviaryan/Clipjump/issues/143", type: 0, time: day(0, "13:58"), size: 48, kind: "url" },
     { id: 3, data: "[IMAGE]", type: 1, time: day(0, "13:40"), size: 214000, fileid: "cache\\history\\demo.jpg", url: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#3a5f8a"/><circle cx="250" cy="45" r="22" fill="#f4d35e"/><path d="M0 180 60 110 120 150 190 80 260 130 320 100v80z" fill="#2f7d5b"/></svg>'), kind: "image", width: 320, height: 180, dim: "320x180" },
+    // an image whose file has gone missing (history rows can outlive their JPEG): its thumbnail must fall back to text
+    { id: 60, data: "[IMAGE]", type: 1, time: day(0, "13:30"), size: 1459, fileid: "cache\\history\\gone.jpg", url: "missing-image.jpg", kind: "image", width: 82, height: 70, dim: "82x70" },
     { id: 4, data: "SELECT id, clip, date FROM history WHERE clip LIKE '%figma%' ORDER BY date DESC", type: 0, time: day(0, "11:05"), size: 82, kind: "text" },
     { id: 5, data: "Mike Peutz <mike@example.com>", type: 0, time: day(0, "09:31"), size: 29, kind: "email" },
     { id: 6, data: "C:\\Users\\MikePeutz\\PortableApps\\Clipjump_new_x64\\design\\phase4", type: 0, time: day(1, "18:12"), size: 61, kind: "text" },
@@ -37,7 +39,8 @@
     if (d.kind) rows = rows.filter((r) => r.kind === d.kind);
     const col = d.sort === "clip" ? "data" : d.sort === "size" ? "size" : "time";
     rows.sort((a, b) => (a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0) * (d.asc ? 1 : -1));
-    reply("list", { rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size, kind: r.kind })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
+    // image rows carry their url and dimensions, as HistoryWin.SendList sends them
+    reply("list", { rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size, kind: r.kind, ...(r.type === 1 ? { url: r.url, width: r.width, height: r.height } : {}) })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
     reply("kinds", { kinds: ["url", "email", "image", "svg"], labels: kindLabels, actions: mockActionTable });
   }
 
@@ -88,7 +91,8 @@
   for (let c = 1; c < 5; c++) for (let i = 1; i <= [0, 12, 27, 5, 3][c]; i++) clips[c].push({ n: i, text: channels[c].name + " clip " + i, type: 0, tags: "", fixed: 0 });
   let active = 0;
   const chList = () => reply("channels", { channels: channels.map((c) => ({ n: c.n, name: c.name, count: clips[c.n].length })), active });
-  const clipList = (ch) => reply("clips", { channel: ch, rows: clips[ch].map((c) => ({ n: c.n, clip: c.text.slice(0, 300), type: c.type, tags: c.tags, fixed: c.fixed, kind: c.kind })) });
+  // image rows carry their url and dimensions, as OrganizerWin.SendClips sends them
+  const clipList = (ch) => reply("clips", { channel: ch, rows: clips[ch].map((c) => ({ n: c.n, clip: c.text.slice(0, 300), type: c.type, tags: c.tags, fixed: c.fixed, kind: c.kind, ...(c.type === 1 ? { url: c.url, dim: c.dim } : {}) })) });
 
   window.mockBridge = {
     handle(cmd, d) {

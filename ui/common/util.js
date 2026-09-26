@@ -41,6 +41,21 @@ window.cj = {
     return p.join("+");
   },
   isTyping(e) { const t = e.target; return t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable); },
+  // an inline row thumbnail: 22 px tall and as wide as the image's shape allows, up to 96 px (cropped past that).
+  // The size comes from the known dimensions so the row never shifts as it loads; lazy, and decoded off the main
+  // thread, since these are the full-size images. Not draggable itself, so dragging a row by its thumbnail moves the
+  // row (the Organizer's drag to another channel) rather than the picture. See dropBrokenThumbs for a missing file.
+  thumb(url, w, h) {
+    if (!url) return "";
+    const H = 22, W = w > 0 && h > 0 ? Math.min(96, Math.max(8, Math.round((H * w) / h))) : H;
+    return `<img class="thumb" src="${this.esc(url)}" width="${W}" height="${H}" loading="lazy" decoding="async" draggable="false" alt="">`;
+  },
+  // "820 × 193" for an image row, or "" when the size is unknown
+  dims(w, h) { return w > 0 && h > 0 ? `${w} × ${h}` : ""; },
+  // a thumbnail whose file is gone removes itself, leaving the row's text; error does not bubble, so capture it
+  dropBrokenThumbs(container) {
+    container.addEventListener("error", (e) => { if (e.target.classList?.contains("thumb")) e.target.remove(); }, true);
+  },
   // small badge for a clip kind; nothing for plain text or unknown
   kindBadge(kind, labels) {
     if (!kind || kind === "text") return "";

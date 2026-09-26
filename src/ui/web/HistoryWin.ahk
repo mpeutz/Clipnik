@@ -88,6 +88,7 @@ class HistoryWin {
 		kind := d is Map && d.Has("kind") ? d["kind"] : ""
 		if (HistoryWin.View(d) = "vault") {
 			r := vaultList(q, partial, kind)
+			HistoryWin.AddImageUrls(r["rows"])
 			r["partial"] := partial ? 1 : 0
 			HistoryWin.host.Post("list", r)
 			HistoryWin.SendKinds()
@@ -95,9 +96,17 @@ class HistoryWin {
 		}
 		r := historyQuery(q, partial, sortBy, asc, 0, 2000, kind)
 		historyEnsureKinds(r["rows"])   ; one transaction for the whole page, not an update per row
+		HistoryWin.AddImageUrls(r["rows"])
 		r["partial"] := partial ? 1 : 0
 		HistoryWin.host.Post("list", r)
 		HistoryWin.SendKinds()
+	}
+
+	; image rows carry the URL their thumbnail loads from (the page loads only the rows it scrolls to)
+	static AddImageUrls(rows) {
+		for row in rows
+			if (row["type"] = 1 && row["fileid"] != "")
+				row["url"] := WebHost.CacheUrl(row["fileid"])
 	}
 
 	static SendKinds() {
@@ -113,7 +122,7 @@ class HistoryWin {
 			if !rec
 				return
 			if (rec["type"] = 1) {
-				rec["url"] := "https://cache.clipnik/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
+				rec["url"] := WebHost.CacheUrl(rec["fileid"])
 				rec.Delete("fileid"), rec.Delete("data")
 			}
 			HistoryWin.host.Post("preview", rec)
@@ -126,7 +135,7 @@ class HistoryWin {
 			rec["kind"] := historyEnsureKind(id)
 		if (rec["type"] == 1) {
 			; the page never needs the raw fileid or the (already blanked) data field
-			rec["url"] := "https://cache.clipnik/" StrReplace(RegExReplace(rec["fileid"], "^cache[\\/]"), "\", "/")
+			rec["url"] := WebHost.CacheUrl(rec["fileid"])
 			rec.Delete("fileid"), rec.Delete("data")
 		}
 		HistoryWin.host.Post("preview", rec)
