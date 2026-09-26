@@ -405,10 +405,13 @@ class Theme {
 		if checked {
 			pen := DllCall("CreatePen", "Int", 0, "Int", Max(2, Round(2 * Theme.Scale)), "UInt", Theme.ToBgr(disabled ? p["muted"] : p["accentText"]), "Ptr")
 			old := DllCall("SelectObject", "Ptr", hdc, "Ptr", pen, "Ptr")
-			s := box / 16
-			DllCall("MoveToEx", "Ptr", hdc, "Int", l + Round(3.5 * s), "Int", by + Round(8 * s), "Ptr", 0)
-			DllCall("LineTo", "Ptr", hdc, "Int", l + Round(6.5 * s), "Int", by + Round(11 * s))
-			DllCall("LineTo", "Ptr", hdc, "Int", l + Round(12.5 * s), "Int", by + Round(4.5 * s))
+			; laid out around the box as painted, not as requested: RoundRect leaves the right and bottom
+			; edges unpainted, so the box covers box - 1 pixels and its middle is (box - 2) / 2 in. The mark
+			; spans 8 x 6 units, even both ways, so it sits on that middle with nothing left to round.
+			s := box / 16, mx := l + (box - 2) / 2, my := by + (box - 2) / 2
+			DllCall("MoveToEx", "Ptr", hdc, "Int", Round(mx - 4 * s), "Int", Round(my), "Ptr", 0)
+			DllCall("LineTo", "Ptr", hdc, "Int", Round(mx - 1 * s), "Int", Round(my + 3 * s))
+			DllCall("LineTo", "Ptr", hdc, "Int", Round(mx + 4 * s), "Int", Round(my - 3 * s))
 			DllCall("SelectObject", "Ptr", hdc, "Ptr", old, "Ptr"), DllCall("DeleteObject", "Ptr", pen)
 		}
 		trc := Buffer(16)
