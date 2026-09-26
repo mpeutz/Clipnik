@@ -282,6 +282,36 @@ ClipFile_Convert8to4(buf) {
 	return out
 }
 
+; True when two clip dumps hold the same capture: every format that carries content matches byte for byte.
+; OLE's bookkeeping is left out of the comparison - DataObject is a handle to the writer's COM object and Ole
+; Private Data its private state, both new on every write - so an OLE writer that puts the same image on the
+; clipboard twice (the Snipping Tool does) is recognized as a repeat. A dump that does not parse is compared
+; whole, as raw bytes.
+ClipFile_SameContent(a, b) {
+	a := ClipFile_Content(a), b := ClipFile_Content(b)
+	return a.Size = b.Size && DllCall("ntdll\RtlCompareMemory", "Ptr", a, "Ptr", b, "UPtr", a.Size, "UPtr") = a.Size
+}
+
+; the dump without OLE's bookkeeping formats; returned unchanged when it does not parse as a v2 dump
+ClipFile_Content(buf) {
+	static skip := Map(DllCall("RegisterClipboardFormat", "Str", "DataObject", "UInt"), true
+		, DllCall("RegisterClipboardFormat", "Str", "Ole Private Data", "UInt"), true)
+	if !ClipFile_IsLayout(buf, 4)
+		return buf
+	out := Buffer(buf.Size), pos := 0, n := 0
+	loop {
+		fmt := NumGet(buf, pos, "UInt")
+		if !fmt
+			break
+		size := NumGet(buf, pos + 4, "UInt")
+		if !skip.Has(fmt)
+			DllCall("RtlMoveMemory", "Ptr", out.Ptr + n, "Ptr", buf.Ptr + pos, "UPtr", 8 + size), n += 8 + size
+		pos += 8 + size
+	}
+	out.Size := n
+	return out
+}
+
 ; True while a Gui object still has its window (Destroy or an owner closing can take it away).
 GuiAlive(g) {
 	try return g.Hwnd ? true : false

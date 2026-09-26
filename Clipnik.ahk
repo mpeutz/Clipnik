@@ -1570,22 +1570,22 @@ renameCorrect(realActive) {
 	}
 }
 
-; True when the image just saved as clip CURSAVE is byte-identical to clip CURSAVE-1 and arrived within 1.5 s of it.
+; True when the image just saved as clip CURSAVE is the same capture as clip CURSAVE-1 and arrived within 1.5 s
+; of it. Compared by content, not as raw bytes: the Snipping Tool writes through OLE, which adds a DataObject
+; handle that is new on every write, so its two writes of one image never match byte for byte. No file-size
+; shortcut either - Ole Private Data can differ in size between two writes of the same image.
 imageIsRepeat() {
 	global
-	local prev, a, b, fa, fb
+	local prev, fa, fb
 	if (A_TickCount - LASTIMAGETICK > 1500)
 		return false
 	prev := CURSAVE - 1
 	if (prev < 1 || CDS[CN.NG][prev] != "")
 		return false
 	fa := CLIPS_dir "/" prev ".avc", fb := CLIPS_dir "/" CURSAVE ".avc"
-	if !FileExist(fa) || (FileGetSize(fa) != FileGetSize(fb))
+	if !FileExist(fa)
 		return false
-	try {
-		a := FileRead(fa, "RAW"), b := FileRead(fb, "RAW")
-		return DllCall("ntdll\RtlCompareMemory", "Ptr", a, "Ptr", b, "UPtr", a.Size, "UPtr") = a.Size
-	}
+	try return ClipFile_SameContent(FileRead(fa, "RAW"), FileRead(fb, "RAW"))
 	return false
 }
 
