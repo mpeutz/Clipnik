@@ -92,6 +92,14 @@ class CJMap extends Map {
         return removed
     }
 
+    ; Drops integer keys 1..n and moves every higher one down by n, as compacter() does to the clip files.
+    ; Remove(int) already shifts the rest down by one, so it is key 1 that goes each time: removing keys 1..n by
+    ; index would take out every other entry instead, and leave the survivors holding their neighbors' values.
+    RemoveFirst(n) {
+        loop n
+            this.Remove(1)
+    }
+
     RawGet(k) => super.__Item[k]
 
     IntKeys() {

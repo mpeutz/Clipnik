@@ -1525,8 +1525,8 @@ compacter() {
 		CDS[CN.NG][A_Index] := ""
 		try FileDelete(A_WorkingDir "\" CLIPS_dir "\" A_Index ".avc")
 		try FileDelete(A_WorkingDir "\" THUMBS_dir "\" A_Index ".jpg")
-		CPS[CN.NG].Remove(A_Index)
 	}
+	CPS[CN.NG].RemoveFirst(ini_Threshold)   ; the prefs move down by the same amount as the files below
 	loop CURSAVE - ini_Threshold
 	{
 		avcNumber := A_Index + ini_Threshold

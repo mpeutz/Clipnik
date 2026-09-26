@@ -88,5 +88,23 @@ check(VarGet("unknownName") = 5 && STORE["unknownName"] = 5, "unknown names fall
 check(HasFuncByName("check") && !HasFuncByName("nope_" A_TickCount), "HasFuncByName")
 check(FuncByName("check") is Func, "FuncByName returns Func")
 
+; RemoveFirst(n): what compacter() needs when it deletes the oldest n clips and moves the rest down by n -
+; every clip's prefs must follow its clip
+p := CJMap()
+loop 31
+	p[A_Index] := "p" A_Index
+p.RemoveFirst(11)
+aligned := true
+loop 20
+	aligned := aligned && (p[A_Index] = "p" (A_Index + 11))
+check(aligned && p.MaxIndex() = 20, "RemoveFirst(11) of 31: clip k now holds what clip k+11 held")
+s := CJMap(2, "a", 5, "b", 14, "c", 25, "d", "name", "keep")
+s.RemoveFirst(11)
+check(!s.Has(2) && !s.Has(5) && s[3] = "c" && s[14] = "d" && s.MaxIndex() = 14 && s["name"] = "keep",
+	"RemoveFirst on sparse keys: dropped ones go, the rest move down by n, string keys stay")
+e := CJMap(1, "x")
+e.RemoveFirst(3)
+check(!e.Has(1) && e.MaxIndex() = "", "RemoveFirst past the end empties the integer keys")
+
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails
