@@ -136,7 +136,7 @@ global ini_MaxHistory := "", ini_ImageDaysToStore := ""
 		, ini_CopyBeep := "", beepFrequency := "", ignoreWindows := "", ini_defEditor := "", ini_defImgEditor := "", ini_defVectorEditor := "", ini_def_Pformat := "", pluginManager_k := "", holdClip_K := "", ini_PreserveClipPos := ""
 		, chOrg_K := "", ini_startSearch := "", ini_revFormat2def := "", ini_pstMode_X := "", ini_pstMode_Y := "", ini_HisCloseOnInstaPaste := "", history_K := "", ini_ram_flush := "", ini_winClipjump := 1
 		, ini_monitorClipboard := 0, channel_K := "", pitswap_K := "", ini_Version := ""
-		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_respectExclusion := 1, ini_searchUsesWindow := 0
+		, ini_theme := "system", ini_accent := "", ini_toastPosition := "cursor", ini_menuStyle := "ring", ini_respectExclusion := 1, ini_searchUsesWindow := 0
 		, ini_showPastingTip := 0, ini_instapasteWritesClipboard := 0, ini_winForPasteMode := 0, ini_priority := "N", IGNORE_GROUP := "ignoreGroup", ini_prewarmWebViews := 1, ini_trayMenu := "card"
 global ini_limitMaxClips := "", ini_KeepSession := ""
 global new_limitMaxClips := "", new_MaxClips := "", new_Threshold := "", new_Quality := "", new_startSearch := "", new_revFormat2def := "", new_copyBeep := ""
@@ -948,28 +948,34 @@ manualClipboardTimer(*) {
 	wasManualClipboard := false
 }
 
-; Z in paste mode: the format ring at the pointer. Formats that fit the clip's kind come first, the rest are
-; dimmed; the active format is outlined. Release Z over a wedge, click one, or press its letter; Z again or Esc
-; closes. Ctrl stays held throughout; releasing it pastes with the current format and closes the ring.
+; Z in paste mode: the format ring at the pointer, or with [Main] MenuStyle=list the same formats as a list on the
+; card. Formats that fit the clip's kind come first, the rest are dimmed; the active format is outlined (ring) or
+; checked (list). Ring: release Z over a wedge, click one, or press its letter. List: press its letter. Z again or
+; Esc closes either. Ctrl stays held throughout; releasing it pastes with the current format and closes the menu.
 Formatting(*) {
 	global
-	local kind, m, picked, letter, pre, trg
+	local kind, m, picked, letter, pre, trg, list
 	if !is_pstMode_active
 		return
 	kind := (temp_clipboard != "") ? ClipType.Of(CN.NG, realActive) : ""
 	m := Formatting_Items(kind)
-	; locked, Ctrl is up: the ring's letters have to be bare or none of them would ever fire. Its own
+	; locked, Ctrl is up: the menu's letters have to be bare or none of them would ever fire. Its own
 	; hotkeys consume them while it is open, so the suspended lock hook misses nothing.
 	pre := LOCK.ACTIVE ? "" : pstIdentifier
 	trg := LOCK.ACTIVE ? "" : pastemodekey.z
 	pasteLock_suspend()
-	picked := Ring.Pick(m.items, {prefix: pre, trigger: trg, triggerHotkey: pre pastemodekey.z
-		, dim: Hud.g.Hwnd, until: Formatting_Ended, idleTitle: curPformat != "" ? curPformat : TXT.HUD_formatOriginal
-		, idleSub: TXT.RNG_activeFormat})
+	if (ini_menuStyle = "list") {
+		; Z, Esc and Enter close it: none of them is a format letter, so they fall through unchanged below
+		list := Hud.MenuFromRing(m.items, pre, ["Esc", pastemodekey.z, "Enter"])
+		picked := RegExReplace(Hud.Menu(list.items, list.keys, TXT.HUD_formatTitle), "^[~*$!^+#<>]*")
+	} else
+		picked := Ring.Pick(m.items, {prefix: pre, trigger: trg, triggerHotkey: pre pastemodekey.z
+			, dim: Hud.g.Hwnd, until: Formatting_Ended, idleTitle: curPformat != "" ? curPformat : TXT.HUD_formatOriginal
+			, idleSub: TXT.RNG_activeFormat})
 	pasteLock_resume()
-	if !is_pstMode_active      ; Ctrl was released while the ring was open: the paste already happened
+	if !is_pstMode_active      ; Ctrl was released while the menu was open: the paste already happened
 		return
-	hkZ_pasteMode(1)           ; the ring replaced ^z and the letters; paste-mode keys come back
+	hkZ_pasteMode(1)           ; the menu replaced ^z and the letters; paste-mode keys come back
 	letter := StrUpper(picked)
 	if (letter != "" && m.byKey.Has(letter)) {
 		set_pformat(m.byKey[letter])
@@ -1651,12 +1657,15 @@ actionmode_run(*) {
 	global
 	local temp_am, act
 	update_actionmode()
-	; the ring binds its letters bare, and a bare hotkey loses to a suppressing InputHook: the locked
-	; card would swallow E B F H T X and the digits before the ring ever saw them (same reason
+	; the ring and the list both bind their letters bare, and a bare hotkey loses to a suppressing InputHook:
+	; the locked card would swallow E B F H T X and the digits before the menu ever saw them (same reason
 	; Formatting() suspends). Ring.isOpen alone cannot help - that keystroke never arrives.
 	pasteLock_suspend()
-	temp_am := Ring.Pick(ActionRing_Items(), {prefix: "", trigger: ActionRing_Trigger(), idleTitle: TXT.RNG_actionTitle
-		, extraKeys: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "D"]})
+	if (ini_menuStyle = "list")        ; [Main] MenuStyle: the card list Action Mode had before the ring
+		temp_am := Hud.Menu(ACTIONMODE.items, ACTIONMODE.keys, PROGNAME " " TXT.ACT__name)
+	else
+		temp_am := Ring.Pick(ActionRing_Items(), {prefix: "", trigger: ActionRing_Trigger(), idleTitle: TXT.RNG_actionTitle
+			, extraKeys: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "D"]})
 	pasteLock_resume()
 	if (temp_am = "")			; cancelled (Esc or an outside click): route through the same exit path Hud.Menu used
 		temp_am := "Esc"

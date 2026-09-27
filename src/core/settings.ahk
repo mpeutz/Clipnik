@@ -78,6 +78,7 @@ load_Settings(all := false) {
 	ini_theme := IniRead(CONFIGURATION_FILE, "Main", "Theme", "system")
 	ini_accent := IniRead(CONFIGURATION_FILE, "Main", "Accent", "")
 	ini_toastPosition := IniRead(CONFIGURATION_FILE, "Main", "ToastPosition", "cursor")
+	ini_menuStyle := IniRead(CONFIGURATION_FILE, "Main", "MenuStyle", "ring") = "list" ? "list" : "ring"   ; Action Mode and the Z formats
 	ini_respectExclusion := IniRead(CONFIGURATION_FILE, "Main", "respectExclusionFormats", 1)
 	ini_searchUsesWindow := IniRead(CONFIGURATION_FILE, "Advanced", "SearchUsesWindow", 0)
 	ini_prewarmWebViews := IniRead(CONFIGURATION_FILE, "Advanced", "PrewarmWebViews", 1) ? 1 : 0
@@ -140,6 +141,7 @@ save_Settings(v) {
 	ini_write("Main", "Theme", v["Theme"], 0)
 	ini_write("Main", "Accent", v["Accent"], 0)
 	ini_write("Main", "ToastPosition", v["ToastPosition"], 0)
+	ini_write("Main", "MenuStyle", v["MenuStyle"], 0)
 	ini_write("Advanced", "beepFrequency", v["beepFrequency"], 0)
 	ini_write("Advanced", "Show_pasting_tip", v["Show_pasting_tip"], 0)
 	ini_write("Advanced", "pstMode_X", v["pstMode_X"], 0)
@@ -182,6 +184,7 @@ save_Settings(v) {
 	uiChanged := (v["Theme"] != ini_theme) || (v["Accent"] != ini_accent)
 	if (v["ToastPosition"] != ini_toastPosition)
 		Toast.Position := v["ToastPosition"]
+	ini_menuStyle := v["MenuStyle"] = "list" ? "list" : "ring"   ; read each time a menu opens, so the next one already follows it
 	if uiChanged
 		Theme.SetMode(v["Theme"], v["Accent"])
 	if (v["pstMode_X"] != ini_pstMode_X || v["pstMode_Y"] != ini_pstMode_Y)
@@ -280,6 +283,7 @@ save_Default(full := 1){
 	ini_write("Main", "Theme", "system")
 	ini_write("Main", "Accent", "")
 	ini_write("Main", "ToastPosition", "cursor")
+	ini_write("Main", "MenuStyle", "ring")
 	ini_write("Main", "respectExclusionFormats", 1)
 	ini_write("Advanced", "SearchUsesWindow", 0)
 	ini_write("Advanced", "PrewarmWebViews", 1)

@@ -480,7 +480,7 @@ class SettingsWin {
 	}
 
 	static BuildAppearance() {
-		global TXT, ini_theme, ini_accent, ini_IsMessage, ini_toastPosition, ini_CopyBeep, beepFrequency, ini_showPastingTip, ini_pstMode_X, ini_pstMode_Y
+		global TXT, ini_theme, ini_accent, ini_menuStyle, ini_IsMessage, ini_toastPosition, ini_CopyBeep, beepFrequency, ini_showPastingTip, ini_pstMode_X, ini_pstMode_Y
 		g := SettingsWin.g
 		SettingsWin.PageStart("appearance", TXT.SET_appearance)
 		themes := Map("system", 1, "dark", 2, "light", 3)
@@ -502,6 +502,7 @@ class SettingsWin {
 		SettingsWin.c["accentMode"] := mode, SettingsWin.c["accentHex"] := hex, SettingsWin.c["accentSwatch"] := swatch, SettingsWin.c["accentPick"] := pick
 		SettingsWin.EndRow(8)
 		SettingsWin.UpdateAccentControls()
+		SettingsWin.Ddl("MenuStyle", TXT.SET_menuStyle, [TXT.SET_menuRing, TXT.SET_menuList], ini_menuStyle = "list" ? 2 : 1, TXT.SET_menuStyleHint)
 		SettingsWin.Section(TXT.SET_sec_notifications)
 		SettingsWin.Check("IsMessage", TXT.SET_ismessage, ini_IsMessage, , TXT.SET_T_ismessage)
 		SettingsWin.Ddl("ToastPosition", TXT.SET_toastPosition, [TXT.SET_toastCursor, TXT.SET_toastBottomRight], ini_toastPosition = "bottomright" ? 2 : 1)
@@ -637,6 +638,7 @@ class SettingsWin {
 		v["Theme"] := ["system", "dark", "light"][c["Theme"].Value]
 		v["Accent"] := (c["accentMode"].Value = 2 && Theme.ValidHex(c["accentHex"].Value)) ? StrUpper(c["accentHex"].Value) : ""
 		v["ToastPosition"] := c["ToastPosition"].Value = 2 ? "bottomright" : "cursor"
+		v["MenuStyle"] := c["MenuStyle"].Value = 2 ? "list" : "ring"
 		v["beepFrequency"] := c["beepFrequency"].Value
 		v["Show_pasting_tip"] := c["Show_pasting_tip"].Value
 		v["pstMode_X"] := c["pstMode_X"].Value

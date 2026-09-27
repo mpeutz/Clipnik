@@ -572,6 +572,20 @@ class Hud {
 		return Hud.WaitKey(s, keys)
 	}
 
+	; The list-style twin of a ring ([Main] MenuStyle=list): the ring's items as Menu rows - active checked, dim
+	; kept - and the hotkeys that pick them, each with prefix, then extra (keys with no row of their own, such as
+	; Esc). Built from the ring's own items so the two styles can never offer different choices.
+	static MenuFromRing(ringItems, prefix, extra) {
+		items := [], keys := ""
+		for it in ringItems {
+			items.Push({key: it.key, caption: it.label, check: it.HasProp("active") && it.active, dim: it.HasProp("dim") && it.dim})
+			keys .= " " prefix it.key
+		}
+		for k in extra
+			keys .= " " prefix k
+		return {items: items, keys: Trim(keys)}
+	}
+
 	; Blocks until a key is pressed. If another card replaces this one meanwhile (e.g. a new paste starts), the
 	; prompt is treated as cancelled and returns "" so the waiting routine can finish.
 	static WaitKey(state, keys) {
