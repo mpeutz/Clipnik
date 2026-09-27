@@ -16,6 +16,7 @@ class SettingsWin {
 	static nav := Map()           ; page id -> {label, bar}
 	static current := ""
 	static dirty := false
+	static rebuildPending := false   ; a theme change arrived while there were unsaved edits
 	static anchored := []         ; [ctl, mode, arg]  mode: right | stretch | footer | navfill
 	static building := ""
 	static y := 0
@@ -46,7 +47,7 @@ class SettingsWin {
 		if SettingsWin.g
 			try SettingsWin.g.Destroy()
 		SettingsWin.g := "", SettingsWin.c := Map(), SettingsWin.pages := Map(), SettingsWin.nav := Map()
-		SettingsWin.anchored := [], SettingsWin.hotkeyVals := Map(), SettingsWin.dirty := false
+		SettingsWin.anchored := [], SettingsWin.hotkeyVals := Map(), SettingsWin.dirty := false, SettingsWin.rebuildPending := false
 		EmptyMem()
 	}
 
@@ -675,16 +676,25 @@ class SettingsWin {
 
 	static Apply() {
 		SettingsWin.Save()
+		if SettingsWin.rebuildPending   ; the edits are saved now, so the rebuild the theme change asked for is safe
+			SettingsWin.Rebuild()
 	}
 
 	static Cancel() {
 		SettingsWin.Close()
 	}
 
-	; rebuilt after a theme change so every control picks up the new palette; unsaved edits are kept only when clean
+	; rebuilt after a theme change so every control picks up the new palette. Rebuilding re-reads every field from the
+	; saved settings, so with unsaved edits it waits: Apply runs it once they are saved, and OK or Cancel close the
+	; window, which the next open builds in the current palette anyway.
 	static Rebuild() {
 		if !SettingsWin.g
 			return
+		if SettingsWin.dirty {
+			SettingsWin.rebuildPending := true
+			return
+		}
+		SettingsWin.rebuildPending := false
 		page := SettingsWin.current
 		SettingsWin.g.GetPos(&x, &y)
 		SettingsWin.Close()

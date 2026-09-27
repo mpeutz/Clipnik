@@ -381,10 +381,18 @@ validate_Settings()
 
 	if !ini_DaysToStore
 	{
-		NOINCOGNITO := false
+		NOINCOGNITO := false, historyOffByDays := true
 		if CALLER_STATUS
 			try TraySetIcon("icons\no_history.ico")
 		Options_Tray.Check(TXT.TRY_incognito)
+	}
+	else if historyOffByDays
+	{
+		; history was off only because Days to store was 0: a value above 0 turns recording back on. A user's own
+		; Incognito toggle clears the flag (incognito()), so this never overrides it.
+		NOINCOGNITO := true, historyOffByDays := false
+		try Options_Tray.Uncheck(TXT.TRY_incognito)
+		changeIcon()
 	}
 
 	if (paste_K = "ERROR")

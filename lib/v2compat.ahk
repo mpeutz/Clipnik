@@ -249,6 +249,20 @@ ClipFileRead(path) {
 	return ClipboardAll(data)
 }
 
+; Writes a clip dump to path, replacing whatever file is there. FileAppend alone would add the new dump after the old
+; one, and ClipFileRead - meeting the old dump's terminator before the end - would bring back the old clip.
+ClipFile_Write(path, data) {
+	try FileDelete(path)
+	FileAppend(data, path)
+}
+
+; True for the files that hold a whole clipboard dump: Clipnik's own clips (.avc) and exports - .cnk, and .cj from
+; the Clipjump days
+ClipFile_IsDump(path) {
+	SplitPath(path, , , &ext)
+	return InStr("|cj|avc|cnk|", "|" ext "|") ? true : false
+}
+
 ; True when the buffer parses cleanly as a chain of format/size/data blocks with the given size-field width,
 ; ending with a 4-byte zero terminator at the end of the buffer.
 ClipFile_IsLayout(buf, sizeBytes) {

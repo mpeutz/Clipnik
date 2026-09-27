@@ -88,5 +88,23 @@ for dir in ["cache\clips", "cache\clips1", "cache\clips2"] {
 }
 check(agree = pairs, "real image pairs in the cache: " agree " of " pairs " judged the same way as their CF_DIB blocks")
 
+; ClipFile_Write replaces: an edited clip written over its old file must be the only dump in it. Appending left the
+; old dump first, and ClipFileRead - finding the first dump's terminator before the end - restored the original.
+tmp := A_Temp "\cnk-clipfile-write-test.avc"
+try FileDelete(tmp)
+first := snip(2, 3), second := snip(4, 5, 200)
+ClipFile_Write(tmp, first)
+ClipFile_Write(tmp, second)
+got := FileRead(tmp, "RAW")
+check(got.Size = second.Size && DllCall("ntdll\RtlCompareMemory", "Ptr", got, "Ptr", second, "UPtr", got.Size, "UPtr") = got.Size,
+	"writing a clip over an existing file leaves only the new dump (" got.Size " bytes, " second.Size " expected)")
+try FileDelete(tmp)
+
+; ClipFile_IsDump: Clipnik's own clips and every export it has ever written, whatever the case of the extension
+check(ClipFile_IsDump("C:\x\cache\clips\5.avc") && ClipFile_IsDump("C:\Users\me\Documents\export1.cnk")
+	&& ClipFile_IsDump("C:\old\export2.cj") && ClipFile_IsDump("D:\EXPORT3.CNK"), "clip files and .cnk / .cj exports are clip dumps")
+check(!ClipFile_IsDump("C:\x\notes.txt") && !ClipFile_IsDump("C:\x\photo.png") && !ClipFile_IsDump("C:\x\noextension"),
+	"text, images and extension-less files are not")
+
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

@@ -116,7 +116,7 @@ global WORKINGHT := tempbottom - temptop, restoreCaller := 0, startUpComplete :=
 global CN := CJMap(), CUSTOMS := CJMap(), CDS := CJMap(), CPS := CJMap(), SEARCHOBJ := CJMap(), HISTORYOBJ := CJMap(), TOTALCLIPS := "", ACTIONMODE := CJMap(), PLUGINS := CJMap()
 global cut_is_delete_windows := "XLMAIN QWidget" 			;excel, kingsoft office
 global CURSAVE := 0, TEMPSAVE := 0, LASTCLIP := "", LASTFORMAT := "", Islastformat_Changed := 1, IScurCBACTIVE := 0, curPformat := "", curPfunction := "", curPisPreviewable := 0, LASTKIND := ""
-global NOINCOGNITO := 1, SPM := CJMap(), protected_DoBeep := 1
+global NOINCOGNITO := 1, historyOffByDays := 0, SPM := CJMap(), protected_DoBeep := 1
 global LOCK := CJMap()   ; ACTIVE, ih (InputHook), keys (vk -> action), target (hwnd at lock time), suspended
 global pastemodekey := CJMap(), spmkey := CJMap()
 global windows_copy_k := "", windows_cut_k := "", ini_OpenAllChbyDef := 0, pstIdentifier := "^", pstKeyName := (pstIdentifier == "^") ? "Ctrl" : "LWin"
@@ -1098,6 +1098,8 @@ move_to_first(*) {
 
 navigate_to_first(*) {
 	global
+	if VAULT.ACTIVE      ; the Vault has no newest clip to jump to, and moving TEMPSAVE would lose the walker's place
+		return
 	if IN_BACK
 		IN_BACK_correction()
 	TEMPSAVE := CURSAVE 		; make tempsave 29 if total clips (cursave) is 29 . so load the first (latest) clip
@@ -1803,7 +1805,7 @@ CopyFileData(*) {
 	if InStr("|jpg|jpeg|tiff|png|bmp|gif|", "|" temp_extension "|")
 		Gdip_SetImagetoClipboard(selectedFile)
 
-	else if InStr("|cj|avc|", "|" temp_extension "|")
+	else if ClipFile_IsDump(selectedFile)
 	{
 		API.blockMonitoring(1)
 		try_ClipboardfromFile(selectedFile)
@@ -1983,6 +1985,7 @@ incognito(*) {
 	global
 	Options_Tray.ToggleCheck(TXT.TRY_incognito)
 	NOINCOGNITO := !NOINCOGNITO
+	historyOffByDays := false   ; the user has taken over: Days to store no longer decides
 	changeIcon()
 }
 
@@ -2053,6 +2056,9 @@ editClip(cnl, clip, owner := "none") {
 			break
 		Sleep 100
 	}
+	; however the editor ended: left bound, Esc stayed hijacked system-wide and its next press ran ProcessClose on
+	; a PID the editor no longer owns
+	hkZ("Esc", editclip_cancel, 0)
 	if (editclip_cancelled) {
 		editclip_cancelled := 0, autoTooltip(TXT.TIP_editnotdone, 800, 10)
 		return
@@ -2062,7 +2068,7 @@ editClip(cnl, clip, owner := "none") {
 		API.blockMonitoring(1)
 		Gdip_SetImagetoClipboard(A_WorkingDir "\cache\edit.jpg")
 		ClipWait(3, 1)
-		try FileAppend(ClipboardAll(), clipLoc)
+		try ClipFile_Write(clipLoc, ClipboardAll())   ; replaces the old dump; appending kept the original image
 		Gdip_CaptureClipboard(A_WorkingDir "\cache\thumbs" (!cnl ? "" : cnl) "\" tmpsv ".jpg", ini_Quality)
 		try FileDelete("cache\edit.jpg")
 		API.blockMonitoring(0)
