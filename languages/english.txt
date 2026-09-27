@@ -201,7 +201,7 @@ TIP_delallprompt = WARNING
 ;10.6
 ;=======
 
-ABT_runadmin = Clipnik is not running as Administrator
+ABT_runadmin = Clipnik is not running as administrator, so it cannot paste into apps that run as administrator.
              = This (may) cause improper functioning of the program.
              =
              = [This message will be shown only once]

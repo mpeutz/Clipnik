@@ -185,9 +185,9 @@ ini_Version := IniRead(CONFIGURATION_FILE, "System", "Version", "")
 if !FileExist(CONFIGURATION_FILE)
 {
 	save_default(1)
-	if !A_IsAdmin
-		MsgBox(TXT.ABT_runadmin, "WARNING", 16)
-	try TrayTip(TXT.ABT_cjready, "Clipnik", 1)
+	; a new install's first start: one quiet note, never a dialog. Not running as administrator is normal; it only
+	; means apps that run as administrator cannot receive Clipnik's pastes.
+	try TrayTip(TXT.ABT_cjready (A_IsAdmin ? "" : "`n" TXT.ABT_runadmin), "Clipnik", 1)
 }
 else if (ini_Version != VERSION)
 {
@@ -322,11 +322,13 @@ fillHISTORYOBJ()
 historyCleanup() ;Clean History
 SetTimer(historyCleanup, 86400000)   ; and daily after that: a machine left running for weeks never restarts into it
 OnMessage(0x4a, Receive_WM_COPYDATA)  ; 0x4a is WM_COPYDATA
-; Portable Startup: re-point the shortcut in case the folder moved. A Clipjump.lnk from before the rename is
-; taken over only when it starts this folder, so another Clipjump install keeps its own shortcut.
+; Portable Startup: re-point the shortcut when the folder moved. A Clipjump.lnk from before the rename is
+; taken over only when it starts this folder, so another Clipjump install keeps its own shortcut. The same goes
+; for Clipnik.lnk: it is re-pointed only when it starts a file that is gone - re-pointing it whenever it existed
+; let any second copy (a test copy, another portable install) take over the login shortcut just by starting.
 if migrateStartupShortcut()
 	setRunAtStartup(true)
-else if isRunAtStartup()
+else if isRunAtStartup() && !startupShortcutWorks()
 {
 	FileDelete(A_Startup "\Clipnik.lnk")
 	setRunAtStartup(true)
@@ -1837,6 +1839,14 @@ strtup(*) {
 
 ; the Startup-folder shortcut is the only record of this option: the tray and Settings both read it
 isRunAtStartup() => FileExist(A_Startup "\Clipnik.lnk") ? true : false
+
+; true while Clipnik.lnk starts a file that still exists, wherever that copy lives
+startupShortcutWorks() {
+	try FileGetShortcut(A_Startup "\Clipnik.lnk", &target)
+	catch
+		return false
+	return (target != "" && FileExist(target)) ? true : false
+}
 
 ; deletes the pre-rename Clipjump.lnk when it points into this folder, or at a file that is gone (the folder was
 ; renamed along with the app); true when it did

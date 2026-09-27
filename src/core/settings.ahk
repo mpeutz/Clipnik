@@ -225,7 +225,7 @@ save_Default(full := 1){
 	IniWrite(1, CONFIGURATION_FILE, "Main", "Keep_Session")
 
 	IniWrite(30, CONFIGURATION_FILE, "Clipboard_History", "Days_to_store")
-	IniWrite(0, CONFIGURATION_FILE, "Clipboard_History", "Store_Images")
+	IniWrite(1, CONFIGURATION_FILE, "Clipboard_History", "Store_Images")   ; images show in History (as thumbnails) out of the box
 	IniWrite(1000, CONFIGURATION_FILE, "Clipboard_History", "Max_history_clips")
 	IniWrite(7, CONFIGURATION_FILE, "Clipboard_History", "Image_days_to_store")
 	}
