@@ -1,5 +1,7 @@
 # Runtime data (clips, thumbnails, history database)
 cache/
+# Each user's own settings: Clipnik writes the defaults on first run when the file is missing
+settings.ini
 # Editor backups
 *.ahk~
 # User-generated hotPaste templates
