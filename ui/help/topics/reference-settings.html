@@ -14,8 +14,10 @@
     clips survive a restart, and whether to skip clips that an app marks private.</p>
 
   <h2>Clipboard History</h2>
-  <p>The long-term store behind the history window: how many days a clip is kept (0 keeps everything), whether
-    images are stored, and the JPEG quality of stored previews.</p>
+  <p>The long-term store behind the history window: how many days a clip is kept (0 keeps everything), the most
+    clips it holds before the oldest are deleted (0 keeps every clip), whether images are stored, how many days a
+    stored image is kept, and the JPEG quality of stored previews. Images take far more room than text, so they
+    can be cleared sooner than everything else; 0 keeps them as long as the rest.</p>
   <p>The history window itself: whether search matches partial text by default, whether the window closes after
     an Insta-Paste, and whether an Insta-Paste also writes the system clipboard.</p>
 
@@ -40,6 +42,8 @@
 
   <h2>Appearance</h2>
   <p>Theme (system, dark or light) and the accent color, either the Windows accent or one you pick.</p>
+  <p>Menu style: whether Action Mode and the paste-mode format picker open as a ring at your pointer or as a
+    list on the card.</p>
   <p>Notifications: whether a copy is confirmed on screen, where notifications appear, whether a copy beeps and
     at what frequency, and whether the card says "Pasting...".</p>
   <p>The paste-mode card: leave the position empty to follow the cursor, or give it a fixed screen position.</p>
