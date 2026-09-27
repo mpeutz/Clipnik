@@ -48,9 +48,10 @@ real := A_ScriptDir "\..\cache\data.db"
 if FileExist(real) {
     db2 := SQLiteDB()
     check(db2.OpenDB(real, "R", false), "open real db " db2.ErrorMsg)
-    check(db2.GetTable("select count(*) from history", &c), "count history")
-    c.Next(&r)
-    FileAppend("     history rows: " r[1] "`n", "*")
+    ok := db2.GetTable("select count(*) from history", &c)
+    check(ok, "count history " db2.ErrorMsg)
+    if ok && c.Next(&r) = 1
+        FileAppend("     history rows: " r[1] "`n", "*")
     db2.CloseDB()
 }
 check(db.CloseDB(), "close")

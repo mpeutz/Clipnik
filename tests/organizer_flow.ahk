@@ -1,6 +1,7 @@
 ; Channel Organizer (WebView2): opens the window, selects the first clip, creates a clip with Ctrl+N through the
 ; native dialog, checks it is listed, deletes it again with Del, then closes with Esc. Needs an idle desktop.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1

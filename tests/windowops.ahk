@@ -2,6 +2,7 @@
 ; Settings Apply/OK round trip (the History and Organizer flows live in history_flow.ahk and organizer_flow.ahk).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\windowops.ahk
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 SetTitleMatchMode 2
 SendLevel 1

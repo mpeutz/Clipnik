@@ -1,6 +1,7 @@
 ; Opens the tray menu card of the running Clipnik (via the API), captures it, opens the Channels submenu with
 ; the keyboard, captures again, then closes it with Esc. Saves tests\out\tray-*.png.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1

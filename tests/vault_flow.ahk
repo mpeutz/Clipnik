@@ -2,6 +2,7 @@
 ; re-detected kind, are reachable from Clipboard History and the Organizer, and are never pruned.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\vault_flow.ahk
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 1

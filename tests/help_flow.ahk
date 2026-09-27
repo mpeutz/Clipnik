@@ -1,6 +1,7 @@
 ; Help window (WebView2): opens from Action Mode, shows the topic list, filters, deep links, and remembers
 ; its geometry. Needs a running Clipnik and an idle desktop.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 SendLevel 1
 SetTitleMatchMode 1

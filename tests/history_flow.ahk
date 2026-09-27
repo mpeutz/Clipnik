@@ -1,6 +1,7 @@
 ; Clipboard History (WebView2): opens the window, selects the newest clip with the keyboard, checks the preview
 ; request, copies it with Ctrl+C and compares the clipboard, filters with a search, then closes with Esc.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1

@@ -2,6 +2,7 @@
 ; Only clips created by this test are deleted.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\modes.ahk
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 SetTitleMatchMode 2
 SendLevel 1

@@ -2,6 +2,7 @@
 ; applies, and checks settings.ini and the live hotkey. Restores the previous values at the end.
 ; Needs an idle desktop. Logs to tests\out\settings_flow.log; prints PASS/FAIL lines.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SendLevel 1

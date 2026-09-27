@@ -2,6 +2,7 @@
 ; mode passes Ctrl+V straight through (no card) without a restart, then removes the class again.
 ; Needs an idle desktop. The class is restored in the ini even when a check fails.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 SendLevel 1
 SetTitleMatchMode 1

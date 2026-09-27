@@ -1,5 +1,6 @@
 ; Opens About, saves the icon area from the screen to tests\out\about_icon.png, and closes it. Requires a running Clipnik.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 2

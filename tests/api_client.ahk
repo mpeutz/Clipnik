@@ -1,6 +1,7 @@
 ; External-process check of publicAPI.ahk against a running Clipnik (v2).
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\api_client.ahk
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 out := ""
 cj := Clipnik()

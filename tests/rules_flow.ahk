@@ -2,6 +2,7 @@
 ; the active channel is unchanged), a transform rule rewrites the clip and its kind, an email rule tags the clip,
 ; an ignore rule drops a clip, and an image rule routes an image clip to a channel. Rules are restored afterwards.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 1

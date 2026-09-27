@@ -1,6 +1,7 @@
 ; Opens the Settings window of the running Clipnik, walks every page and saves tests\out\settings-<page>.png.
 ; Optional argument: a page id to stop on (leaves the window open for manual inspection).
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 1

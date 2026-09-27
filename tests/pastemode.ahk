@@ -2,6 +2,7 @@
 ; State is read through the public API (WM_COPYDATA) rather than by scraping tooltips.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\pastemode.ahk
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 SetTitleMatchMode 2
 SendLevel 1

@@ -1,6 +1,7 @@
 ; End-to-end smoke test against a RUNNING Clipnik (v2): copy capture, paste-mode cycling in Notepad.
 ;   runtime\AutoHotkey64.exe /ErrorStdOut tests\e2e.ahk
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 SetTitleMatchMode 2
 SendLevel 1   ; hook hotkeys in the target script ignore level-0 simulated input

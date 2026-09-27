@@ -1,5 +1,6 @@
 ; Screenshots the live HUD card and toast while driving a RUNNING Clipnik: copy, Ctrl+V, V, X, F search.
 #Requires AutoHotkey v2.0
+#Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
 #Include ..\lib\vendor\Gdip_All.ahk
 SetTitleMatchMode 2
