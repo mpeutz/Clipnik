@@ -2,7 +2,8 @@
 #Requires AutoHotkey v2.0
 #Warn All, Off
 #Include ..\lib\v2compat.ahk
-#Include ..\lib\vendor\Gdip_All.ahk
+#Include ..\lib\gdiplus.ahk
+#Include lib\gdiplus_test.ahk
 #Include ..\src\ui\native\Theme.ahk
 SetWorkingDir A_ScriptDir "\.."
 for mode in ["dark", "light"] {

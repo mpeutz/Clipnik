@@ -6,3 +6,5 @@
 *.ttf binary
 *.chm binary
 settings.ini -text
+# Test references are compared byte for byte: never convert their line endings
+tests/fixtures/** -text

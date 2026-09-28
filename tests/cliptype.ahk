@@ -3,7 +3,7 @@
 #Requires AutoHotkey v2.0
 #Warn All, Off   ; cliptype.ahk's ClipType.Of/Store reference clipPref/AddClipPref/CDS, which only Clipnik.ahk defines
 #Include ..\lib\v2compat.ahk
-#Include ..\lib\vendor\Gdip_All.ahk
+#Include ..\lib\gdiplus.ahk
 #Include ..\src\core\cliptype.ahk
 #Include ..\src\core\imageclip.ahk
 

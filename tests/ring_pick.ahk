@@ -7,7 +7,7 @@ CoordMode "Mouse", "Screen"
 SendMode "Event"
 SendLevel 1
 #Include ..\lib\v2compat.ahk
-#Include ..\lib\vendor\Gdip_All.ahk
+#Include ..\lib\gdiplus.ahk
 #Include ..\lib\translations.ahk
 #Include ..\src\ui\native\Theme.ahk
 #Include ..\src\ui\native\RingGeom.ahk

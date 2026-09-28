@@ -2214,7 +2214,7 @@ Receive_WM_COPYDATA(wParam, lParam, *) {
 #Include %A_ScriptDir%\src\core\vault.ahk
 #Include %A_ScriptDir%\src\core\transforms.ahk
 #Include %A_ScriptDir%\src\core\rules.ahk
-#Include %A_ScriptDir%\lib\vendor\Gdip_All.ahk
+#Include %A_ScriptDir%\lib\gdiplus.ahk
 #Include %A_ScriptDir%\lib\HotkeyParser.ahk
 #Include %A_ScriptDir%\lib\anticj_func_labels.ahk
 #Include %A_ScriptDir%\src\core\settings.ahk

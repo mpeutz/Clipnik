@@ -7,7 +7,7 @@
 ; modal dialog at startup and the test never runs
 #Warn All, Off
 #Include ..\lib\v2compat.ahk
-#Include ..\lib\vendor\Gdip_All.ahk
+#Include ..\lib\gdiplus.ahk
 #Include ..\lib\vendor\WebView2\WebView2.ahk
 #Include ..\lib\vendor\JSON.ahk
 #Include ..\src\ui\native\Theme.ahk

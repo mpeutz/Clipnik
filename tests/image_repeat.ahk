@@ -13,7 +13,7 @@
 #Requires AutoHotkey v2.0
 #Include lib\sandbox_guard.ahk   ; drives a running Clipnik: only ever a sandbox copy's
 #Include ..\publicAPI.ahk
-#Include ..\lib\vendor\Gdip_All.ahk
+#Include ..\lib\gdiplus.ahk
 SendLevel 1
 cj := Clipnik()
 fails := 0

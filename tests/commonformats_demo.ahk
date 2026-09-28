@@ -4,7 +4,8 @@
 #Requires AutoHotkey v2.0
 #Warn All, Off
 #Include ..\lib\v2compat.ahk
-#Include ..\lib\vendor\Gdip_All.ahk
+#Include ..\lib\gdiplus.ahk
+#Include lib\gdiplus_test.ahk
 #Include ..\lib\translations.ahk
 #Include ..\src\ui\native\Theme.ahk
 #Include ..\plugins\pformat.commonformats.ahk

@@ -31,6 +31,7 @@ Third-party components ===
   MIT License, see lib/vendor/LICENSE-thqby-ahk2_lib.txt.
 - Microsoft WebView2 loader (lib/vendor/WebView2/WebView2Loader.dll): BSD 3-Clause License,
   see lib/vendor/WebView2/LICENSE-WebView2.txt.
-- Gdip library for AutoHotkey v2 (lib/vendor/Gdip_All.ahk): originally by tic (Tariq Porter).
 - SQLite (sqlite3.dll): public domain.
-- unHTML (plugins/pformat.commonformats.lib/unhtml.ahk): by derRaphael.
+- SQLiteDB (lib/SQLiteDB/SQLiteDB.ahk): a port of "just me"'s Class_SQLiteDB, released into the
+  public domain under the Unlicense (https://github.com/AHK-just-me/Class_SQLiteDB).
+- Lucide icon font (icons/lucide.ttf): ISC License, see icons/LICENSE-lucide.txt.
