@@ -381,6 +381,9 @@ class API
 				if (sleeptime * A_Index) > 1000
 					break
 			}
+			; a block that saw no write of its own has nothing left to swallow: left empty, the flag made the
+			; clipboard handler drop the user's next copy instead (the first copy after a fresh start)
+			ONCLIPBOARD := 1
 			CALLER := CALLER_STATUS
 		}
 	}
