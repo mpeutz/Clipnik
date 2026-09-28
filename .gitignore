@@ -17,3 +17,5 @@ design/phase4/clipjump-history-and-organizer.html
 design/phase5/clipjump-toast-and-paste-card.html
 design/phase6/clipjump-clip-intelligence.html
 design/phase7/clipjump-action-ring.html
+# Release zips (tools/make-release.sh)
+dist/

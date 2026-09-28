@@ -3,6 +3,7 @@
 ;   stop <where> [force]  asks the Clipnik running from <where> (its folder or its Clipnik.ahk) to exit, its
 ;                       OnExit saving as usual, and waits; with force, one that will not exit is ended
 ;   ready <folder>      waits until the only Clipnik running is the one from <folder>, finished starting up
+;   dialogs <folder>    prints the message boxes the AutoHotkey in <folder>\runtime shows; exit 1 when there are any
 ;   clip-save <file>    writes the whole clipboard to <file>
 ;   clip-restore <file> puts <file> back on the clipboard
 ; Exit code 0 on success, 1 with a reason on stdout otherwise.
@@ -17,6 +18,7 @@ switch cmd {
 	case "running": ExitApp Running()
 	case "stop": ExitApp Stop(arg, A_Args.Length > 2 && A_Args[3] = "force")
 	case "ready": ExitApp Ready(arg)
+	case "dialogs": ExitApp Dialogs(arg)
 	case "clip-save": ExitApp ClipSave(arg)
 	case "clip-restore": ExitApp ClipRestore(arg)
 }
@@ -91,6 +93,18 @@ Ready(folder) {
 		Sleep 500
 	}
 	Fail("the Clipnik in " folder " was not the only one running and started within 30 s (" Clipniks().Count " running)")
+}
+
+Dialogs(folder) {
+	exe := SandboxGuard_Long(FolderOf(folder) "\runtime\AutoHotkey64.exe"), n := 0
+	for hw in WinGetList("ahk_class #32770") {
+		try path := SandboxGuard_Long(WinGetProcessPath(hw))
+		catch
+			continue
+		if (path = exe)
+			FileAppend(WinGetTitle(hw) ": " StrReplace(WinGetText(hw), "`r`n", " ") "`n", "*"), n++
+	}
+	return n ? 1 : 0
 }
 
 ; an empty clipboard saves as an empty file

@@ -8,3 +8,13 @@
 settings.ini -text
 # Test references are compared byte for byte: never convert their line endings
 tests/fixtures/** -text
+# Left out of the release zip (tools/make-release.sh uses git archive): development only
+design/ export-ignore
+docs/ export-ignore
+tests/ export-ignore
+tools/ export-ignore
+AUDIT-FIX-PROGRESS.md export-ignore
+ui/demo/ export-ignore
+ui/common/mock-bridge.js export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
