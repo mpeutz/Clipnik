@@ -12,6 +12,7 @@
 #Include ..\lib\vendor\JSON.ahk
 #Include ..\src\ui\native\Theme.ahk
 #Include ..\src\ui\web\WebHost.ahk
+#Include lib\edge_dump.ahk
 global CJGUI := Map(), PROGNAME := "Clipnik", TXT := CJMap(), STORE := Map()
 
 OnError(fatal)
@@ -28,35 +29,6 @@ check(cond, msg) {
 		fails++
 }
 
-root := RegExReplace(A_ScriptDir, "\\tests$")
-edge := A_ProgramFiles " (x86)\Microsoft\Edge\Application\msedge.exe"
-if !FileExist(edge)
-	edge := A_ProgramFiles "\Microsoft\Edge\Application\msedge.exe"
-
-; the page's DOM once the mock bridge has answered and the images in view have loaded or failed. The command goes
-; through a batch file: cmd /c's quote stripping does not survive "Program Files (x86)" plus a redirect, and reading
-; Edge's stdout pipe to the end never returns, because its helper processes inherit the pipe and outlive it. cmd
-; waits for Edge's main process only; the helpers are closed afterwards, found by this dump's own profile folder.
-; Each dump gets a fresh profile, since a previous dump's helpers can still hold theirs and make the next Edge wait
-; on them, and a dump that still hangs is ended after 30 s, so the page's checks fail instead of the whole test.
-dump(page) {
-	global root, edge
-	tag := "cnk-edge-profile-" A_TickCount
-	profile := A_Temp "\" tag, out := A_Temp "\cnk-dump.html", bat := A_Temp "\cnk-dump.cmd"
-	url := "file:///" StrReplace(root "\ui\" page, "\", "/")
-	try FileDelete(out)
-	try FileDelete(bat)
-	FileAppend('@"' edge '" --headless --disable-gpu --user-data-dir="' profile '" --virtual-time-budget=5000 --dump-dom "' url '" > "' out '" 2>nul', bat)
-	Run(bat, , "Hide", &pid)
-	if ProcessWaitClose(pid, 30)
-		try ProcessClose(pid)
-	for p in ComObjGet("winmgmts:").ExecQuery("select ProcessId, CommandLine from Win32_Process where Name='msedge.exe'")
-		if InStr(p.CommandLine, tag)
-			try ProcessClose(p.ProcessId)
-	Sleep 300
-	try DirDelete(profile, true)
-	return FileExist(out) ? FileRead(out, "UTF-8") : ""
-}
 
 ; one table row's markup, by its data attribute
 row(html, attr, id) => RegExMatch(html, 's)<div class="tr[^"]*" data-' attr '="' id '"[^>]*>.*?</div>', &m) ? m[0] : ""
@@ -64,7 +36,7 @@ row(html, attr, id) => RegExMatch(html, 's)<div class="tr[^"]*" data-' attr '="'
 thumbOf(r) => RegExMatch(r, '<img class="thumb"[^>]*>', &m) ? m[0] : ""
 
 ; ---- History (and the Vault, which is the same table) ----
-h := dump("history\index.html")
+h := EdgeDump("history\index.html")
 check(InStr(h, 'id="rows"'), "history page rendered (" StrLen(h) " bytes of DOM)")
 img := row(h, "id", 3), t := thumbOf(img)
 check(t != "", "history: an image row shows a thumbnail")
@@ -76,7 +48,7 @@ check(gone != "" && thumbOf(gone) = "" && InStr(gone, "82 × 70"), "history: an 
 check(thumbOf(row(h, "id", 1)) = "", "history: text rows have no thumbnail")
 
 ; ---- Channel Organizer ----
-o := dump("organizer\index.html")
+o := EdgeDump("organizer\index.html")
 check(InStr(o, 'id="rows"'), "organizer page rendered (" StrLen(o) " bytes of DOM)")
 oi := row(o, "n", 3), ot := thumbOf(oi)
 check(ot != "" && InStr(ot, 'loading="lazy"') && InStr(ot, 'width="39"'), "organizer: an image row shows a lazy, pre-sized thumbnail")

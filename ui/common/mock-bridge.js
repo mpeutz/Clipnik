@@ -5,7 +5,10 @@
   const vars = light
     ? "--bg:#F3F3F3;--surface:#FFFFFF;--surfaceAlt:#EDEDED;--border:#D9D9D9;--text:#1B1B1B;--muted:#6B6B6B;--accent:#C42B1C;--accentText:#FFFFFF;--danger:#C42B1C;"
     : "--bg:#202020;--surface:#2B2B2B;--surfaceAlt:#363636;--border:#3F3F3F;--text:#F0F0F0;--muted:#9A9A9A;--accent:#C42B1C;--accentText:#FFFFFF;--danger:#E5484D;";
-  const reply = (cmd, data) => setTimeout(() => bridge.dispatch(cmd, data), 30);
+  const reply = (cmd, data, ms = 30) => setTimeout(() => bridge.dispatch(cmd, data), ms);
+  // ?race: the first History list comes back late and the host switches to the Vault meanwhile, so the two
+  // list replies arrive out of order (tests/history_race.ahk)
+  let race = new URLSearchParams(location.search).has("race");
   const day = (n, hm) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10) + " " + hm + ":00"; };
 
   // ---- history ----
@@ -32,7 +35,17 @@
   ];
   for (let i = 10; i < 60; i++) hist.push({ id: i, data: "Filler clip number " + i + " lorem ipsum dolor sit amet", type: 0, time: day(5 + (i % 20), "08:00"), size: 40 + i, kind: "text" });
 
+  const vault = [
+    { id: 1, data: "Kind regards, Mike", name: "Signature", type: 0, time: day(2, "09:00"), size: 18, kind: "text" },
+    { id: 2, data: "1 Example Street, Springfield", name: "Shipping address", type: 0, time: day(6, "12:00"), size: 29, kind: "text" },
+  ];
   function histList(d) {
+    if (d.view === "vault") {
+      reply("list", { view: "vault", rows: vault.map((r) => ({ id: r.id, clip: r.data, name: r.name, type: r.type, time: r.time, size: r.size, kind: r.kind })), matched: vault.length, total: vault.length, bytes: vault.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
+      return;
+    }
+    const late = race;
+    if (race) { race = false; setTimeout(() => bridge.dispatch("setView", "vault"), 50); }
     const q = (d.q || "").trim().toLowerCase();
     const words = d.partial ? q.split(/\s+/).filter(Boolean) : (q ? [q] : []);
     let rows = hist.filter((r) => words.every((w) => r.data.toLowerCase().includes(w)));
@@ -40,7 +53,7 @@
     const col = d.sort === "clip" ? "data" : d.sort === "size" ? "size" : "time";
     rows.sort((a, b) => (a[col] > b[col] ? 1 : a[col] < b[col] ? -1 : 0) * (d.asc ? 1 : -1));
     // image rows carry their url and dimensions, as HistoryWin.SendList sends them
-    reply("list", { rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size, kind: r.kind, ...(r.type === 1 ? { url: r.url, width: r.width, height: r.height } : {}) })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 });
+    reply("list", { view: "history", rows: rows.map((r) => ({ id: r.id, clip: r.data.slice(0, 300), type: r.type, time: r.time, size: r.size, kind: r.kind, ...(r.type === 1 ? { url: r.url, width: r.width, height: r.height } : {}) })), matched: rows.length, total: hist.length, bytes: hist.reduce((s, r) => s + r.size, 0), partial: d.partial ? 1 : 0 }, late ? 400 : 30);
     reply("kinds", { kinds: ["url", "email", "image", "svg"], labels: kindLabels, actions: mockActionTable });
   }
 

@@ -90,6 +90,7 @@ class HistoryWin {
 			r := vaultList(q, partial, kind)
 			HistoryWin.AddImageUrls(r["rows"])
 			r["partial"] := partial ? 1 : 0
+			r["view"] := "vault"   ; the page drops a reply for a view it has since left
 			HistoryWin.host.Post("list", r)
 			HistoryWin.SendKinds()
 			return
@@ -98,6 +99,7 @@ class HistoryWin {
 		historyEnsureKinds(r["rows"])   ; one transaction for the whole page, not an update per row
 		HistoryWin.AddImageUrls(r["rows"])
 		r["partial"] := partial ? 1 : 0
+		r["view"] := "history"
 		HistoryWin.host.Post("list", r)
 		HistoryWin.SendKinds()
 	}

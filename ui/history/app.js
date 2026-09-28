@@ -158,6 +158,8 @@
   // ---------- events ----------
   bridge.on("i18n", (m) => { Object.assign(T, m || {}); applyI18n(); });
   bridge.on("list", (d) => {
+    // a reply for the view the page has since left: a large history list can arrive after the Vault's
+    if (d.view && d.view !== state.view) return;
     state.rows = (d.rows || []).map((r) => ({ ...r, id: +r.id, type: +r.type, size: +r.size }));
     if (d.partial != null) { state.partial = !!+d.partial; el("partial").classList.toggle("on", state.partial); el("exact").classList.toggle("on", !state.partial); }
     const ids = new Set(state.rows.map((r) => r.id));

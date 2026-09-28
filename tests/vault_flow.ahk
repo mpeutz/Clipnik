@@ -15,6 +15,7 @@ check(name, cond) {
 	FileAppend((cond ? "PASS " : "FAIL ") name "`n", "*")
 	if !cond
 		fails++
+	return cond
 }
 step(s) => FileAppend("     .. " s "`n", "*")
 ; the host appends to this file constantly; a read that collides with a write must not take the suite down
@@ -92,7 +93,13 @@ Sleep 1000
 check("the history view does not show vault entries", !InStr(lastList(), "vault-one-" stamp))
 expectedMatched := cj.runFunction("vaultCount()")
 cj.runFunction("History_SetView(vault)")
-check("the vault list reaches the page", waitUntil(vaultListShown))
+if !check("the vault list reaches the page (" expectedMatched " entries)", waitUntil(vaultListShown)) {
+	; what the page asked for and what it was sent, in order
+	for line in StrSplit(readLog(), "`n", "`r")
+		if RegExMatch(line, '(recv|post) \{"cmd":"(list|setView|ready)"', &m)
+			FileAppend("     .. log: " SubStr(line, 1, 15) m[1] " " m[2] " " (RegExMatch(line, '"view":"(\w+)"', &v) ? "view=" v[1] " " : "")
+				. (RegExMatch(line, '"matched":"(\d+)"', &n) ? "matched=" n[1] : "") (RegExMatch(line, '"data":"(\w+)"', &s) ? s[1] : "") "`n", "*")
+}
 
 step("the order is the user's")
 check("new entries land at the end, in the order they were added", posOf(a) > 0 && posOf(b) = posOf(a) + 1)

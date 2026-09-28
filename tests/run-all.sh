@@ -16,7 +16,7 @@ run() {
 }
 failed=0
 echo "=== validate"; MSYS_NO_PATHCONV=1 timeout 60 ./runtime/AutoHotkey64.exe /ErrorStdOut /validate Clipnik.ahk && echo "validate ok" || { echo "!!! validate failed"; failed=1; }
-run sandbox_guard.ahk; run cjmap.ahk; run hotkeyparser.ahk; run sqlitedb.ahk; run clipfile.ahk; run cliptext.ahk; run clipdump.ahk; run cliptype.ahk; run transforms.ahk; run unhtml.ahk; run rules.ahk; run ring_geom.ahk; run zorder.ahk; run traytint.ahk; run checkbox.ahk; run webthumbs.ahk; run menustyle.ahk; run history_kinds.ahk; run history_prune.ahk; run vault.ahk; run webhost_demo.ahk 60; run webhost_reentry.ahk 60; run gdiplus.ahk 60
+run sandbox_guard.ahk; run cjmap.ahk; run hotkeyparser.ahk; run sqlitedb.ahk; run clipfile.ahk; run cliptext.ahk; run clipdump.ahk; run cliptype.ahk; run transforms.ahk; run unhtml.ahk; run rules.ahk; run ring_geom.ahk; run zorder.ahk; run traytint.ahk; run checkbox.ahk; run webthumbs.ahk; run history_race.ahk; run menustyle.ahk; run history_kinds.ahk; run history_prune.ahk; run vault.ahk; run webhost_demo.ahk 60; run webhost_reentry.ahk 60; run gdiplus.ahk 60
 if [ -f .clipnik-test-sandbox ]; then
   [[ "$only" == *" readme_shots.ahk "* ]] && run readme_shots.ahk 120   # only when named: it takes the README screenshots
   run ring_pick.ahk 60;
