@@ -49,7 +49,7 @@ class WebHost {
 	__New(title, page, name := "") {
 		this.title := title, this.page := page, this.name := name
 		this.ready := false, this.queue := [], this.handlers := [], this.closeFns := [], this.resizeFns := []
-		this.ctrl := "", this.core := "", this.token := "", this.Visible := false
+		this.ctrl := "", this.core := "", this.token := "", this.Visible := false, this.creating := false, this.wantFocus := false
 		g := Gui("+Resize +MinSize500x300", title)
 		this.g := g
 		g.MarginX := 0, g.MarginY := 0
@@ -65,31 +65,46 @@ class WebHost {
 		WebHost.hosts[g.Hwnd] := this
 	}
 
-	; creates the WebView2 controller; must run after the Gui has a client area (Show once, hidden is fine)
+	; creates the WebView2 controller; must run after the Gui has a client area (Show once, hidden is fine).
+	; Each await lets other threads run - the startup prewarm, a second hotkey press, a close - so a call that
+	; arrives meanwhile returns at once instead of starting a second browser on the same window. The browser
+	; becomes this.ctrl only once no wait is left, then takes whatever visibility the window has by then, so a
+	; close during the wait stays closed.
 	Create() {
-		if this.ctrl
+		if this.ctrl || this.creating
 			return true
 		if !WebHost.Available()
 			return false
+		this.creating := true
+		try this.Build()
+		finally this.creating := false
+		this.ctrl.IsVisible := this.Visible
+		this.ctrl.Fill()
+		if this.wantFocus && this.Visible
+			this.Focus()
+		this.wantFocus := false
+		return true
+	}
+
+	Build() {
 		dataDir := A_Temp "\Clipnik\wv2"
 		DirCreate(dataDir)
 		env := WebView2.CreateEnvironmentAsync(0, dataDir, "", A_WorkingDir "\lib\vendor\WebView2\WebView2Loader.dll").await()
-		this.ctrl := env.CreateCoreWebView2ControllerAsync(this.g.Hwnd).await()
-		core := this.core := this.ctrl.CoreWebView2
+		ctrl := env.CreateCoreWebView2ControllerAsync(this.g.Hwnd).await()
+		core := ctrl.CoreWebView2
 		s := core.Settings
 		s.AreDefaultContextMenusEnabled := false
 		s.IsStatusBarEnabled := false
 		s.IsZoomControlEnabled := false
 		s.AreDevToolsEnabled := !A_IsCompiled
 		s.AreHostObjectsAllowed := false
-		this.ctrl.DefaultBackgroundColor := WebHost.Wv2Color(Theme.Palette["surface"])
+		ctrl.DefaultBackgroundColor := WebHost.Wv2Color(Theme.Palette["surface"])
 		core.SetVirtualHostNameToFolderMapping("app.clipnik", A_WorkingDir "\ui", 1)       ; COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_ALLOW
 		core.SetVirtualHostNameToFolderMapping("cache.clipnik", A_WorkingDir "\cache", 1)
 		core.AddScriptToExecuteOnDocumentCreatedAsync(this.ThemeScript()).await()
+		this.ctrl := ctrl, this.core := core
 		this.token := core.WebMessageReceived(this.OnWebMessage.Bind(this))
 		core.Navigate("https://app.clipnik/" this.page)
-		this.ctrl.Fill()
-		return true
 	}
 
 	ThemeScript() {
@@ -161,8 +176,12 @@ class WebHost {
 			WebHost_MissingRuntime()
 			return false
 		}
-		this.ctrl.IsVisible := true
-		this.ctrl.Fill()
+		; no browser yet while another thread creates it (that thread shows it when done), and none to show when
+		; the window was closed while this Show waited
+		if this.ctrl && this.Visible {
+			this.ctrl.IsVisible := true
+			this.ctrl.Fill()
+		}
 		return true
 	}
 
@@ -171,8 +190,6 @@ class WebHost {
 		if (this.ctrl || !WebHost.Available())
 			return
 		this.Create()
-		if this.ctrl
-			this.ctrl.IsVisible := false
 	}
 
 	Hide() {
@@ -205,7 +222,9 @@ class WebHost {
 		this.Hide()
 	}
 
+	; before the browser exists (its Show returned while another thread creates it) the focus is kept for Create()
 	Focus() {
+		this.wantFocus := !this.ctrl
 		try this.ctrl.MoveFocus(0)   ; COREWEBVIEW2_MOVE_FOCUS_REASON_PROGRAMMATIC
 	}
 }
