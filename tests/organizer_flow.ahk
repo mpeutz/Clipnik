@@ -35,6 +35,13 @@ snap(name) {
 	p := Gdip_Startup(), b := Gdip_BitmapFromScreen(x "|" y "|" w "|" h)
 	Gdip_SaveBitmapToFile(b, A_ScriptDir "\out\organizer-" name ".png"), Gdip_DisposeImage(b), Gdip_Shutdown(p)
 }
+; the preview step needs a clip to select: a fresh copy starts with none
+if (Integer(cj.runFunction("API.getChStrength(0)")) = 0) {
+	A_Clipboard := "organizer-seed-" A_TickCount
+	t := A_TickCount
+	while (Integer(cj.runFunction("API.getChStrength(0)")) = 0 && A_TickCount - t < 3000)
+		Sleep 100
+}
 before := Integer(cj.runFunction("API.getChStrength(0)"))
 try FileDelete(logFile)
 cj.runLabel("channelOrganizer")
@@ -54,8 +61,14 @@ check("new clip dialog opens", dlg != 0)
 if dlg {
 	ControlSetText(marker, "Edit1", "ahk_id " dlg)
 	Sleep 200
+	seq := DllCall("GetClipboardSequenceNumber", "UInt")
 	ControlClick("OK", "ahk_id " dlg)
-	Sleep 1200
+	t := A_TickCount
+	while (Integer(cj.runFunction("API.getChStrength(0)")) != before + 1 && A_TickCount - t < 4000)
+		Sleep 100
+	FileAppend("     .. the new clip was in the channel " (A_TickCount - t) " ms after OK`n", "*")
+	; the clip is made from the text: the user's clipboard is neither replaced nor rewritten on the way
+	check("a new clip leaves the clipboard alone", DllCall("GetClipboardSequenceNumber", "UInt") = seq)
 }
 check("clip added to channel 0", Integer(cj.runFunction("API.getChStrength(0)")) = before + 1)
 check("page received the new list", InStr(readLog(), marker))

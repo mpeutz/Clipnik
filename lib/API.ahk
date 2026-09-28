@@ -402,40 +402,12 @@ class API
 
 	;gets binary ClipboardAll data from simple text
 	; Text = the string you want to convert to ClipboardAll
-	; returnVar = byref variable to return ClipboardAll data
-	; v2 throws when another process holds the clipboard, so every step retries for a moment
+	; returnVar = byref variable to return ClipboardAll data; returns 0 (it cannot fail)
+	; Made from the text itself: building it on the clipboard replaced the user's clipboard for a moment, which
+	; other clipboard tools recorded, and paused Clipnik's own monitoring three times.
 	static Text2Binary(Text, &returnVar) {
-		this.blockMonitoring(1)
-		err := 1, oldclip := ""
-		loop 10 {                                   ; the original content is captured once, so a retry cannot overwrite it
-			try {
-				oldclip := ClipboardAll()
-				break
-			}
-			catch
-				Sleep 50
-		}
-		loop 10 {
-			try {
-				A_Clipboard := Text
-				this.blockMonitoring(0), this.blockMonitoring(1)
-				returnVar := ClipboardAll()
-				err := 0
-				break
-			}
-			catch
-				Sleep 50
-		}
-		loop 10 {
-			try {
-				A_Clipboard := oldclip
-				break
-			}
-			catch
-				Sleep 50
-		}
-		this.blockMonitoring(0)
-		return err
+		returnVar := ClipFile_FromText(Text)
+		return 0
 	}
 
 	;Tooltip for plugins
