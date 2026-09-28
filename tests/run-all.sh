@@ -20,7 +20,7 @@ run sandbox_guard.ahk; run cjmap.ahk; run hotkeyparser.ahk; run sqlitedb.ahk; ru
 if [ -f .clipnik-test-sandbox ]; then
   [[ "$only" == *" readme_shots.ahk "* ]] && run readme_shots.ahk 120   # only when named: it takes the README screenshots
   run ring_pick.ahk 60;
-  run api_client.ahk; run gdiplus_clipboard.ahk 60; run capture_flow.ahk 60; run startup_clipboard.ahk 90; run e2e.ahk 120; run pastemode.ahk 240; run modes.ahk 240; run image.ahk 120; run image_repeat.ahk 60; run windows.ahk 180; run windowops.ahk 240; run settings_flow.ahk 180; run ignored_flow.ahk 120; run history_flow.ahk 120; run vault_flow.ahk 120; run help_flow.ahk 120; run history_image.ahk 90; run organizer_flow.ahk 120; run rules_flow.ahk 90; run tray_shots.ahk 90
+  run api_client.ahk; run gdiplus_clipboard.ahk 60; run capture_flow.ahk 60; run clipboard_busy.ahk 60; run startup_clipboard.ahk 90; run e2e.ahk 120; run pastemode.ahk 240; run modes.ahk 240; run image.ahk 120; run image_repeat.ahk 60; run windows.ahk 180; run windowops.ahk 240; run settings_flow.ahk 180; run ignored_flow.ahk 120; run history_flow.ahk 120; run vault_flow.ahk 120; run help_flow.ahk 120; run history_image.ahk 90; run organizer_flow.ahk 120; run rules_flow.ahk 90; run tray_shots.ahk 90
 else
   echo "Not a sandbox copy: interactive tests skipped (run tools/test-sandbox.sh for those)"
 fi

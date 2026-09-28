@@ -1913,7 +1913,7 @@ showCopyToast(text) {
 
 ; rewrites the just-saved clip (file, in-memory text, LASTCLIP) with a paste format applied
 Rules_ApplyTransform(formatName) {
-	global PLUGINS, LASTCLIP, CDS, CN, CURSAVE, CLIPS_dir
+	global PLUGINS, LASTCLIP, CDS, CN, CURSAVE, CLIPS_dir, ONCLIPBOARD
 	fn := ""
 	for k, v in PLUGINS.pformat
 		if (v["name"] = formatName)
@@ -1923,13 +1923,15 @@ Rules_ApplyTransform(formatName) {
 	t := callPformat(fn, LASTCLIP)
 	if (t == LASTCLIP || t = "")
 		return
+	; the clip is rewritten through the clipboard just after a copy, while other programs are still reading it:
+	; wait for it rather than silently keep the untransformed clip. The stored clip is made from the text itself,
+	; so it always matches what went on the clipboard.
 	API.blockMonitoring(1)
-	try {
-		A_Clipboard := t
-		FileDelete(CLIPS_dir "/" CURSAVE ".avc")
-		FileAppend(ClipboardAll(), CLIPS_dir "/" CURSAVE ".avc")
+	if trySetClipboard(t) {
+		ClipFile_Write(CLIPS_dir "/" CURSAVE ".avc", ClipFile_FromText(t))
 		CDS[CN.NG][CURSAVE] := t, LASTCLIP := t
-	}
+	} else
+		ONCLIPBOARD := 1 	; nothing was written, so there is no notification of ours to wait for
 	API.blockMonitoring(0, 5)
 	Critical "On"
 }

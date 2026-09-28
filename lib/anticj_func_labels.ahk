@@ -86,6 +86,22 @@ FileTransfer(src, dest := "", keep_original := 1, flag := 1) {
 	}
 }
 
+; Puts value on the clipboard, retrying while another program holds it open. Clipnik runs with
+; #ClipboardTimeout 0, so one attempt fails at once, and right after a copy is exactly when clipboard history
+; and other managers are reading it. False when it stayed busy for timeout ms.
+trySetClipboard(value, timeout := 1000) {
+	t := A_TickCount
+	loop {
+		try {
+			A_Clipboard := value
+			return true
+		}
+		if (A_TickCount - t >= timeout)
+			return false
+		Sleep 15
+	}
+}
+
 ;Try getting the Clipboard text, retrying while another process holds the clipboard
 tryGetClipboard(maxtries := 100) {
 	ret := ""

@@ -8,6 +8,10 @@
 SendLevel 1
 SetTitleMatchMode 1
 cj := Clipnik()
+; keep the channel well below its clip limit: a clip past the limit compacts the oldest away and renumbers
+; the rest, so a count taken before a copy no longer matches after it (earlier suites fill the channel)
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+	cj.runFunction("compacter()")
 title := cj["TXT.ORG__name"] " ahk_class AutoHotkeyGUI"
 logFile := A_Temp "\Clipnik\webhost.log"
 fails := 0

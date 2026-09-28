@@ -30,6 +30,21 @@ snap(name) {
 	Gdip_SaveBitmapToFile(b, A_ScriptDir "\out\settings-" name ".png"), Gdip_DisposeImage(b), Gdip_Shutdown(p)
 }
 
+; the Hold Clip recorder, found through its label's position. The other pages' controls exist too, only hidden:
+; a field at the same height on another page is not this one. Looked up again after the window is rebuilt.
+holdClipField() {
+	global title
+	ControlGetPos(&lx, &ly, , , "Hold Clip", title)
+	loop 40 {
+		try {
+			ControlGetPos(&ex, &ey, , , "Edit" A_Index, title)
+			if (Abs(ey - ly) < 8 && ex > lx && ControlGetVisible("Edit" A_Index, title))
+				return "Edit" A_Index
+		}
+	}
+	return ""
+}
+
 oldTheme := IniRead(ini, "Main", "Theme", "system")
 oldThreshold := IniRead(ini, "Main", "Threshold", 10)
 oldHold := IniRead(ini, "Shortcuts", "holdClip_K", "")
@@ -54,20 +69,15 @@ check("threshold written", IniRead(ini, "Main", "Threshold", "") = oldThreshold 
 ; --- hotkey recorder: Hold Clip on the Shortcuts page
 ControlClick("Shortcuts", title)
 Sleep 300
-; the Hold Clip field is the recorder directly under the CAPTURE header: locate through the label's position
-ControlGetPos(&lx, &ly, , , "Hold Clip", title)
-found := ""
-loop 20 {
-	try {
-		ControlGetPos(&ex, &ey, , , "Edit" A_Index, title)
-		if (Abs(ey - ly) < 8 && ex > lx)
-			found := "Edit" A_Index
-	}
-}
+focusPage := ""
+try focusPage := ControlGetClassNN(ControlGetFocus(title))
+found := holdClipField()
 check("hold clip recorder found", found != "")
 ControlClick(found, title)
 Sleep 300
-check("recorder shows prompt", InStr(ControlGetText(found, title), "Press"))
+focusNow := ""
+try focusNow := ControlGetClassNN(ControlGetFocus(title))
+check("recorder shows prompt [" ControlGetText(found, title) "; " found " clicked; focus on " focusPage " after the page switch, " focusNow " after the click]", InStr(ControlGetText(found, title), "Press"))
 Send("^!{F9}")
 Sleep 500
 check("recorder shows Ctrl + Alt + F9", ControlGetText(found, title) = "Ctrl + Alt + F9")
@@ -136,6 +146,7 @@ Send("^a" oldThreshold)
 Sleep 200
 ControlClick("Shortcuts", title)
 Sleep 300
+found := holdClipField()
 ControlClick(found, title)
 Sleep 300
 if (oldHold = "")

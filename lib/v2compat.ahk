@@ -278,6 +278,15 @@ ClipFile_TextOf(path) {
 	return blocks.Has(15) ? ClipFile_DropList(blocks[15]) : ""   ; CF_HDROP
 }
 
+; a clip dump holding just text (CF_UNICODETEXT), as ClipboardAll() writes one after A_Clipboard := text
+ClipFile_FromText(text) {
+	size := (StrLen(text) + 1) * 2
+	buf := Buffer(8 + size + 4, 0)   ; format, size, the text with its terminating zero, then the end marker
+	NumPut("UInt", 13, "UInt", size, buf)
+	StrPut(text, buf.Ptr + 8, "UTF-16")
+	return buf
+}
+
 ; the paths in a DROPFILES block, one per line
 ClipFile_DropList(b) {
 	if (b.size < 20)

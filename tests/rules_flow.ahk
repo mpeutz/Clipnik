@@ -7,6 +7,10 @@
 #Include ..\lib\gdiplus.ahk
 SetTitleMatchMode 1
 cj := Clipnik()
+; keep the channel well below its clip limit: a clip past the limit compacts the oldest away and renumbers
+; the rest, so a count taken before a copy no longer matches after it (earlier suites fill the channel)
+if (Integer(cj.runFunction("API.getChStrength(0)")) >= Integer(cj["TOTALCLIPS"]) - 6)
+	cj.runFunction("compacter()")
 ini := A_ScriptDir "\..\settings.ini"
 fails := 0
 check(name, cond) {
@@ -95,6 +99,7 @@ else
 check("email copy was recorded at all", copyUntil("r" stamp "@example.com", 0, "@example.com"))
 check("email tagged", cj.runFunction("clipPref(0," cj["CURSAVE"] ",Tags)") = "contact")
 before0 := Integer(cj.runFunction("API.getChStrength(0)"))
+Sleep 400   ; Clipnik takes a change within 200 ms of the last one for a program's own write and skips it
 A_Clipboard := "secret-" stamp
 Sleep 1200
 ; the toast proves the rule fired: without it, a copy Clipnik never saw would pass this check too

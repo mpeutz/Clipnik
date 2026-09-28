@@ -375,12 +375,10 @@ class API
 			while CALLER
 				Sleep sleeptime
 		} else {
-			while !ONCLIPBOARD
-			{
+			; a second by the clock: counting sleeps assumed each lasted sleeptime, but a Sleep 5 takes about 15 ms
+			t := A_TickCount
+			while !ONCLIPBOARD && (A_TickCount - t < 1000)
 				Sleep sleeptime
-				if (sleeptime * A_Index) > 1000
-					break
-			}
 			; a block that saw no write of its own has nothing left to swallow: left empty, the flag made the
 			; clipboard handler drop the user's next copy instead (the first copy after a fresh start)
 			ONCLIPBOARD := 1

@@ -424,8 +424,12 @@ SendEvent(token)
 Sleep 1100
 check(InStr(cj["temp_clipboard"], token), "search filtered to the unique clip: [" cj["temp_clipboard"] "]")
 SendEvent("{Enter}")
-Sleep 1500
-check(cj["SPM.ACTIVE"] = "", "Enter ended the search")
+t := A_TickCount
+while (cj["SPM.ACTIVE"] != "" || cj["ctrlRef"] != "") && A_TickCount - t < 12000
+    Sleep 100
+took := A_TickCount - t
+FileAppend("     .. the search and its paste finished " took " ms after Enter`n", "*")
+check(took < 3000, "Enter ended the search within 3 s (" took " ms)")
 check(locked() = 0, "the lock was released with the search")
 check(InStr(ed.Value, token), "search + Enter pasted the match: [" ed.Value "]")
 
