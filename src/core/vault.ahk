@@ -150,7 +150,7 @@ vaultToClipboard(id) {
 	if (rec["type"] = 1)
 		Gdip_SetImagetoClipboard(rec["fileid"])
 	else
-		try A_Clipboard := rec["data"]
+		try trySetClipboard(rec["data"])
 	return true
 }
 

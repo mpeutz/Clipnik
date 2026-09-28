@@ -88,8 +88,11 @@ FileTransfer(src, dest := "", keep_original := 1, flag := 1) {
 
 ; Puts value on the clipboard, retrying while another program holds it open. Clipnik runs with
 ; #ClipboardTimeout 0, so one attempt fails at once, and right after a copy is exactly when clipboard history
-; and other managers are reading it. False when it stayed busy for timeout ms.
+; and other managers are reading it. False when it stayed busy for timeout ms. A critical thread (paste mode,
+; stepping the Vault) holds up every hotkey and timer while it waits, so there the wait stays short.
 trySetClipboard(value, timeout := 1000) {
+	if A_IsCritical
+		timeout := Min(timeout, 150)
 	t := A_TickCount
 	loop {
 		try {

@@ -82,5 +82,39 @@ try FileDelete(helper)
 loop 2
 	if InStr(cj.getClipAt(0, 1), stamp)
 		cj.runFunction("API.deleteClip(0,1)")
+
+; a format paste with the clipboard busy when Ctrl is released: the formatted text is already on the clipboard
+; by then (picking the format puts it there), so the paste must still come out formatted
+SendLevel 1
+quiet := "quiet busy " stamp
+Sleep 300
+A_Clipboard := quiet
+t := A_TickCount
+while (cj.getClipAt(0, 1) != quiet && A_TickCount - t < 3000)
+	Sleep 100
+g := Gui("+AlwaysOnTop", "cj-busy-target"), ed := g.Add("Edit", "w400 h80")
+g.Show(), WinWaitActive("cj-busy-target", , 5), ed.Focus()
+Sleep 300
+SendEvent("{Ctrl down}v")
+Sleep 400
+SendEvent("z")
+Sleep 600
+SendEvent("u")
+Sleep 500
+check(cj["curPformat"] = "Upper case", "Upper case picked for the paste")
+flag := A_Temp "\cnk-paste-" stamp ".flag", helper := A_Temp "\cnk-paste-" stamp ".ahk"
+FileAppend('#NoTrayIcon`nwhile !DllCall("OpenClipboard", "Ptr", 0)`n`tSleep 5`nFileAppend("", "' flag '")`nSleep 800`nDllCall("CloseClipboard")`n', helper)
+Run('"' A_AhkPath '" "' helper '"')
+t := A_TickCount
+while !FileExist(flag) && A_TickCount - t < 3000
+	Sleep 10
+SendEvent("{Ctrl up}")
+Sleep 1800
+check(InStr(ed.Value, StrUpper(quiet), true), "a format paste with the clipboard busy at release still comes out upper case [" ed.Value "]")
+g.Destroy()
+try FileDelete(flag)
+try FileDelete(helper)
+if InStr(cj.getClipAt(0, 1), stamp)
+	cj.runFunction("API.deleteClip(0,1)")
 FileAppend((fails ? fails " FAILED" : "ALL PASSED") "`n", "*")
 ExitApp fails

@@ -51,7 +51,7 @@ class ImageClip {
 		if !FileExist(ref)
 			return 0
 		if (StrLower(SubStr(ref, -4)) = ".avc") {
-			try A_Clipboard := ClipFileRead(ref)
+			try trySetClipboard(ClipFileRead(ref))
 			catch
 				return 0
 			return ClipWait(2) ? 1 : 0

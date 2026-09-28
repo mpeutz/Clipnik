@@ -409,7 +409,7 @@ paste(*) {
 			try oldclip_data := ClipboardAll()
 		}
 
-		try A_Clipboard := ""
+		try trySetClipboard("")
 		hkZ(pstIdentifier pastemodekey.up, channel_up), hkZ(pstIdentifier pastemodekey.down, channel_down) 		;activate the 2 keys to jump channels
 		PasteModeTooltip("{" CN.Name "} " MSG_CLIPJUMP_EMPTY, 1) 				;No Clip Exists
 		SetTimer(ctrlCheck, 50)
@@ -1291,7 +1291,8 @@ ctrlCheck(*) {
 					Coutput := callPformat(curPfunction, zCb) 	; don't try here, the exception in fileread-filemissing-commonformats will nt allow it.
 				; old pformat plugins flag the change themselves; built-in transforms just return the new text
 				if STORE.ClipboardChanged || (Coutput != "" && Coutput !== zCb) {
-					try A_Clipboard := Coutput, IScurCBACTIVE := 0
+					if trySetClipboard(Coutput)
+						IScurCBACTIVE := 0
 				} else
 					ONCLIPBOARD := 1
 				API.blockMonitoring(0, 5)
@@ -1323,7 +1324,7 @@ ctrlCheck(*) {
 
 		if (ctrlref = "cancel" || ctrlref = "delete" || ctrlref = "DeleteAll")
 			if !IScurCBACTIVE 						;dont disturb current clipboard if it is already active
-				try A_Clipboard := oldclip_data       ;The command opens, writes and closes clipboard . The ONCC Label is launched when writing takes place.
+				try trySetClipboard(oldclip_data)       ;The command opens, writes and closes clipboard . The ONCC Label is launched when writing takes place.
 
 		Sleep sleeptime
 		Hud.Hide()
@@ -1369,7 +1370,7 @@ endPastemode(*) {
 		TEMPSAVE := realActive
 	API.blockMonitoring(1)
 	if !IScurCBACTIVE
-		try A_Clipboard := oldclip_data
+		try trySetClipboard(oldclip_data)
 	API.blockMonitoring(0)
 	ctrlRef := "", restoreCaller := is_pstMode_active := IN_BACK := oldclip_exist := jumpClip_sign := 0, VAULT.ACTIVE := 0
 	hkZ_pasteMode(0), CALLER := CALLER_STATUS
@@ -1473,7 +1474,7 @@ holdClip(*) {
 	if (STORE.holdClip_preText == "")
 		Send(STORE.holdClip_send ? STORE.holdClip_send : "^{vk43}")
 	else
-		try A_Clipboard := STORE.holdClip_preText
+		try trySetClipboard(STORE.holdClip_preText)
 	STORE.holdClip_send := "^{vk43}", STORE.holdClip_preText := "" 	; default
 
 	while !ONCLIPBOARD
@@ -1495,11 +1496,11 @@ holdClip(*) {
 	else if (keyPressed = "Insert")
 	{
 		try t_cb := ClipboardAll()
-		try A_Clipboard := ""
+		try trySetClipboard("")
 	}
 	API.blockMonitoring(0)
 	if (keyPressed = "Insert")
-		try A_Clipboard := t_cb
+		try trySetClipboard(t_cb)
 	hkZ((paste_k && CLIPJUMP_STATUS ? "$" pstIdentifier paste_k : ""), paste)
 	EmptyMem()
 }
@@ -1771,7 +1772,7 @@ copyFile(*) {
 	copyMessage := MSG_FILE_PATH_COPIED
 	selectedFile := GetFile()
 	if (selectedFile != "")
-		try A_Clipboard := selectedfile
+		try trySetClipboard(selectedfile)
 	CopyMessage := MSG_TRANSFER_COMPLETE " {" CN.Name "}"
 }
 
@@ -1781,7 +1782,7 @@ copyFolder(*) {
 	copyMessage := MSG_FOLDER_PATH_COPIED
 	openedFolder := GetFolder()
 	if (openedfolder != "")
-		try A_Clipboard := openedFolder
+		try trySetClipboard(openedFolder)
 	copyMessage := MSG_TRANSFER_COMPLETE " {" CN.Name "}"
 }
 
@@ -1803,7 +1804,7 @@ CopyFileData(*) {
 		ClipWait(1, 1)
 		oldclip := ClipboardAll()
 		API.blockMonitoring(0)
-		try A_Clipboard := oldclip
+		try trySetClipboard(oldclip)
 		oldclip := ""           ;The methodology is adopted due to an AHK Bug
 	}
 	else
@@ -1868,7 +1869,7 @@ addToWinClip(lastEntry, extraTip) {
 	API.blockMonitoring()
 	Hud.Message(Valueof(extraTip))
 	if CURSAVE
-		try A_Clipboard := ClipFileRead(A_WorkingDir "/" CLIPS_dir "/" lastentry ".avc")
+		try trySetClipboard(ClipFileRead(A_WorkingDir "/" CLIPS_dir "/" lastentry ".avc"))
 	Sleep 1000
 	Hud.Hide()
 	API.blockMonitoring(0)
@@ -2120,11 +2121,11 @@ CopytoVar(clipwait_time := 3, send_macro := "^{vk43}") {
 	local oldclip := "", var := ""
 	CALLER := 0
 	try oldclip := ClipboardAll()
-	try A_Clipboard := ""
+	try trySetClipboard("")
 	Send(send_macro)
 	ClipWait(clipwait_time)
 	try var := A_Clipboard
-	try A_Clipboard := oldclip
+	try trySetClipboard(oldclip)
 	CALLER := CALLER_STATUS
 	return var
 }

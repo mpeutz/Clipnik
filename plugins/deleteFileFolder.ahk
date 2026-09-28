@@ -39,7 +39,7 @@ plugin_deleteFileFolder(zchannels := "") {
 				loop files "cache\clips" zCfactor "\*.avc"
 				{
 					ONCLIPBOARD := 0 	; This var is made 1 by the OnClipboardChange callback that responds to system clipboard change.
-					try A_Clipboard := ClipFileRead(A_LoopFileFullPath) 	; read clip file to clipboard
+					try trySetClipboard(ClipFileRead(A_LoopFileFullPath)) 	; read clip file to clipboard
 					zFormat := getClipboardFormat() 				; get its format
 					if (zFormat == "[" TXT.TIP_file_folder "]") 	; if format is file/folder
 					{

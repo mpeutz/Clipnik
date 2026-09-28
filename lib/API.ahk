@@ -39,7 +39,7 @@ class API
 		this.blockMonitoring(1)
 		if (channel = "") && (clipno = "") {
 			if !IsCurCBActive
-				try A_Clipboard := ClipFileRead(A_WorkingDir "\" CLIPS_dir "\" TEMPSAVE ".avc")
+				try trySetClipboard(ClipFileRead(A_WorkingDir "\" CLIPS_dir "\" TEMPSAVE ".avc"))
 		}
 		else {
 			r := this.getClipLoc(channel, clipno)
@@ -60,7 +60,7 @@ class API
 		else {
 			this.blockMonitoring(1)
 			r := this.getClipLoc(channel, clipno)
-			try A_Clipboard := ClipFileRead(r)
+			try trySetClipboard(ClipFileRead(r))
 			err := GetClipboardFormat() = "" ? 0 : 1
 			ret := ClipboardAll()
 			this.blockMonitoring(0)
@@ -396,7 +396,7 @@ class API
 		Sleep 100
 		Send("^{vk56}")
 		Sleep 100
-		try A_Clipboard := oldclip
+		try trySetClipboard(oldclip)
 		this.blockMonitoring(0)
 	}
 
@@ -451,7 +451,7 @@ class API
 	; get the text from a ClipboardAll binary
 	static Binary2Text(binary) {
 		this.blockMonitoring(1)
-		try A_Clipboard := binary
+		try trySetClipboard(binary)
 		out := tryGetClipboard()
 		this.blockMonitoring(0)
 		return out

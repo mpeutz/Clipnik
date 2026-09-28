@@ -166,7 +166,7 @@ class OrganizerWin {
 			return
 		}
 		API.blockMonitoring(1)
-		try A_Clipboard := ClipFileRead(avc)
+		try trySetClipboard(ClipFileRead(avc))
 		ClipWait(2)
 		t := Gdip_Startup()
 		bm := Gdip_CreateBitmapFromClipboard()
