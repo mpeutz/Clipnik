@@ -249,6 +249,50 @@ ClipFileRead(path) {
 	return ClipboardAll(data)
 }
 
+; The text A_Clipboard would show once the clip file is on the clipboard - its text, else its files one path per
+; line - read straight from the file, so nothing has to go through the clipboard. Like ClipboardAll() it reads up
+; to the first terminator: older caches hold dumps with a second one appended. "" for an image, a missing file or
+; one that is not a dump.
+ClipFile_TextOf(path) {
+	try data := FileRead(path, "RAW")
+	catch
+		return ""
+	if !ClipFile_IsLayout(data, 4) && ClipFile_IsLayout(data, 8)
+		data := ClipFile_Convert8to4(data)
+	blocks := Map(), pos := 0
+	loop {
+		if (pos + 4 > data.Size)
+			return ""
+		if !(fmt := NumGet(data, pos, "UInt"))
+			break
+		if (pos + 8 > data.Size) || (pos + 8 + (size := NumGet(data, pos + 4, "UInt")) > data.Size)
+			return ""
+		blocks[fmt] := {ptr: data.Ptr + pos + 8, size: size}
+		pos += 8 + size
+	}
+	for , t in [[13, "UTF-16"], [1, "CP0"], [7, "CP" DllCall("GetOEMCP", "UInt")]]   ; Unicode, ANSI, OEM text
+		if blocks.Has(t[1]) {
+			b := blocks[t[1]]
+			return StrGet(b.ptr, t[1] = 13 ? b.size // 2 : b.size, t[2])   ; stops at the terminating zero
+		}
+	return blocks.Has(15) ? ClipFile_DropList(blocks[15]) : ""   ; CF_HDROP
+}
+
+; the paths in a DROPFILES block, one per line
+ClipFile_DropList(b) {
+	if (b.size < 20)
+		return ""
+	wide := NumGet(b.ptr, 16, "Int"), p := b.ptr + NumGet(b.ptr, 0, "UInt"), stop := b.ptr + b.size
+	cs := wide ? 2 : 1
+	files := ""
+	; each read is bounded by the block, so a list missing its terminating zeros cannot run past it
+	while (p + cs <= stop) && (f := StrGet(p, (stop - p) // cs, wide ? "UTF-16" : "CP0")) != "" {
+		files .= (files = "" ? "" : "`r`n") f
+		p += (StrLen(f) + 1) * cs
+	}
+	return files
+}
+
 ; Writes a clip dump to path, replacing whatever file is there. FileAppend alone would add the new dump after the old
 ; one, and ClipFileRead - meeting the old dump's terminator before the end - would bring back the old clip.
 ClipFile_Write(path, data) {

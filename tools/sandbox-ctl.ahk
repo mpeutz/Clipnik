@@ -93,10 +93,12 @@ Ready(folder) {
 	Fail("the Clipnik in " folder " was not the only one running and started within 30 s (" Clipniks().Count " running)")
 }
 
+; an empty clipboard saves as an empty file
 ClipSave(file) {
 	data := ClipboardAll()
 	f := FileOpen(file, "w")
-	f.RawWrite(data)
+	if data.Size
+		f.RawWrite(data)
 	f.Close()
 	return 0
 }
@@ -104,6 +106,6 @@ ClipSave(file) {
 ClipRestore(file) {
 	if !FileExist(file)
 		Fail("no saved clipboard at " file)
-	A_Clipboard := ClipboardAll(FileRead(file, "RAW"))
+	A_Clipboard := FileGetSize(file) ? ClipboardAll(FileRead(file, "RAW")) : ""
 	return 0
 }

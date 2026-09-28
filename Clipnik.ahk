@@ -101,7 +101,6 @@ try FileSetAttrib("-H", A_WorkingDir "\cache")
 
 ;Init Non-Ini Configurations
 try FileDelete(A_Temp "/clipnikcom.txt")
-try A_Clipboard := ""
 
 
 /*
@@ -358,31 +357,21 @@ onExitHandler(*) {
 	return 0
 }
 
+; each clip's text is read from its file: putting every clip on the clipboard to read it back left the user's
+; clipboard replaced by whichever clip loaded last
 loadClipboardDataS() {
 	global
-	local fp, R, Z
+	local fp, R
 	API.showTip(TXT.TIP_initMsg)
-	API.blockMonitoring(1)
 	loop CN.Total
 	{
 		fp := "cache\clips" (A_Index - 1 ? A_Index - 1 : "")
 		CDS[R := A_Index - 1] := CJMap()
 		CPS[R] := ini2Obj(fp "\prefs.ini")
 		loop files fp "\*.avc"
-		{
-			ONCLIPBOARD := "", Z := ""
-			if try_ClipboardfromFile(A_LoopFileFullPath, 300)
-				Z := tryGetClipboard(500) 	; 300 tries minimize chances of Clipboard recorders like Exekutor to interrupt
-			else
-				ONCLIPBOARD := 1, Z := ""
-
-			while !ONCLIPBOARD
-				Sleep 5
-			CDS[R][SubStr(A_LoopFileName, 1, -4)] := Z
-		}
+			CDS[R][SubStr(A_LoopFileName, 1, -4)] := ClipFile_TextOf(A_LoopFileFullPath)
 	}
 	API.removeTip()
-	API.blockMonitoring(0)
 }
 
 ; calls the active paste-format plugin function on text
