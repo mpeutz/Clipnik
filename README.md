@@ -1,10 +1,12 @@
+![A silver satellite marked with a C, its antennas trailing, against a star field and nebula](docs/header.jpg)
+
 # Clipnik
 
 A keyboard-first clipboard manager for Windows. Clipnik keeps everything you copy on a stack, and pasting can
 walk that stack: hold **Ctrl**, tap **V** to step back through what you copied earlier, and let go of Ctrl to
 paste the clip you landed on.
 
-![The paste card beside a text editor, on the fourth clip of seven](docs/screenshots/paste-card.png)
+![The paste card on the fourth clip of seven, a JSON snippet](docs/screenshots/paste-card.png)
 
 ## What it does
 

@@ -58,15 +58,15 @@ Gdip_DisposeImage(bm), Gdip_Shutdown(t)
 Sleep 3000   ; let the copy toasts fade
 check(Integer(cj.runFunction("API.getChStrength(0)")) >= 7, "the made-up clips were recorded")
 
-; the paste card, four clips down the stack, over a small editor
-ed := Gui("-Caption +Border", "Draft - Notes")   ; no title bar: no AutoHotkey icon or accent color in the shot
-ed.SetFont("s11", "Segoe UI")
-box := ed.Add("Edit", "w560 h220 +Multi", "Release notes`r`n`r`nThe settings file now lives next to the app:`r`n")
-ed.Show("x" (A_ScreenWidth // 2 - 300) " y" (A_ScreenHeight // 2 - 180))
+; the paste card on its own, four clips down the stack. Paste mode needs a text field to paste into, so a small
+; editor sits in the top-left corner, out of the shot; the card opens by the pointer, well away from it.
+ed := Gui("-Caption +Border", "Draft - Notes")
+box := ed.Add("Edit", "w300 h100 +Multi")
+ed.Show("x40 y40")
 WinWaitActive("Draft - Notes", , 5)
-box.Focus(), SendEvent("^{End}")
+box.Focus()
 WinGetPos(&ex, &ey, &ew, &eh, "Draft - Notes")
-MouseMove(ex + 120, ey + 150, 0)   ; the card opens by the pointer, so it lands beside the editor
+MouseMove(A_ScreenWidth * 0.55, A_ScreenHeight * 0.4, 0)
 Sleep 300
 SendEvent("{Ctrl down}v")
 Sleep 300
@@ -77,9 +77,10 @@ loop 3 {
 Sleep 500
 if check(WinExist("Clipnik_HUD ahk_class AutoHotkeyGUI"), "the paste card is showing") {
 	WinGetPos(&cx, &cy, &cw, &ch, "Clipnik_HUD ahk_class AutoHotkeyGUI")
-	x := Min(ex, cx) - 24, y := Min(ey, cy) - 24, w := Max(ex + ew, cx + cw) + 24 - x, h := Max(ey + eh, cy + ch) + 24 - y
-	; a card far from the editor makes a large shot that can take in other programs' always-on-top windows
-	if check(w <= 1000 && h <= 650, "the card opened beside the editor (" w "x" h ")")
+	x := cx - 24, y := cy - 24, w := cw + 48, h := ch + 48
+	; only the card and a margin of backdrop: nothing of the editor, nor any other program's always-on-top window
+	clear := x > ex + ew || y > ey + eh
+	if check(clear && w <= 900 && h <= 400, "the card stands clear of the editor (" w "x" h ")")
 		shot("paste-card", x, y, w, h)
 }
 SendEvent("{Ctrl up}")
